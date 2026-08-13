@@ -1,0 +1,123 @@
+"use client";
+
+import { useState } from "react";
+import { useTasks } from "@/lib/store-context";
+import { fmt, fmtDate, fmtTime } from "@/lib/format";
+import type { Task } from "@/lib/types";
+import SidePanel from "../ui/SidePanel";
+
+/**
+ * The day's work, plus the two things you'd want from a date you just clicked:
+ * add something to it, or move something off it. The Move date control is the
+ * accessible equivalent of dragging a marker across the grid, and it's the
+ * only way on touch.
+ */
+export default function DayPanel({
+  iso,
+  tasks,
+  onClose,
+}: {
+  iso: string;
+  tasks: Task[];
+  onClose: () => void;
+}) {
+  const { addTask, openTask, patchTask, projects } = useTasks();
+  const [draft, setDraft] = useState("");
+  const [moving, setMoving] = useState<string | null>(null);
+
+  return (
+    <SidePanel open onClose={onClose} title={fmtDate(iso)}>
+      <div className="space-y-5">
+        <div className="space-y-1.5">
+          <label htmlFor="calendar-add" className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+            Add a task on this day
+          </label>
+          <input
+            id="calendar-add"
+            value={draft}
+            placeholder="What needs doing?"
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={async (e) => {
+              if (e.key !== "Enter" || !draft.trim()) return;
+              const text = draft;
+              setDraft("");
+              // The date comes from the day you opened, not from parsing.
+              await addTask(text, { scheduled: iso }).catch(() => {});
+            }}
+            className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-accent/40"
+          />
+        </div>
+
+        {tasks.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nothing scheduled. Add the first thing above.</p>
+        ) : (
+          <ul className="space-y-2">
+            {tasks.map((task) => {
+              const project = projects.find((p) => p.id === task.projectId);
+              return (
+                <li key={task.id} className="rounded-xl border border-border bg-card p-3">
+                  <div className="flex items-start gap-2">
+                    <button
+                      onClick={() => openTask(task.id)}
+                      className={`min-w-0 flex-1 text-left text-sm font-medium hover:text-accent ${
+                        task.status === "done" ? "line-through opacity-60" : ""
+                      }`}
+                    >
+                      {task.title}
+                    </button>
+                  </div>
+
+                  <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.08em] text-muted-foreground">
+                    <span>{fmt(task.minutes)}</span>
+                    {task.dueTime && <span>{fmtTime(task.dueTime)}</span>}
+                    {project && (
+                      <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
+                        <span
+                          aria-hidden
+                          className="size-1.5 rounded-full"
+                          style={{ background: project.color }}
+                        />
+                        {project.name}
+                      </span>
+                    )}
+                  </div>
+
+                  {moving === task.id ? (
+                    <div className="mt-2 flex items-center gap-2">
+                      <input
+                        type="date"
+                        autoFocus
+                        aria-label={`New date for ${task.title}`}
+                        defaultValue={task.scheduled}
+                        onChange={(e) => {
+                          if (!e.target.value) return;
+                          // The time of day is deliberately preserved.
+                          patchTask(task.id, { scheduled: e.target.value });
+                          setMoving(null);
+                        }}
+                        className="h-9 rounded-lg border border-border bg-background px-2 text-sm outline-none focus:border-accent/40"
+                      />
+                      <button
+                        onClick={() => setMoving(null)}
+                        className="rounded-lg px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setMoving(task.id)}
+                      className="mt-2 rounded-md px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground hover:bg-muted hover:text-foreground"
+                    >
+                      Move date
+                    </button>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+    </SidePanel>
+  );
+}
