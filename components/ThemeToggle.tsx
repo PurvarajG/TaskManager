@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useSyncExternalStore } from "react";
 
 type Theme = "light" | "dark" | "system";
 
@@ -10,26 +10,45 @@ function apply(theme: Theme) {
   else root.dataset.theme = theme;
 }
 
+/** Notifies this tab when `cycle` writes; `storage` covers the other tabs. */
+const CHANGED = "theme-changed";
+const listeners = new Set<() => void>();
+
+function subscribe(notify: () => void) {
+  listeners.add(notify);
+  window.addEventListener("storage", notify);
+  return () => {
+    listeners.delete(notify);
+    window.removeEventListener("storage", notify);
+  };
+}
+
+/**
+ * The saved theme lives in localStorage, so it's read as an external store
+ * rather than copied into state by an effect. The server snapshot is `null`,
+ * which renders the placeholder and keeps hydration honest.
+ */
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("system");
-  const [mounted, setMounted] = useState(false);
+  const theme = useSyncExternalStore(
+    subscribe,
+    () => (localStorage.getItem("theme") as Theme | null) ?? "system",
+    () => null,
+  );
 
+  // Writing to the DOM is exactly what an effect is for.
   useEffect(() => {
-    const saved = (localStorage.getItem("theme") as Theme | null) ?? "system";
-    setTheme(saved);
-    apply(saved);
-    setMounted(true);
-  }, []);
+    if (theme) apply(theme);
+  }, [theme]);
 
-  function cycle() {
+  const cycle = useCallback(() => {
     const order: Theme[] = ["system", "light", "dark"];
-    const next = order[(order.indexOf(theme) + 1) % order.length];
-    setTheme(next);
-    apply(next);
+    const next = order[(order.indexOf(theme ?? "system") + 1) % order.length];
     localStorage.setItem("theme", next);
-  }
+    for (const notify of listeners) notify();
+    window.dispatchEvent(new Event(CHANGED));
+  }, [theme]);
 
-  if (!mounted) return <div className="size-8" />;
+  if (!theme) return <div className="size-8" />;
 
   const label = theme === "system" ? "Auto" : theme === "light" ? "Light" : "Dark";
 

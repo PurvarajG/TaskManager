@@ -66,7 +66,7 @@ export default function TaskTime({ task }: { task: Task }) {
       <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
         <button
           onClick={() => (isRunning ? stopTimer() : startTimer(task.id))}
-          className={`rounded-lg px-3 py-2 text-sm font-medium transition-all ${
+          className={`min-h-11 rounded-lg px-3 py-2 text-sm font-medium transition-all sm:min-h-9 ${
             isRunning
               ? "bg-muted text-foreground hover:bg-border"
               : "bg-gradient-to-r from-accent to-accent-secondary text-accent-foreground hover:brightness-110"
@@ -156,7 +156,7 @@ export default function TaskTime({ task }: { task: Task }) {
               });
               setAdding(false);
             }}
-            className="rounded-lg bg-muted px-3 py-2 text-sm font-medium hover:bg-border"
+            className="min-h-11 rounded-lg bg-muted px-3 py-2 text-sm font-medium hover:bg-border sm:min-h-9"
           >
             Record
           </button>
@@ -170,7 +170,7 @@ export default function TaskTime({ task }: { task: Task }) {
       ) : (
         <button
           onClick={() => setAdding(true)}
-          className="font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground"
+          className="min-h-11 rounded-lg px-1 text-left font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground sm:min-h-0"
         >
           + Record time manually
         </button>

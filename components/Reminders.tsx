@@ -1,8 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useSyncExternalStore } from "react";
 import { useTasks } from "@/lib/store-context";
 import { toISODate } from "@/lib/parse";
+
+const promptListeners = new Set<() => void>();
+
+function subscribeToPrompt(notify: () => void) {
+  promptListeners.add(notify);
+  return () => promptListeners.delete(notify);
+}
 
 /**
  * Best-effort in-app reminders: while this tab is open, fires a browser
@@ -12,15 +19,21 @@ import { toISODate } from "@/lib/parse";
  */
 export default function Reminders() {
   const { tasks } = useTasks();
-  const [permission, setPermission] = useState<NotificationPermission | null>(null);
-  const [dismissed, setDismissed] = useState(true);
   const fired = useRef(new Set<string>());
 
-  useEffect(() => {
-    if (typeof Notification === "undefined") return;
-    setPermission(Notification.permission);
-    setDismissed(localStorage.getItem("reminders-dismissed") === "1" || Notification.permission !== "default");
-  }, []);
+  // Both the browser's permission and the saved dismissal are external state,
+  // so they're read as a store rather than copied into React by an effect.
+  const state = useSyncExternalStore(
+    subscribeToPrompt,
+    () =>
+      typeof Notification === "undefined"
+        ? "unsupported"
+        : `${Notification.permission}:${localStorage.getItem("reminders-dismissed") ?? ""}`,
+    () => null,
+  );
+
+  const permission = state && state !== "unsupported" ? (state.split(":")[0] as NotificationPermission) : null;
+  const dismissed = state === null || state === "unsupported" || state.endsWith(":1");
 
   useEffect(() => {
     if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
@@ -45,15 +58,13 @@ export default function Reminders() {
   }, [tasks]);
 
   async function enable() {
-    const result = await Notification.requestPermission();
-    setPermission(result);
-    setDismissed(true);
-    localStorage.setItem("reminders-dismissed", "1");
+    await Notification.requestPermission();
+    dismiss();
   }
 
   function dismiss() {
-    setDismissed(true);
     localStorage.setItem("reminders-dismissed", "1");
+    for (const notify of promptListeners) notify();
   }
 
   if (dismissed || permission !== "default") return null;

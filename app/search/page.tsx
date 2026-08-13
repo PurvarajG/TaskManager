@@ -10,21 +10,28 @@ import TaskRow from "@/components/TaskRow";
 function SearchResults() {
   const params = useSearchParams();
   const q = params.get("q") ?? "";
-  const [results, setResults] = useState<Task[]>([]);
-  const [ready, setReady] = useState(false);
+  // Results are stored with the query they belong to, so "still loading" is a
+  // comparison rather than a flag an effect has to keep in sync.
+  const [data, setData] = useState<{ q: string; results: Task[] } | null>(null);
+  const results = data?.q === q ? data.results : [];
+  const ready = !q.trim() || data?.q === q;
   const todayISO = toISODate(new Date());
 
   useEffect(() => {
-    if (!q.trim()) {
-      setResults([]);
-      setReady(true);
-      return;
-    }
-    setReady(false);
+    if (!q.trim()) return;
+    let current = true;
     fetch(`/api/tasks?q=${encodeURIComponent(q)}`)
       .then((r) => r.json())
-      .then(setResults)
-      .finally(() => setReady(true));
+      .then((found: Task[]) => {
+        // A slower earlier query must not overwrite a newer one's results.
+        if (current) setData({ q, results: found });
+      })
+      .catch(() => {
+        if (current) setData({ q, results: [] });
+      });
+    return () => {
+      current = false;
+    };
   }, [q]);
 
   return (

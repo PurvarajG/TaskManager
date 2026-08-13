@@ -37,11 +37,12 @@ export default function TaskPanel() {
       open
       onClose={closeTask}
       title="Task"
+      // min-h-11 keeps these actions at the 44px touch minimum on phones.
       footer={
         <div className="flex items-center justify-between">
           <button
             onClick={() => (done ? reopenTask(task.id) : completeTask(task.id))}
-            className="rounded-lg bg-gradient-to-r from-accent to-accent-secondary px-3 py-2 text-sm font-medium text-accent-foreground transition-all hover:brightness-110"
+            className="min-h-11 rounded-lg bg-gradient-to-r from-accent to-accent-secondary px-3 py-2 text-sm font-medium text-accent-foreground transition-all hover:brightness-110 sm:min-h-9"
           >
             {done ? "Reopen task" : "Mark complete"}
           </button>
@@ -50,7 +51,7 @@ export default function TaskPanel() {
               trashTask(task.id);
               closeTask();
             }}
-            className="rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="min-h-11 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:min-h-9"
           >
             Move to trash
           </button>

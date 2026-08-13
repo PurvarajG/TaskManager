@@ -100,7 +100,7 @@ export default function ProjectSettings({
                   onClose();
                   router.push("/all");
                 }}
-                className="rounded-lg bg-muted px-3 py-2 text-sm font-medium hover:bg-border"
+                className="min-h-11 rounded-lg bg-muted px-3 py-2 text-sm font-medium hover:bg-border sm:min-h-9"
               >
                 Yes, delete {project.name}
               </button>

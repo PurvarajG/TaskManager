@@ -81,7 +81,7 @@ export default function RemoveStageDialog({
                 setBusy(false);
               }
             }}
-            className="rounded-lg bg-gradient-to-r from-accent to-accent-secondary px-3 py-2 text-sm font-medium text-accent-foreground transition-all hover:brightness-110 disabled:opacity-40"
+            className="min-h-11 rounded-lg bg-gradient-to-r from-accent to-accent-secondary px-3 py-2 text-sm font-medium text-accent-foreground transition-all hover:brightness-110 disabled:opacity-40 sm:min-h-9"
           >
             Remove column
           </button>

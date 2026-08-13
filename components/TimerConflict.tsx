@@ -30,7 +30,7 @@ export default function TimerConflict() {
           <button
             autoFocus
             onClick={() => switchTimer(timerConflict.taskId)}
-            className="rounded-lg bg-gradient-to-r from-accent to-accent-secondary px-3 py-2 text-sm font-medium text-accent-foreground hover:brightness-110"
+            className="min-h-11 rounded-lg bg-gradient-to-r from-accent to-accent-secondary px-3 py-2 text-sm font-medium text-accent-foreground hover:brightness-110 sm:min-h-9"
           >
             Stop it and start {target ? `"${target.title}"` : "this one"}
           </button>
