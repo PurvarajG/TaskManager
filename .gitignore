@@ -55,3 +55,6 @@ next-env.d.ts
 *[[:space:]][0-9].tsx
 *[[:space:]][0-9].sql
 *[[:space:]][0-9].md
+
+# Database snapshots — real task data, never commit
+/backups
