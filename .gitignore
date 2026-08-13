@@ -45,3 +45,13 @@ next-env.d.ts
 
 # local PGlite database (dev only; real deploys use POSTGRES_URL/DATABASE_URL)
 /.data
+
+# Editor/sync duplicate artifacts ("file 2.ts")
+*[[:space:]]2.ts
+*[[:space:]]2.tsx
+*[[:space:]]2.sql
+*[[:space:]]2.md
+*[[:space:]][0-9].ts
+*[[:space:]][0-9].tsx
+*[[:space:]][0-9].sql
+*[[:space:]][0-9].md
