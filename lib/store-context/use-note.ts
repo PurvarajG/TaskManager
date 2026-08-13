@@ -47,6 +47,10 @@ export function useNote(): NoteApi {
     (body: string) => {
       setNoteText(body);
       pending.current = body;
+      // "Saving" from the first keystroke, not from when the request leaves:
+      // during the debounce the text genuinely is not saved yet, and claiming
+      // otherwise would be the one moment the indicator could mislead.
+      setNoteState("saving");
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(() => void save(body), DEBOUNCE_MS);
     },
