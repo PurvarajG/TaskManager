@@ -5,6 +5,7 @@ import { useTasks } from "@/lib/store-context";
 import { daysBetween } from "@/lib/parse";
 import { fmt, fmtDate, fmtTime, PRIORITY_LABEL } from "@/lib/format";
 import { STALE_AFTER_DAYS, type Task } from "@/lib/types";
+import TimerButton from "./TimerButton";
 
 export default function TaskRow({
   task,
@@ -175,6 +176,7 @@ export default function TaskRow({
       </div>
 
       <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+        {!done && <TimerButton taskId={task.id} title={task.title} />}
         {task.subtasks.length === 0 && (
           <button
             onClick={() => setOpen((v) => !v)}

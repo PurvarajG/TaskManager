@@ -5,6 +5,7 @@ import { TasksProvider } from "@/lib/store-context";
 import Sidebar from "./Sidebar";
 import Reminders from "./Reminders";
 import TaskPanel from "./TaskPanel";
+import TimerStrip from "./TimerStrip";
 import TimerConflict from "./TimerConflict";
 import ErrorToast from "./ErrorToast";
 
@@ -20,6 +21,7 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
       {/* Mounted once, above every surface: any list, board, or calendar can
           open the same task panel without routing away. */}
       <TaskPanel />
+      <TimerStrip />
       <TimerConflict />
       <ErrorToast />
       <Reminders />

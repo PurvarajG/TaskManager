@@ -59,6 +59,15 @@ export default function ProjectPage() {
         {summary.blocked > 0 && <Stat label="Blocked" value={String(summary.blocked)} />}
         <Stat label="Estimated" value={fmt(summary.estimatedMinutes)} />
         <Stat label="Recorded" value={fmt(summary.recordedMinutes)} />
+        <Stat label="Today" value={fmt(summary.recordedTodayMinutes)} />
+        <Stat label="Last 7 days" value={fmt(summary.recordedWeekMinutes)} />
+      </dl>
+
+      {/* Counts by column, so the board's shape is legible before you scan it. */}
+      <dl className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+        {summary.byStage.map(({ stage, count }) => (
+          <Stat key={stage.id} label={stage.name} value={String(count)} />
+        ))}
       </dl>
 
       <div className="mt-8">

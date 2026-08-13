@@ -5,6 +5,7 @@ import { useTasks } from "@/lib/store-context";
 import { fmt, fmtTime, PRIORITY_LABEL } from "@/lib/format";
 import { fmtDate } from "@/lib/format";
 import type { ProjectStage, Task } from "@/lib/types";
+import TimerButton from "../TimerButton";
 
 /**
  * A compact card. Everything it shows is also stated in words somewhere on the
@@ -49,6 +50,12 @@ export default function Card({
         >
           {task.title}
         </button>
+
+        {task.status !== "done" && (
+          <div className="shrink-0 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+            <TimerButton taskId={task.id} title={task.title} />
+          </div>
+        )}
 
         <div className="relative shrink-0">
           <button
