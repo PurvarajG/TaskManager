@@ -4,33 +4,24 @@ import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTasks } from "@/lib/store-context";
 import { toISODate } from "@/lib/parse";
-import { useDragReorder } from "@/lib/useDragReorder";
+import { fmt } from "@/lib/format";
+import { projectSummary } from "@/lib/summary";
 import SectionLabel from "@/components/SectionLabel";
-import TaskRow from "@/components/TaskRow";
-import QuickAdd from "@/components/QuickAdd";
 import ProjectSettings from "@/components/ProjectSettings";
+import Board from "@/components/kanban/Board";
 
 export default function ProjectPage() {
   const { id } = useParams<{ id: string }>();
-  const { tasks, projects, ready, reorderTasks } = useTasks();
+  const { tasks, projects, stages, timeEntries, ready } = useTasks();
   const todayISO = toISODate(new Date());
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const project = projects.find((p) => p.id === id);
 
-  const open = useMemo(
-    () =>
-      tasks
-        .filter((t) => t.status === "open" && t.projectId === id)
-        .sort((a, b) => a.sortOrder - b.sortOrder),
-    [tasks, id],
+  const summary = useMemo(
+    () => projectSummary(id, tasks, stages, timeEntries, todayISO),
+    [id, tasks, stages, timeEntries, todayISO],
   );
-  const done = useMemo(
-    () => tasks.filter((t) => t.status === "done" && t.projectId === id),
-    [tasks, id],
-  );
-
-  const { list, dragHandleProps } = useDragReorder(open, reorderTasks);
 
   if (ready && !project) {
     return (
@@ -42,7 +33,7 @@ export default function ProjectPage() {
   if (!project) return null;
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 sm:px-10 sm:py-16">
+    <div className="px-6 py-12 sm:px-10 sm:py-16">
       <div className="flex items-center justify-between">
         <SectionLabel>Project</SectionLabel>
         <button
@@ -58,46 +49,34 @@ export default function ProjectPage() {
         {project.name}
       </h1>
 
+      {/* Plain counts, not a score: every figure here is recomputed from tasks,
+          stage semantics, and time entries. */}
+      <dl className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+        <Stat label="Complete" value={`${summary.percentComplete}%`} />
+        <Stat label="Open" value={String(summary.open)} />
+        <Stat label="Done" value={String(summary.completed)} />
+        {summary.overdue > 0 && <Stat label="Overdue" value={String(summary.overdue)} />}
+        {summary.blocked > 0 && <Stat label="Blocked" value={String(summary.blocked)} />}
+        <Stat label="Estimated" value={fmt(summary.estimatedMinutes)} />
+        <Stat label="Recorded" value={fmt(summary.recordedMinutes)} />
+      </dl>
+
+      <div className="mt-8">
+        <Board project={project} todayISO={todayISO} />
+      </div>
+
       {settingsOpen && (
         <ProjectSettings project={project} onClose={() => setSettingsOpen(false)} />
       )}
+    </div>
+  );
+}
 
-      <div className="mt-10">
-        <QuickAdd projectId={project.id} autoFocus={false} />
-      </div>
-
-      {ready && open.length === 0 && (
-        <p className="mt-10 rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground">
-          Nothing open in this project.
-        </p>
-      )}
-
-      <ul className="mt-10 space-y-2.5">
-        {list.map((t) => (
-          <TaskRow
-            key={t.id}
-            task={t}
-            todayISO={todayISO}
-            showProject={false}
-            showDate
-            draggable
-            dragHandleProps={dragHandleProps(t.id)}
-          />
-        ))}
-      </ul>
-
-      {done.length > 0 && (
-        <details className="mt-10">
-          <summary className="cursor-pointer list-none">
-            <SectionLabel>Done · {done.length}</SectionLabel>
-          </summary>
-          <ul className="mt-5 space-y-2.5">
-            {done.map((t) => (
-              <TaskRow key={t.id} task={t} todayISO={todayISO} showProject={false} />
-            ))}
-          </ul>
-        </details>
-      )}
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-baseline gap-1.5">
+      <dt>{label}</dt>
+      <dd className="text-foreground">{value}</dd>
     </div>
   );
 }

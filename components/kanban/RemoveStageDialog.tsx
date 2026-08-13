@@ -1,0 +1,98 @@
+"use client";
+
+import { useState } from "react";
+import { useTasks } from "@/lib/store-context";
+import type { ProjectStage } from "@/lib/types";
+import { inputClass, labelClass } from "../ui/Field";
+
+/**
+ * Removing a column can't proceed until its tasks have somewhere to go. The
+ * destination is a required choice, not a default that quietly loses work.
+ */
+export default function RemoveStageDialog({
+  stage,
+  siblings,
+  taskCount,
+  onClose,
+  onRemoved,
+}: {
+  stage: ProjectStage;
+  siblings: ProjectStage[];
+  taskCount: number;
+  onClose: () => void;
+  onRemoved: (message: string) => void;
+}) {
+  const { removeStage } = useTasks();
+  const [destination, setDestination] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const needsDestination = taskCount > 0;
+  const canRemove = !needsDestination || destination !== "";
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Remove the ${stage.name} column`}
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+    >
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} aria-hidden />
+      <div className="relative w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl">
+        <h2 className="font-display text-lg">Remove &ldquo;{stage.name}&rdquo;</h2>
+        <p className="mt-1.5 text-sm text-muted-foreground">
+          {needsDestination
+            ? `${taskCount} ${taskCount === 1 ? "task needs" : "tasks need"} a new column first.`
+            : "This column is empty."}
+        </p>
+
+        {needsDestination && (
+          <div className="mt-4 space-y-1.5">
+            <label htmlFor="stage-destination" className={labelClass}>
+              Move tasks to
+            </label>
+            <select
+              id="stage-destination"
+              value={destination}
+              onChange={(e) => setDestination(e.target.value)}
+              className={inputClass}
+            >
+              <option value="">Choose a column…</option>
+              {siblings.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className="mt-5 flex items-center gap-2">
+          <button
+            disabled={!canRemove || busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await removeStage(stage.id, destination || siblings[0].id);
+                onRemoved(`${stage.name} column removed.`);
+                onClose();
+              } catch {
+                // The store has already surfaced the server's reason.
+              } finally {
+                setBusy(false);
+              }
+            }}
+            className="rounded-lg bg-gradient-to-r from-accent to-accent-secondary px-3 py-2 text-sm font-medium text-accent-foreground transition-all hover:brightness-110 disabled:opacity-40"
+          >
+            Remove column
+          </button>
+          <button
+            onClick={onClose}
+            className="rounded-lg px-3 py-2 text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
