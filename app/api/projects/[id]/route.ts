@@ -1,23 +1,24 @@
+import { handle, json } from "@/lib/api";
 import { store } from "@/lib/store";
-import type { ProjectInput } from "@/lib/types";
+import * as v from "@/lib/validate";
 
-export async function PATCH(
-  request: Request,
-  ctx: RouteContext<"/api/projects/[id]">,
-) {
+export async function PATCH(request: Request, ctx: RouteContext<"/api/projects/[id]">) {
   const { id } = await ctx.params;
-  const patch = (await request.json()) as Partial<ProjectInput & { archived: boolean }>;
-  const updated = await store.updateProject(id, patch);
-  if (!updated) return Response.json({ error: "Not found" }, { status: 404 });
-  return Response.json(updated);
+  return handle(async () => {
+    const b = v.body(await json(request));
+    return store.updateProject(v.uuid(id, "project id"), {
+      ...(b.name !== undefined ? { name: v.nonEmpty(b.name, "Project name", 120) } : {}),
+      ...(b.color !== undefined ? { color: v.str(b.color, "color", 20) } : {}),
+      ...(b.archived !== undefined ? { archived: v.bool(b.archived, "archived") } : {}),
+    });
+  });
 }
 
-export async function DELETE(
-  _request: Request,
-  ctx: RouteContext<"/api/projects/[id]">,
-) {
+/** Permanent. Surviving tasks keep existing, but lose their project and column. */
+export async function DELETE(_request: Request, ctx: RouteContext<"/api/projects/[id]">) {
   const { id } = await ctx.params;
-  const removed = await store.deleteProject(id);
-  if (!removed) return Response.json({ error: "Not found" }, { status: 404 });
-  return new Response(null, { status: 204 });
+  return handle(async () => {
+    const removed = await store.deleteProject(v.uuid(id, "project id"));
+    return removed ? { ok: true } : null;
+  });
 }

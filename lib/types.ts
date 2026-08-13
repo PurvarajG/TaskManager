@@ -18,11 +18,44 @@ export type Subtask = {
   sortOrder: number;
 };
 
+/**
+ * What a column *means*, independent of what the user renamed it to. Progress,
+ * blocked counts, and completion all read `kind`, never the visible name.
+ */
+export type StageKind = "backlog" | "active" | "blocked" | "done";
+
+export const STAGE_KINDS: StageKind[] = ["backlog", "active", "blocked", "done"];
+
+export type ProjectStage = {
+  id: string;
+  projectId: string;
+  name: string;
+  kind: StageKind;
+  sortOrder: number;
+  createdAt: string;
+};
+
+export type StageInput = {
+  name: string;
+  kind: StageKind;
+};
+
+/** Created with every new project, and backfilled onto existing ones. */
+export const DEFAULT_STAGES: StageInput[] = [
+  { name: "Backlog", kind: "backlog" },
+  { name: "In Progress", kind: "active" },
+  { name: "Blocked", kind: "blocked" },
+  { name: "Done", kind: "done" },
+];
+
 export type Task = {
   id: string;
   title: string;
   notes?: string;
   projectId?: string;
+  /** Always a stage of `projectId`; absent when the task has no project. */
+  stageId?: string;
+  boardOrder: number;
   tags: string[];
   /** Local YYYY-MM-DD: the day you intend to *do* this, not a deadline. */
   scheduled: string;
@@ -43,6 +76,7 @@ export type TaskInput = {
   title: string;
   notes?: string;
   projectId?: string;
+  stageId?: string;
   tags?: string[];
   scheduled: string;
   dueTime?: string;
@@ -64,6 +98,40 @@ export type ProjectInput = {
   name: string;
   color?: string;
 };
+
+/** There is exactly one general note, and this is its primary key. */
+export const GENERAL_NOTE_ID = "owner";
+
+export type GeneralNote = {
+  body: string;
+  updatedAt: string;
+};
+
+/** A scratch checklist item. Deliberately not a Task — it can graduate into one. */
+export type QuickTodo = {
+  id: string;
+  title: string;
+  done: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type TimeEntry = {
+  id: string;
+  taskId: string;
+  startedAt: string;
+  /** Absent while the timer is still running. */
+  endedAt?: string;
+  /** Whole minutes, minimum 1. Absent while running. */
+  minutes?: number;
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** A stopped timer always records at least this much, so a quick task still counts. */
+export const MIN_TRACKED_MINUTES = 1;
 
 /** After this many days sitting undone, a task stops nagging and asks to be dropped. */
 export const STALE_AFTER_DAYS = 7;

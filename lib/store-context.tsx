@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import type { Project, Task, TaskInput } from "./types";
+import type { Project, ProjectStage, Task, TaskInput } from "./types";
 
 type AddOptions = { projectId?: string };
 
@@ -238,7 +238,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       body: JSON.stringify({ name, color }),
     });
     if (!res.ok) throw new Error("add-project-failed");
-    const project = (await res.json()) as Project;
+    // A project always arrives with its default board attached.
+    const { project } = (await res.json()) as { project: Project; stages: ProjectStage[] };
     setProjects((prev) => [...prev, project]);
     return project;
   }, []);
