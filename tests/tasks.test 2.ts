@@ -1,0 +1,102 @@
+import assert from "node:assert/strict";
+import test, { after, before } from "node:test";
+import { TaskInvariantError } from "../lib/store/tasks";
+import { freshDb, type TestDb } from "./helpers/db";
+
+let db: TestDb;
+
+before(async () => {
+  db = await freshDb();
+});
+after(async () => db.close());
+
+function task(overrides: Record<string, unknown> = {}) {
+  return db.store.addTask({
+    title: "A task",
+    scheduled: "2026-03-01",
+    minutes: 30,
+    priority: 0,
+    ...overrides,
+  });
+}
+
+test("a new project task lands in the first open column", async () => {
+  const { project, stages } = await db.store.addProject({ name: "Intake" });
+  const t = await task({ projectId: project.id });
+  assert.equal(t.stageId, stages[0].id);
+});
+
+test("changing project moves the task to the new project's first column", async () => {
+  const a = await db.store.addProject({ name: "From" });
+  const b = await db.store.addProject({ name: "To" });
+  const t = await task({ projectId: a.project.id, stageId: a.stages[1].id });
+
+  const moved = await db.store.updateTask(t.id, { projectId: b.project.id });
+  assert.equal(moved?.projectId, b.project.id);
+  assert.equal(moved?.stageId, b.stages[0].id);
+});
+
+test("clearing the project clears the column", async () => {
+  const { project } = await db.store.addProject({ name: "Detach" });
+  const t = await task({ projectId: project.id });
+
+  const loose = await db.store.updateTask(t.id, { projectId: "" });
+  assert.equal(loose?.projectId, undefined);
+  assert.equal(loose?.stageId, undefined);
+});
+
+test("a column from another project is refused", async () => {
+  const a = await db.store.addProject({ name: "Own" });
+  const b = await db.store.addProject({ name: "Other" });
+  const t = await task({ projectId: a.project.id });
+
+  await assert.rejects(
+    () => db.store.updateTask(t.id, { stageId: b.stages[0].id }),
+    TaskInvariantError,
+  );
+});
+
+test("completing a project task moves it to Done, and reopening brings it back", async () => {
+  const { project, stages } = await db.store.addProject({ name: "Lifecycle" });
+  const t = await task({ projectId: project.id, stageId: stages[1].id });
+
+  const completed = await db.store.completeTask(t.id);
+  assert.equal(completed?.task.status, "done");
+  assert.equal(completed?.task.stageId, stages[3].id);
+
+  const reopened = await db.store.reopenTask(t.id);
+  assert.equal(reopened?.status, "open");
+  assert.equal(reopened?.stageId, stages[0].id, "reopening returns to the first open column");
+});
+
+test("completing a recurring task creates the next occurrence in the open column", async () => {
+  const { project, stages } = await db.store.addProject({ name: "Recurring" });
+  const t = await task({
+    projectId: project.id,
+    scheduled: "2026-03-01",
+    recurrence: { freq: "weekly", interval: 1 },
+  });
+
+  const result = await db.store.completeTask(t.id);
+  assert.equal(result?.next?.scheduled, "2026-03-08");
+  assert.equal(result?.next?.status, "open");
+  assert.equal(result?.next?.stageId, stages[0].id);
+});
+
+test("a task with no project completes without needing a column", async () => {
+  const t = await task();
+  const result = await db.store.completeTask(t.id);
+  assert.equal(result?.task.status, "done");
+  assert.equal(result?.task.stageId, undefined);
+});
+
+test("deleting a project leaves its tasks intact but unassigned", async () => {
+  const { project } = await db.store.addProject({ name: "Doomed" });
+  const t = await task({ projectId: project.id });
+
+  await db.store.deleteProject(project.id);
+
+  const survivor = await db.store.getTask(t.id);
+  assert.equal(survivor?.projectId, undefined);
+  assert.equal(survivor?.stageId, undefined);
+});

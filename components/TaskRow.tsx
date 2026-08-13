@@ -23,8 +23,17 @@ export default function TaskRow({
   draggable?: boolean;
   dragHandleProps?: React.LiHTMLAttributes<HTMLLIElement>;
 }) {
-  const { projects, completeTask, reopenTask, trashTask, patchTask, addSubtask, toggleSubtask, deleteSubtask } =
-    useTasks();
+  const {
+    projects,
+    openTask,
+    completeTask,
+    reopenTask,
+    trashTask,
+    patchTask,
+    addSubtask,
+    toggleSubtask,
+    deleteSubtask,
+  } = useTasks();
   const [open, setOpen] = useState(false);
   const [subtaskText, setSubtaskText] = useState("");
 
@@ -68,9 +77,15 @@ export default function TaskRow({
       />
 
       <div className="min-w-0 flex-1">
-        <p className={`truncate text-[15px] font-semibold tracking-[-0.01em] ${done ? "line-through" : ""}`}>
+        {/* The title is the way into the full editor, from every list. */}
+        <button
+          onClick={() => openTask(task.id)}
+          className={`block w-full truncate text-left text-[15px] font-semibold tracking-[-0.01em] transition-colors hover:text-accent ${
+            done ? "line-through" : ""
+          }`}
+        >
           {task.title}
-        </p>
+        </button>
 
         <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
           <span>{fmt(task.minutes)}</span>
