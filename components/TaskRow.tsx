@@ -13,6 +13,7 @@ export default function TaskRow({
   onPushTomorrow,
   showProject = true,
   showDate = false,
+  compact = false,
   draggable = false,
   dragHandleProps,
 }: {
@@ -21,6 +22,8 @@ export default function TaskRow({
   onPushTomorrow?: () => void;
   showProject?: boolean;
   showDate?: boolean;
+  /** Used by the bounded Today workspace; other lists keep their roomier default. */
+  compact?: boolean;
   draggable?: boolean;
   dragHandleProps?: React.LiHTMLAttributes<HTMLLIElement>;
 }) {
@@ -47,7 +50,7 @@ export default function TaskRow({
   return (
     <li
       {...(draggable ? dragHandleProps : undefined)}
-      className={`group relative flex items-start gap-3 rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-300 hover:border-accent/30 hover:shadow-lg ${
+      className={`group relative flex items-start gap-3 rounded-xl border border-border bg-card shadow-sm transition-all duration-300 hover:border-accent/30 hover:shadow-lg ${compact ? "p-3 lg:py-2.5" : "p-4"} ${
         stale ? "opacity-70" : ""
       } ${done ? "opacity-60" : ""} ${draggable ? "cursor-grab active:cursor-grabbing" : ""}`}
     >
@@ -81,14 +84,14 @@ export default function TaskRow({
         {/* The title is the way into the full editor, from every list. */}
         <button
           onClick={() => openTask(task.id)}
-          className={`block w-full truncate text-left text-[15px] font-semibold tracking-[-0.01em] transition-colors hover:text-accent ${
+          className={`block w-full truncate text-left font-semibold tracking-[-0.01em] transition-colors hover:text-accent ${compact ? "text-sm" : "text-[15px]"} ${
             done ? "line-through" : ""
           }`}
         >
           {task.title}
         </button>
 
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+        <div className={`${compact ? "mt-1 gap-x-2 text-[10px]" : "mt-1.5 gap-x-3 text-[11px]"} flex flex-wrap items-center gap-y-1 font-mono uppercase tracking-[0.08em] text-muted-foreground`}>
           <span>{fmt(task.minutes)}</span>
           {task.dueTime && <span>{fmtTime(task.dueTime)}</span>}
           {task.priority > 0 && (

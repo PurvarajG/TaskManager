@@ -61,11 +61,11 @@ export default function Today() {
   const [upNext, ...rest] = today;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12 sm:px-10 sm:py-16 lg:flex lg:h-dvh lg:flex-col lg:overflow-hidden lg:py-6">
+    <div className="mx-auto max-w-6xl px-6 py-12 sm:px-10 sm:py-16 lg:flex lg:h-dvh lg:max-w-none lg:flex-col lg:overflow-hidden lg:px-8 lg:py-4 xl:px-10">
       <header className="shrink-0 animate-fade-up">
         <SectionLabel pulse>Today</SectionLabel>
 
-        <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl">
+        <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:mt-3 lg:text-3xl">
           <span className="gradient-text">
             {now.toLocaleDateString(undefined, { weekday: "long" })}
           </span>{" "}
@@ -74,7 +74,7 @@ export default function Today() {
 
         {ready && (
           <>
-            <dl className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
+            <dl className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground lg:mt-3 lg:gap-x-5 lg:text-[10px]">
               <Stat label="Active" value={String(today.length)} />
               {summary.overdue.length > 0 && (
                 <Stat label="Overdue" value={String(summary.overdue.length)} />
@@ -85,7 +85,7 @@ export default function Today() {
               {runningTask && <Stat label="Timing" value={runningTask.title} />}
             </dl>
 
-            <div className="mt-4">
+            <div className="mt-4 lg:mt-2">
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-accent to-accent-secondary transition-all duration-500"
@@ -106,11 +106,15 @@ export default function Today() {
           content columns share the available space and scroll independently. */}
       <div
         data-testid="today-workspace"
-        className="mt-10 grid gap-10 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)_auto] lg:gap-x-10 lg:gap-y-6"
+        className="mt-10 grid gap-10 lg:mt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_18rem] lg:grid-rows-[minmax(0,1fr)] lg:gap-x-6"
       >
-        <div className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-2">
+        <div data-testid="today-primary-pane" data-density="compact" className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
           <div className="animate-fade-up" style={{ animationDelay: "0.08s" }}>
-            <QuickAdd />
+            <QuickAdd compact />
+          </div>
+
+          <div className="mt-8 animate-fade-up lg:mt-4" style={{ animationDelay: "0.12s" }}>
+            <DashboardTimeline todayISO={todayISO} />
           </div>
 
           {ready && today.length === 0 && (
@@ -121,8 +125,8 @@ export default function Today() {
 
           {/* The one thing. Inverted so it can't be confused with the list. */}
           {upNext && (
-            <section className="mt-10 animate-fade-up" style={{ animationDelay: "0.16s" }}>
-              <div className="relative overflow-hidden rounded-2xl bg-foreground p-7 text-background shadow-xl">
+            <section className="mt-10 animate-fade-up lg:mt-4" style={{ animationDelay: "0.16s" }}>
+              <div className="relative overflow-hidden rounded-2xl bg-foreground p-7 text-background shadow-xl lg:rounded-xl lg:p-4">
                 <div className="dot-texture pointer-events-none absolute inset-0" />
                 <div className="relative">
                   <span className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-accent to-accent-secondary px-3.5 py-1.5">
@@ -131,25 +135,25 @@ export default function Today() {
                     </span>
                   </span>
 
-                  <h2 className="mt-5 font-display text-3xl leading-[1.15] tracking-[-0.01em]">
+                  <h2 className="mt-5 font-display text-3xl leading-[1.15] tracking-[-0.01em] lg:mt-2 lg:text-xl">
                     {upNext.title}
                   </h2>
 
-                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.1em] text-background/60">
+                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.1em] text-background/60 lg:mt-2 lg:text-[10px]">
                     <span>{fmt(upNext.minutes)}</span>
                     {upNext.priority > 0 && <span>P{upNext.priority}</span>}
                   </div>
 
-                  <div className="mt-7 flex flex-wrap items-center gap-3">
+                  <div className="mt-7 flex flex-wrap items-center gap-3 lg:mt-3 lg:gap-2">
                     <button
                       onClick={() => completeTask(upNext.id)}
-                      className="h-11 rounded-xl bg-gradient-to-r from-accent to-accent-secondary px-5 text-sm font-medium text-accent-foreground transition-all duration-200 hover:shadow-accent-lg hover:brightness-110 active:scale-[0.98]"
+                      className="h-11 rounded-xl bg-gradient-to-r from-accent to-accent-secondary px-5 text-sm font-medium text-accent-foreground transition-all duration-200 hover:shadow-accent-lg hover:brightness-110 active:scale-[0.98] lg:h-8 lg:rounded-lg lg:px-3 lg:text-xs"
                     >
                       Mark done
                     </button>
                     <button
                       onClick={() => patchTask(upNext.id, { scheduled: addDays(todayISO, 1) })}
-                      className="h-11 rounded-xl px-4 text-sm text-background/70 transition-colors hover:bg-background/10 hover:text-background"
+                      className="h-11 rounded-xl px-4 text-sm text-background/70 transition-colors hover:bg-background/10 hover:text-background lg:h-8 lg:px-3 lg:text-xs"
                     >
                       Not today
                     </button>
@@ -160,14 +164,15 @@ export default function Today() {
           )}
 
           {rest.length > 0 && (
-            <section className="mt-12 animate-fade-up" style={{ animationDelay: "0.24s" }}>
+            <section className="mt-12 animate-fade-up lg:mt-5" style={{ animationDelay: "0.24s" }}>
               <SectionLabel>Then</SectionLabel>
-              <ul className="mt-5 space-y-2.5">
+              <ul className="mt-5 space-y-2.5 lg:mt-3 lg:space-y-1.5">
                 {rest.map((t) => (
                   <TaskRow
                     key={t.id}
                     task={t}
                     todayISO={todayISO}
+                    compact
                     onPushTomorrow={() => patchTask(t.id, { scheduled: addDays(todayISO, 1) })}
                   />
                 ))}
@@ -199,7 +204,7 @@ export default function Today() {
           )}
         </div>
 
-        <aside className="min-w-0 space-y-10 lg:min-h-0 lg:overflow-y-auto lg:pr-2">
+        <aside className="min-w-0 space-y-10 lg:min-h-0 lg:space-y-5 lg:overflow-y-auto lg:pr-1">
           <TaskGroup
             label="Due today"
             tasks={summary.dueToday}
@@ -210,13 +215,10 @@ export default function Today() {
             tasks={summary.blocked}
             emptyText="Nothing is waiting on anything."
           />
-          <GeneralNote />
+          <GeneralNote compact />
           <QuickTodos />
         </aside>
 
-        <div className="mt-2 lg:col-span-2 lg:mt-0">
-          <DashboardTimeline todayISO={todayISO} />
-        </div>
       </div>
     </div>
   );

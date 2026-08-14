@@ -6,9 +6,11 @@ import { useTasks } from "@/lib/store-context";
 export default function QuickAdd({
   projectId,
   autoFocus = true,
+  compact = false,
 }: {
   projectId?: string;
   autoFocus?: boolean;
+  compact?: boolean;
 }) {
   const { addTask } = useTasks();
   const [text, setText] = useState("");
@@ -47,17 +49,17 @@ export default function QuickAdd({
             }
           }}
           placeholder="What needs doing?"
-          className="h-14 w-full rounded-xl border border-border bg-card pl-5 pr-28 text-[15px] shadow-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-accent/40 focus:ring-2 focus:ring-accent/20"
+          className={`${compact ? "h-11 pl-4 text-sm" : "h-14 pl-5 text-[15px]"} w-full rounded-xl border border-border bg-card pr-28 shadow-sm outline-none transition-all placeholder:text-muted-foreground/60 focus:border-accent/40 focus:ring-2 focus:ring-accent/20`}
         />
         <button
           type="submit"
           disabled={!text.trim()}
-          className="absolute right-2 top-1/2 h-10 -translate-y-1/2 rounded-lg bg-gradient-to-r from-accent to-accent-secondary px-4 text-sm font-medium text-accent-foreground shadow-sm transition-all duration-200 hover:shadow-accent hover:brightness-110 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-0"
+          className={`${compact ? "h-8 px-3 text-xs" : "h-10 px-4 text-sm"} absolute right-2 top-1/2 -translate-y-1/2 rounded-lg bg-gradient-to-r from-accent to-accent-secondary font-medium text-accent-foreground shadow-sm transition-all duration-200 hover:shadow-accent hover:brightness-110 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-0`}
         >
           Add
         </button>
       </div>
-      <p className="mt-2.5 px-1 font-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+      <p className={`${compact ? "mt-1.5 text-[10px]" : "mt-2.5 text-[11px]"} px-1 font-mono uppercase tracking-[0.12em] text-muted-foreground`}>
         30m · p1 · thu · 3pm · weekly · #project · @tag
       </p>
     </form>

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { useTasks } from "@/lib/store-context";
 import { shiftDays } from "@/lib/summary";
 import { DAY_END_HOUR, type Project, type Task } from "@/lib/types";
@@ -40,8 +40,10 @@ export default function DashboardTimeline({ todayISO }: { todayISO: string }) {
   const { tasks, projects, openTask } = useTasks();
   const now = useNow();
   const [rangeIndex, setRangeIndex] = useState(4);
+  const [isDraggingRange, setIsDraggingRange] = useState(false);
   const [startISO, setStartISO] = useState(todayISO);
   const span = SPANS[rangeIndex];
+  const rangeProgress = `${(rangeIndex / (SPANS.length - 1)) * 100}%`;
   const days = Array.from({ length: span }, (_, index) => shiftDays(startISO, index));
   const visibleTasks = tasks.filter(
     (task) => task.status !== "trashed" && days.includes(task.scheduled),
@@ -62,7 +64,21 @@ export default function DashboardTimeline({ todayISO }: { todayISO: string }) {
 
       <div className="mt-3 flex items-center gap-3">
         <label htmlFor="timeline-range" className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Range</label>
-        <input id="timeline-range" aria-label="Timeline range" type="range" min={0} max={SPANS.length - 1} step={1} value={rangeIndex} onChange={(event) => setRangeIndex(Number(event.target.value))} className="h-1.5 min-w-36 flex-1 accent-[var(--color-accent)]" />
+        <input
+          id="timeline-range"
+          aria-label="Timeline range"
+          type="range"
+          min={0}
+          max={SPANS.length - 1}
+          step={1}
+          value={rangeIndex}
+          onChange={(event) => setRangeIndex(Number(event.target.value))}
+          onPointerDown={() => setIsDraggingRange(true)}
+          onPointerUp={() => setIsDraggingRange(false)}
+          onPointerCancel={() => setIsDraggingRange(false)}
+          className={`timeline-range min-w-36 flex-1 ${isDraggingRange ? "timeline-range--dragging" : ""}`}
+          style={{ "--range-progress": rangeProgress } as CSSProperties}
+        />
         <output className="w-14 text-right font-mono text-[11px] text-muted-foreground">{span} {span === 1 ? "day" : "days"}</output>
       </div>
 

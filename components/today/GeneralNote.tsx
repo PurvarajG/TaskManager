@@ -14,7 +14,7 @@ const STATUS: Record<string, string> = {
  * it — nothing typed is discarded — and Retry sends what is currently on
  * screen rather than the attempt that failed.
  */
-export default function GeneralNote() {
+export default function GeneralNote({ compact = false }: { compact?: boolean }) {
   const { note, noteState, setNote, retryNote } = useTasks();
 
   return (
@@ -36,8 +36,8 @@ export default function GeneralNote() {
         aria-label="General notepad"
         onChange={(e) => setNote(e.target.value)}
         placeholder="Anything you don't want to lose."
-        rows={7}
-        className="mt-3 w-full resize-y rounded-xl border border-border bg-card px-4 py-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-accent/40 focus:ring-2 focus:ring-accent/20"
+        rows={compact ? 4 : 7}
+        className={`${compact ? "min-h-24" : ""} mt-3 w-full resize-y rounded-xl border border-border bg-card px-4 py-3 text-sm leading-relaxed outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-accent/40 focus:ring-2 focus:ring-accent/20`}
       />
 
       {noteState === "error" && (

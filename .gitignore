@@ -58,3 +58,4 @@ next-env.d.ts
 
 # Database snapshots — real task data, never commit
 /backups
+.gstack/

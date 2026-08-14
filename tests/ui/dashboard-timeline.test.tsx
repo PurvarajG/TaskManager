@@ -19,6 +19,17 @@ describe("Today dashboard timeline", () => {
     expect(screen.getByText("1 day")).toBeInTheDocument();
   });
 
+  test("keeps the slider track progress in sync with its selected snap point", () => {
+    renderWorkspace(<DashboardTimeline todayISO="2026-08-14" />);
+
+    const slider = screen.getByLabelText("Timeline range");
+    expect(slider).toHaveClass("timeline-range");
+    expect(slider).toHaveStyle({ "--range-progress": "66.66666666666666%" });
+
+    fireEvent.change(slider, { target: { value: "6" } });
+    expect(slider).toHaveStyle({ "--range-progress": "100%" });
+  });
+
   test("moves by the selected span and links unused days to the calendar", async () => {
     renderWorkspace(<DashboardTimeline todayISO="2026-08-14" />);
 
@@ -128,6 +139,7 @@ describe("Today dashboard timeline", () => {
     const timeline = container.querySelector<HTMLElement>('[data-testid="today-timeline"]');
 
     expect(container.querySelector('[data-testid="today-workspace"]')).toBeInTheDocument();
+    expect(primaryPane).toHaveAttribute("data-density", "compact");
     expect(primaryPane).toContainElement(timeline);
   });
 });
