@@ -13,7 +13,7 @@ import QuickAdd from "./QuickAdd";
 import GeneralNote from "./today/GeneralNote";
 import QuickTodos from "./today/QuickTodos";
 import TaskGroup from "./today/TaskGroup";
-import ThreeWeekTimeline from "./today/ThreeWeekTimeline";
+import DashboardTimeline from "./today/DashboardTimeline";
 
 export default function Today() {
   const { tasks, stages, timeEntries, running, ready, completeTask, patchTask, reopenTask } =
@@ -61,8 +61,8 @@ export default function Today() {
   const [upNext, ...rest] = today;
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-12 sm:px-10 sm:py-16">
-      <header className="animate-fade-up">
+    <div className="mx-auto max-w-6xl px-6 py-12 sm:px-10 sm:py-16 lg:flex lg:h-dvh lg:flex-col lg:overflow-hidden lg:py-6">
+      <header className="shrink-0 animate-fade-up">
         <SectionLabel pulse>Today</SectionLabel>
 
         <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl">
@@ -102,10 +102,13 @@ export default function Today() {
         )}
       </header>
 
-      {/* Main column carries the work; the utility column holds the things you
-          glance at. Below `lg` it all becomes one vertical flow. */}
-      <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <div className="min-w-0">
+      {/* Below `lg` this remains ordinary document flow. On desktop, the two
+          content columns share the available space and scroll independently. */}
+      <div
+        data-testid="today-workspace"
+        className="mt-10 grid gap-10 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)_auto] lg:gap-x-10 lg:gap-y-6"
+      >
+        <div className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-2">
           <div className="animate-fade-up" style={{ animationDelay: "0.08s" }}>
             <QuickAdd />
           </div>
@@ -196,7 +199,7 @@ export default function Today() {
           )}
         </div>
 
-        <aside className="min-w-0 space-y-10">
+        <aside className="min-w-0 space-y-10 lg:min-h-0 lg:overflow-y-auto lg:pr-2">
           <TaskGroup
             label="Due today"
             tasks={summary.dueToday}
@@ -210,10 +213,10 @@ export default function Today() {
           <GeneralNote />
           <QuickTodos />
         </aside>
-      </div>
 
-      <div className="mt-12">
-        <ThreeWeekTimeline todayISO={todayISO} />
+        <div className="mt-2 lg:col-span-2 lg:mt-0">
+          <DashboardTimeline todayISO={todayISO} />
+        </div>
       </div>
     </div>
   );

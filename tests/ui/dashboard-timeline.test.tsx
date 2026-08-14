@@ -1,8 +1,13 @@
 import { fireEvent, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+import Today from "@/components/Today";
 import DashboardTimeline from "@/components/today/DashboardTimeline";
 import { emptyWorkspace, makeProject, makeTask, renderWorkspace } from "./harness";
+
+vi.mock("@/lib/useNow", () => ({
+  useNow: () => new Date("2026-08-14T12:00:00"),
+}));
 
 describe("Today dashboard timeline", () => {
   test("renders a seven-day span and changes it with the range control", async () => {
@@ -34,5 +39,12 @@ describe("Today dashboard timeline", () => {
     await userEvent.click(await screen.findByRole("button", { name: "Ship timeline" }));
     expect(view.container.querySelector("button[style*='border-left-color']")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Ship timeline" })).toBeInTheDocument();
+  });
+
+  test("mounts Today in a bounded workspace with its timeline", () => {
+    const { container } = renderWorkspace(<Today />);
+
+    expect(container.querySelector('[data-testid="today-workspace"]')).toBeInTheDocument();
+    expect(container.querySelector('[data-testid="today-timeline"]')).toBeInTheDocument();
   });
 });
