@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { withTransaction } from "../db";
-import type { Project, ProjectInput, ProjectStage } from "../types";
+import { PROJECT_COLORS, type Project, type ProjectInput, type ProjectStage } from "../types";
 import { db, rowToProject, type ProjectRow, type Q } from "./rows";
 import { createDefaultStages } from "./stages";
 
@@ -21,11 +21,15 @@ export async function addProject(
   input: ProjectInput,
 ): Promise<{ project: Project; stages: ProjectStage[] }> {
   return withTransaction(async (tx) => {
+    const [{ count }] = await tx.query<{ count: number }>(
+      `select count(*)::int as count from projects`,
+    );
+    const color = input.color ?? PROJECT_COLORS[Number(count) % PROJECT_COLORS.length];
     const rows = await tx.query<ProjectRow>(
       `insert into projects (id, name, color, sort_order)
        values ($1,$2,$3, coalesce((select max(sort_order)+1 from projects), 0))
        returning *`,
-      [randomUUID(), input.name, input.color ?? "#0052ff"],
+      [randomUUID(), input.name, color],
     );
     const project = rowToProject(rows[0]);
     return { project, stages: await createDefaultStages(tx, project.id) };
