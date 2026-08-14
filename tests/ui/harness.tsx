@@ -72,6 +72,8 @@ export type MockFetch = {
   /** Force the next matching request to fail, to exercise rollback paths. */
   failNext: (urlFragment: string, status?: number, error?: string, extra?: object) => void;
   respondWith: (urlFragment: string, value: unknown) => void;
+  /** Serve `value` for the next single request matching `fragment`, then fall through. */
+  respondNext: (urlFragment: string, value: unknown, method?: string) => void;
 };
 
 /**
@@ -83,6 +85,7 @@ export function renderWorkspace(ui: React.ReactNode, workspace: Workspace = empt
   const calls: MockFetch['calls'] = [];
   const failures = new Map<string, { status: number; error: string; extra: object }>();
   const canned = new Map<string, unknown>();
+  const oneShots: { fragment: string; value: unknown; method?: string }[] = [];
 
   const initial: Record<string, unknown> = {
     "/api/tasks": workspace.tasks,
@@ -99,6 +102,14 @@ export function renderWorkspace(ui: React.ReactNode, workspace: Workspace = empt
       const method = init?.method ?? "GET";
       const body = init?.body ? JSON.parse(init.body as string) : undefined;
       if (method !== "GET") calls.push({ url, method, body });
+
+      for (let i = 0; i < oneShots.length; i++) {
+        const shot = oneShots[i];
+        if (url.includes(shot.fragment) && (shot.method === undefined || shot.method === method)) {
+          oneShots.splice(i, 1);
+          return Response.json(shot.value);
+        }
+      }
 
       for (const [fragment, failure] of failures) {
         if (url.includes(fragment)) {
@@ -129,6 +140,7 @@ export function renderWorkspace(ui: React.ReactNode, workspace: Workspace = empt
     failNext: (fragment, status = 500, error = "That didn't save", extra = {}) =>
       failures.set(fragment, { status, error, extra }),
     respondWith: (fragment, value) => canned.set(fragment, value),
+    respondNext: (fragment, value, method) => oneShots.push({ fragment, value, method }),
   };
 
   return { ...render(<TasksProvider>{ui}</TasksProvider>), mock };

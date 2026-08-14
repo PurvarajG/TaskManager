@@ -43,13 +43,31 @@ export function useTasksState(
           body: JSON.stringify({ text: raw, ...opts }),
         });
         setTasks((prev) => [...prev, created]);
+
+        // Quick-add can create a brand-new #project server-side. If so, our
+        // `projects` state has never heard of it, so refresh it (and its
+        // stages) or the new task has no lane to render in until reload.
+        // A failed refresh must not fail task creation itself.
+        if (created.projectId && !projects.some((p) => p.id === created.projectId)) {
+          try {
+            const [freshProjects, freshStages] = await Promise.all([
+              request<Project[]>("/api/projects"),
+              request<ProjectStage[]>("/api/stages"),
+            ]);
+            setProjects(freshProjects);
+            onStagesCreated(freshStages.filter((stage) => stage.projectId === created.projectId));
+          } catch (error) {
+            onError((error as Error).message);
+          }
+        }
+
         return created;
       } catch (error) {
         onError((error as Error).message);
         throw error;
       }
     },
-    [onError],
+    [onError, onStagesCreated, projects],
   );
 
   const patchTask = useCallback(
