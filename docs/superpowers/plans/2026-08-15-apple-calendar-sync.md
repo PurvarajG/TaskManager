@@ -44,7 +44,7 @@ node:test (`npm run test:unit`), Vitest + Testing Library (`npm run test:ui`).
 
 ## Track B — Import (iCloud → `/calendar`)
 
-- [ ] **B1. `lib/icloud.ts` — `getExternalEvents(startISO, endISO)`**
+- [x] **B1. `lib/icloud.ts` — `getExternalEvents(startISO, endISO)`**
       `tsdav` (`DAVClient`, `https://caldav.icloud.com`, Basic) across all calendars,
       `node-ical` to parse and expand recurrence within the range. New env vars
       `ICLOUD_APPLE_ID` / `ICLOUD_APP_PASSWORD`. New deps: `tsdav`, `node-ical`.
