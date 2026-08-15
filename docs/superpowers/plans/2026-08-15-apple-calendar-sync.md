@@ -52,7 +52,7 @@ node:test (`npm run test:unit`), Vitest + Testing Library (`npm run test:ui`).
       expansion in range, all-day vs timed. No real network calls.
       ⚠️ *Adds runtime dependencies and reads a credential env var — confirm before starting.*
 
-- [ ] **B2. `app/api/external-events/route.ts`**
+- [x] **B2. `app/api/external-events/route.ts`** ✅ 10 tests in `tests/external-events.test.ts` (logic lives in `lib/external-events.ts`)
       `GET ?start=&end=`, stays behind the cookie session. Always `200`
       `{ events, ok }`. Unset env or thrown CalDAV error → `{ events: [], ok: false }`
       with `console.error`. Module-level `Map` cache keyed `"start|end"`, ~5 min TTL.
