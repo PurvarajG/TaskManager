@@ -27,6 +27,7 @@ function task(overrides: Partial<Task>): Task {
     minutes: 30,
     priority: 0,
     status: "open",
+    isComplex: false,
     sortOrder: 0,
     boardOrder: 0,
     createdAt: "2026-03-01T00:00:00.000Z",
@@ -123,6 +124,33 @@ test("today's summary separates due, overdue, and blocked", () => {
   assert.equal(s.overdue.length, 1);
   assert.equal(s.blocked.length, 1);
   assert.equal(s.plannedMinutes, 60);
+});
+
+test("a complex task is due on every day of its range", () => {
+  const tasks = [
+    task({ isComplex: true, scheduled: "2026-03-08", finishDate: "2026-03-12" }),
+  ];
+  const s = todaySummary(tasks, stages, [], TODAY);
+  assert.equal(s.dueToday.length, 1, "today falls inside the range");
+  assert.equal(s.overdue.length, 0);
+});
+
+test("a complex task is overdue only once its finish date passes, not its start day", () => {
+  const tasks = [
+    task({ isComplex: true, scheduled: "2026-03-01", finishDate: "2026-03-09" }),
+  ];
+  const s = todaySummary(tasks, stages, [], TODAY);
+  assert.equal(s.dueToday.length, 0, "finished yesterday, not due today");
+  assert.equal(s.overdue.length, 1);
+});
+
+test("a complex task starting tomorrow is neither due nor overdue today", () => {
+  const tasks = [
+    task({ isComplex: true, scheduled: "2026-03-11", finishDate: "2026-03-15" }),
+  ];
+  const s = todaySummary(tasks, stages, [], TODAY);
+  assert.equal(s.dueToday.length, 0);
+  assert.equal(s.overdue.length, 0);
 });
 
 test("day shifting crosses month and year boundaries", () => {

@@ -4,7 +4,8 @@ import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTasks } from "@/lib/store-context";
 import { useNow } from "@/lib/useNow";
-import { toISODate } from "@/lib/parse";
+import { daysBetween, toISODate } from "@/lib/parse";
+import { shiftDays } from "@/lib/summary";
 import { monthGrid, monthLabel, shiftMonth } from "@/lib/calendar";
 import type { Task } from "@/lib/types";
 import SectionLabel from "@/components/SectionLabel";
@@ -42,11 +43,19 @@ function Calendar() {
 
   const tasksByDate = useMemo(() => {
     const map = new Map<string, Task[]>();
+    const add = (iso: string, task: Task) => {
+      const list = map.get(iso) ?? [];
+      list.push(task);
+      map.set(iso, list);
+    };
     for (const task of tasks) {
       if (task.status === "trashed") continue;
-      const list = map.get(task.scheduled) ?? [];
-      list.push(task);
-      map.set(task.scheduled, list);
+      if (task.isComplex && task.finishDate) {
+        const span = daysBetween(task.scheduled, task.finishDate);
+        for (let offset = 0; offset <= span; offset++) add(shiftDays(task.scheduled, offset), task);
+      } else {
+        add(task.scheduled, task);
+      }
     }
     for (const list of map.values()) {
       list.sort((a, b) => (a.dueTime ?? "99:99").localeCompare(b.dueTime ?? "99:99"));

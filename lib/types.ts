@@ -59,12 +59,16 @@ export type Task = {
   tags: string[];
   /** Local YYYY-MM-DD: the day you intend to *do* this, not a deadline. */
   scheduled: string;
-  /** Optional local HH:MM (24h). */
+  /** Optional local HH:MM (24h). Never set alongside `isComplex`. */
   dueTime?: string;
   minutes: Duration;
   priority: Priority;
   status: Status;
   recurrence?: Recurrence;
+  /** Spans multiple days from `scheduled` to `finishDate` instead of a single day. */
+  isComplex: boolean;
+  /** Local YYYY-MM-DD, `>= scheduled`. Only meaningful when `isComplex`. */
+  finishDate?: string;
   sortOrder: number;
   createdAt: string;
   completedAt?: string;
@@ -83,6 +87,9 @@ export type TaskInput = {
   minutes: Duration;
   priority: Priority;
   recurrence?: Recurrence;
+  /** Defaults to false on create. */
+  isComplex?: boolean;
+  finishDate?: string;
 };
 
 export type Project = {

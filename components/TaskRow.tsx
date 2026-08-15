@@ -97,7 +97,13 @@ export default function TaskRow({
           {task.priority > 0 && (
             <span className="text-accent">{PRIORITY_LABEL[task.priority]}</span>
           )}
-          {showDate && <span>{fmtDate(task.scheduled)}</span>}
+          {showDate && (
+            <span>
+              {task.isComplex && task.finishDate
+                ? `${fmtDate(task.scheduled)} → ${fmtDate(task.finishDate)}`
+                : fmtDate(task.scheduled)}
+            </span>
+          )}
           {showProject && project && (
             <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
               <span className="size-1.5 rounded-full" style={{ background: project.color }} />

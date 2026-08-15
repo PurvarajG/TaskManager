@@ -43,6 +43,13 @@ test("required text can't be whitespace, and durations have bounds", () => {
   assert.equal(v.minutes(90, "minutes"), 90);
 });
 
+test("booleans must be actual booleans, not truthy strings", () => {
+  assert.equal(v.bool(true, "isComplex"), true);
+  assert.equal(v.bool(false, "isComplex"), false);
+  assert.throws(() => v.bool("true", "isComplex"), v.Invalid);
+  assert.throws(() => v.bool(1, "isComplex"), v.Invalid);
+});
+
 test("bodies must be objects", () => {
   assert.deepEqual(v.body({ a: 1 }), { a: 1 });
   assert.throws(() => v.body([1, 2]), v.Invalid);

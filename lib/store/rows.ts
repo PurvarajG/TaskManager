@@ -32,6 +32,8 @@ export type TaskRow = {
   priority: number;
   status: string;
   recurrence: Recurrence | null;
+  is_complex: boolean;
+  finish_date: string | null;
   sort_order: number;
   created_at: string;
   completed_at: string | null;
@@ -142,6 +144,8 @@ export function rowToTask(r: TaskRow, subtasks: Subtask[]): Task {
     priority: r.priority as Priority,
     status: r.status as Status,
     recurrence: r.recurrence ?? undefined,
+    isComplex: r.is_complex,
+    finishDate: r.finish_date ? isoDate(r.finish_date) : undefined,
     sortOrder: r.sort_order,
     createdAt: ts(r.created_at),
     completedAt: r.completed_at ? ts(r.completed_at) : undefined,

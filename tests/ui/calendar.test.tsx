@@ -82,6 +82,82 @@ describe("month calendar", () => {
   });
 });
 
+describe("month calendar — complex tasks", () => {
+  const spanTask = makeTask({
+    id: "44444444-4444-4444-8444-444444444444",
+    scheduled: "2026-03-10",
+    isComplex: true,
+    finishDate: "2026-03-12",
+    title: "Write the report",
+  });
+
+  function spanTasksByDate() {
+    return new Map([
+      ["2026-03-10", [spanTask]],
+      ["2026-03-11", [spanTask]],
+      ["2026-03-12", [spanTask]],
+    ]);
+  }
+
+  test("a complex task is listed on every day in its range", async () => {
+    renderWorkspace(
+      <MonthGrid
+        days={monthGrid(2026, 2)}
+        todayISO={TODAY}
+        tasksByDate={spanTasksByDate()}
+        onSelectDay={() => {}}
+        onAnnounce={() => {}}
+      />,
+      emptyWorkspace({ tasks: [spanTask], projects: [project] }),
+    );
+
+    for (const label of [/2026-03-10/, /2026-03-11/, /2026-03-12/]) {
+      const button = await screen.findByRole("button", { name: label });
+      expect(within(button.parentElement as HTMLElement).getByText("Write the report")).toBeInTheDocument();
+    }
+  });
+
+  test("dragging a complex task's marker shifts the whole range, preserving span length", async () => {
+    const { mock } = renderWorkspace(
+      <MonthGrid
+        days={monthGrid(2026, 2)}
+        todayISO={TODAY}
+        tasksByDate={spanTasksByDate()}
+        onSelectDay={() => {}}
+        onAnnounce={() => {}}
+      />,
+      emptyWorkspace({ tasks: [spanTask], projects: [project] }),
+    );
+
+    const markers = await screen.findAllByRole("button", { name: "Write the report" });
+    const marker = markers[0].parentElement as HTMLElement;
+    const targetCell = screen.getByRole("button", { name: /2026-03-15/ })
+      .parentElement as HTMLElement;
+
+    const dataTransfer = { effectAllowed: "", setData: () => {}, getData: () => spanTask.id };
+    const fire = async (node: HTMLElement, type: string) => {
+      node.dispatchEvent(
+        Object.assign(new Event(type, { bubbles: true, cancelable: true }), { dataTransfer }),
+      );
+      await waitFor(() => {});
+    };
+
+    await fire(marker, "dragstart");
+    await fire(targetCell, "dragover");
+    await fire(targetCell, "drop");
+
+    // Dragged the day-10 marker to the 15th: a 5-day shift, so the 2-day span
+    // (10th->12th) becomes 15th->17th.
+    await waitFor(() =>
+      expect(mock.calls).toContainEqual({
+        url: `/api/tasks/${spanTask.id}`,
+        method: "PATCH",
+        body: { scheduled: "2026-03-15", finishDate: "2026-03-17" },
+      }),
+    );
+  });
+});
+
 describe("day panel", () => {
   test("lists the day's tasks and adds a new one on that date", async () => {
     const { mock } = renderWorkspace(

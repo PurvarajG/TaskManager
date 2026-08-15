@@ -90,6 +90,57 @@ test("a task with no project completes without needing a column", async () => {
   assert.equal(result?.task.stageId, undefined);
 });
 
+test("a complex task requires a finish date on or after scheduled", async () => {
+  await assert.rejects(
+    () => task({ isComplex: true }),
+    TaskInvariantError,
+    "no finishDate at all",
+  );
+  await assert.rejects(
+    () => task({ isComplex: true, finishDate: "2026-02-28" }),
+    TaskInvariantError,
+    "finishDate before scheduled",
+  );
+
+  const t = await task({ isComplex: true, finishDate: "2026-03-01", scheduled: "2026-03-01" });
+  assert.equal(t.finishDate, "2026-03-01", "equal to scheduled is allowed");
+});
+
+test("a complex task clears dueTime, since a time-of-day doesn't apply to a range", async () => {
+  const t = await task({
+    isComplex: true,
+    finishDate: "2026-03-05",
+    dueTime: "09:00",
+  });
+  assert.equal(t.dueTime, undefined);
+});
+
+test("turning complex off clears the finish date", async () => {
+  const t = await task({ isComplex: true, finishDate: "2026-03-05" });
+  const toggledOff = await db.store.updateTask(t.id, { isComplex: false });
+  assert.equal(toggledOff?.isComplex, false);
+  assert.equal(toggledOff?.finishDate, undefined);
+});
+
+test("patching only the finish date on an existing complex task is validated against scheduled", async () => {
+  const t = await task({ isComplex: true, finishDate: "2026-03-05" });
+  await assert.rejects(
+    () => db.store.updateTask(t.id, { finishDate: "2026-02-15" }),
+    TaskInvariantError,
+  );
+
+  const extended = await db.store.updateTask(t.id, { finishDate: "2026-03-10" });
+  assert.equal(extended?.finishDate, "2026-03-10");
+});
+
+test("moving scheduled past an existing finish date is refused", async () => {
+  const t = await task({ isComplex: true, finishDate: "2026-03-05" });
+  await assert.rejects(
+    () => db.store.updateTask(t.id, { scheduled: "2026-03-10" }),
+    TaskInvariantError,
+  );
+});
+
 test("deleting a project leaves its tasks intact but unassigned", async () => {
   const { project } = await db.store.addProject({ name: "Doomed" });
   const t = await task({ projectId: project.id });

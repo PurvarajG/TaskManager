@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type CSSProperties } from "react";
 import { useTasks } from "@/lib/store-context";
+import { daysBetween } from "@/lib/parse";
 import { shiftDays } from "@/lib/summary";
 import { DAY_END_HOUR, type Project, type Task } from "@/lib/types";
 import { useNow } from "@/lib/useNow";
@@ -35,6 +36,14 @@ function projectFor(task: Task, projects: Project[]) {
   return projects.find((project) => project.id === task.projectId);
 }
 
+/** A complex task is visible whenever its range overlaps the visible days at all. */
+function overlapsRange(task: Task, days: string[]): boolean {
+  if (task.isComplex && task.finishDate) {
+    return task.scheduled <= days.at(-1)! && task.finishDate >= days[0];
+  }
+  return days.includes(task.scheduled);
+}
+
 /** An adaptive task timeline: hours for near-term planning, days for roadmaps. */
 export default function DashboardTimeline({ todayISO }: { todayISO: string }) {
   const { tasks, projects, openTask } = useTasks();
@@ -46,7 +55,7 @@ export default function DashboardTimeline({ todayISO }: { todayISO: string }) {
   const rangeProgress = `${(rangeIndex / (SPANS.length - 1)) * 100}%`;
   const days = Array.from({ length: span }, (_, index) => shiftDays(startISO, index));
   const visibleTasks = tasks.filter(
-    (task) => task.status !== "trashed" && days.includes(task.scheduled),
+    (task) => task.status !== "trashed" && overlapsRange(task, days),
   );
 
   return (
@@ -164,7 +173,71 @@ function DayTimeline({ days, tasks, projects, todayISO, onOpenTask }: { days: st
   const known = new Set(projects.map((p) => p.id));
   const isOrphan = (task: Task) => !task.projectId || !known.has(task.projectId);
   const lanes = [...projects.filter((project) => tasks.some((task) => task.projectId === project.id)), ...(tasks.some((task) => isOrphan(task)) ? [{ id: "unassigned", name: "Unassigned", color: "var(--color-muted-foreground)" }] : [])];
-  return <div className="mt-4 overflow-x-auto pb-2" data-testid="day-scale-timeline"><div className="min-w-[48rem] overflow-hidden rounded-xl border border-border/70"><div className="grid grid-cols-[8rem_minmax(0,1fr)] border-b border-border/70 bg-muted/30"><div className="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Project</div><div className="grid" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(5rem, 1fr))` }}>{days.map((iso) => <DayHeader key={iso} iso={iso} todayISO={todayISO} />)}</div></div>{lanes.map((lane) => <div key={lane.id} className="grid min-h-12 grid-cols-[8rem_minmax(0,1fr)] border-b border-border/70 last:border-b-0"><div className="flex items-center gap-2 border-r border-border/70 px-3 text-xs"><span className="size-2 rounded-full" style={{ backgroundColor: lane.color }} /><span className="truncate">{lane.name}</span></div><div className="grid" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(5rem, 1fr))` }}>{days.map((iso) => <div key={iso} className={`border-l border-border/60 p-1 ${iso === todayISO ? "bg-accent/[0.035]" : ""}`}>{tasks.filter((task) => task.scheduled === iso && (lane.id === "unassigned" ? isOrphan(task) : task.projectId === lane.id)).map((task) => <TaskButton key={task.id} task={task} color={lane.color} fill onOpenTask={onOpenTask} />)}</div>)}</div></div>)}</div></div>;
+  return (
+    <div className="mt-4 overflow-x-auto pb-2" data-testid="day-scale-timeline">
+      <div className="min-w-[48rem] overflow-hidden rounded-xl border border-border/70">
+        <div className="grid grid-cols-[8rem_minmax(0,1fr)] border-b border-border/70 bg-muted/30">
+          <div className="px-3 py-2 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground">Project</div>
+          <div className="grid" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(5rem, 1fr))` }}>
+            {days.map((iso) => <DayHeader key={iso} iso={iso} todayISO={todayISO} />)}
+          </div>
+        </div>
+        {lanes.map((lane) => {
+          const laneOf = (task: Task) => (lane.id === "unassigned" ? isOrphan(task) : task.projectId === lane.id);
+          const spanning = tasks.filter((task) => task.isComplex && task.finishDate && laneOf(task));
+          const barsHeight = spanning.length > 0 ? 4 + spanning.length * 24 : 0;
+          return (
+            <div key={lane.id} className="grid min-h-12 grid-cols-[8rem_minmax(0,1fr)] border-b border-border/70 last:border-b-0">
+              <div className="flex items-center gap-2 border-r border-border/70 px-3 text-xs">
+                <span className="size-2 rounded-full" style={{ backgroundColor: lane.color }} />
+                <span className="truncate">{lane.name}</span>
+              </div>
+              <div className="relative">
+                <div className="grid" style={{ gridTemplateColumns: `repeat(${days.length}, minmax(5rem, 1fr))` }}>
+                  {days.map((iso) => (
+                    <div
+                      key={iso}
+                      className={`border-l border-border/60 p-1 ${iso === todayISO ? "bg-accent/[0.035]" : ""}`}
+                      style={barsHeight > 0 ? { paddingTop: barsHeight } : undefined}
+                    >
+                      {tasks
+                        .filter((task) => !task.isComplex && task.scheduled === iso && laneOf(task))
+                        .map((task) => <TaskButton key={task.id} task={task} color={lane.color} fill onOpenTask={onOpenTask} />)}
+                    </div>
+                  ))}
+                </div>
+                {spanning.map((task, index) => (
+                  <SpanBar key={task.id} task={task} days={days} color={lane.color} top={4 + index * 24} onOpenTask={onOpenTask} />
+                ))}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+/** A complex task's continuous bar across the day-columns it spans, clamped to the visible window. */
+function SpanBar({ task, days, color, top, onOpenTask }: { task: Task; days: string[]; color: string; top: number; onOpenTask: (id: string) => void }) {
+  const span = days.length;
+  const startOffset = Math.max(0, daysBetween(days[0], task.scheduled));
+  const endOffset = Math.min(span, daysBetween(days[0], task.finishDate!) + 1);
+  if (endOffset <= startOffset) return null;
+  const left = (startOffset / span) * 100;
+  const width = ((endOffset - startOffset) / span) * 100;
+  return (
+    <button
+      type="button"
+      data-testid="timeline-bar"
+      onClick={() => onOpenTask(task.id)}
+      title={task.title}
+      className={`absolute truncate rounded px-2 text-left text-[10px] font-medium text-white shadow-sm transition-opacity hover:opacity-85 ${task.status === "done" ? "opacity-55 line-through" : ""}`}
+      style={{ left: `${left}%`, width: `${width}%`, top, height: 20, backgroundColor: color }}
+    >
+      {task.title}
+    </button>
+  );
 }
 
 function DayHeader({ iso, todayISO }: { iso: string; todayISO: string }) {

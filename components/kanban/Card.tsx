@@ -29,7 +29,12 @@ export default function Card({
   const { openTask, running, recordedMinutes } = useTasks();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const overdue = task.status === "open" && task.scheduled < todayISO;
+  const dateLabel =
+    task.isComplex && task.finishDate
+      ? `${fmtDate(task.scheduled)} → ${fmtDate(task.finishDate)}`
+      : fmtDate(task.scheduled);
+  const overdue =
+    task.status === "open" && (task.isComplex ? task.finishDate! : task.scheduled) < todayISO;
   const isRunning = running?.taskId === task.id;
   const recorded = recordedMinutes(task.id);
   const doneSubtasks = task.subtasks.filter((s) => s.done).length;
@@ -93,7 +98,7 @@ export default function Card({
         {recorded > 0 && <span>{fmt(recorded)} done</span>}
         {task.priority > 0 && <span className="text-accent">{PRIORITY_LABEL[task.priority]}</span>}
         <span className={overdue ? "text-accent" : ""}>
-          {overdue ? `Overdue · ${fmtDate(task.scheduled)}` : fmtDate(task.scheduled)}
+          {overdue ? `Overdue · ${dateLabel}` : dateLabel}
         </span>
         {task.dueTime && <span>{fmtTime(task.dueTime)}</span>}
         {task.subtasks.length > 0 && (

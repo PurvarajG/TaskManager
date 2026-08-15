@@ -139,4 +139,37 @@ describe("project kanban board", () => {
 
     expect(await screen.findByText(/Overdue/)).toBeInTheDocument();
   });
+
+  test("a complex task shows its full range instead of a single date", async () => {
+    const { workspace } = board([
+      makeTask({
+        projectId: project.id,
+        stageId: stages[0].id,
+        isComplex: true,
+        scheduled: "2026-03-01",
+        finishDate: "2026-03-05",
+      }),
+    ]);
+    renderWorkspace(<Surface />, workspace);
+
+    expect(await screen.findByText(/Mar 1.*→.*Mar 5/)).toBeInTheDocument();
+  });
+
+  test("a complex task is overdue only once its finish date passes", async () => {
+    const { workspace } = board([
+      makeTask({
+        projectId: project.id,
+        stageId: stages[0].id,
+        isComplex: true,
+        scheduled: "2026-02-25",
+        finishDate: "2026-03-05",
+      }),
+    ]);
+    renderWorkspace(<Surface />, workspace);
+
+    // todayISO is 2026-03-01: the range's start has passed but its finish
+    // hasn't, so this open-started task isn't overdue.
+    expect(await screen.findByText(/Feb 25.*→.*Mar 5/)).toBeInTheDocument();
+    expect(screen.queryByText(/Overdue/)).not.toBeInTheDocument();
+  });
 });

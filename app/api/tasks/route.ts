@@ -33,6 +33,8 @@ export async function POST(request: Request) {
       minutes: parsed?.minutes ?? v.duration(b.minutes, "minutes"),
       priority: parsed?.priority ?? (b.priority !== undefined ? v.priority(b.priority, "priority") : 0),
       recurrence: parsed?.recurrence,
+      isComplex: b.isComplex !== undefined ? v.bool(b.isComplex, "isComplex") : undefined,
+      finishDate: b.finishDate ? v.isoDate(b.finishDate, "finishDate") : undefined,
     };
 
     return store.addTask(input);

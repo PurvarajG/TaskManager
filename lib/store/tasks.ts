@@ -63,16 +63,37 @@ async function resolveStage(
   return (await firstOpenStageOf(tx, projectId))?.id ?? null;
 }
 
+/**
+ * A complex task's finish date must be on or after its scheduled start; a
+ * non-complex task never carries a finish date. `dueTime` doesn't apply to a
+ * multi-day span, so it's cleared whenever the task is complex.
+ */
+function resolveComplex(
+  isComplex: boolean,
+  scheduled: string,
+  finishDate: string | undefined,
+  dueTime: string | undefined,
+): { finishDate: string | undefined; dueTime: string | undefined } {
+  if (!isComplex) return { finishDate: undefined, dueTime };
+  if (!finishDate || finishDate < scheduled) {
+    throw new TaskInvariantError("finishDate must be on or after scheduled for a complex task");
+  }
+  return { finishDate, dueTime: undefined };
+}
+
 export async function addTask(input: TaskInput): Promise<Task> {
   return withTransaction(async (tx) => {
     const stageId = await resolveStage(tx, input.projectId, input.stageId);
+    const isComplex = input.isComplex ?? false;
+    const resolved = resolveComplex(isComplex, input.scheduled, input.finishDate, input.dueTime);
     const rows = await tx.query<TaskRow>(
       `insert into tasks
          (id, title, notes, project_id, stage_id, tags, scheduled, due_time, minutes,
-          priority, status, recurrence, sort_order, board_order)
+          priority, status, recurrence, sort_order, board_order, is_complex, finish_date)
        values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'open',$11,
          coalesce((select max(sort_order) + 1 from tasks), 0),
-         coalesce((select max(board_order) + 1 from tasks where stage_id = $5), 0))
+         coalesce((select max(board_order) + 1 from tasks where stage_id = $5), 0),
+         $12, $13)
        returning *`,
       [
         randomUUID(),
@@ -82,10 +103,12 @@ export async function addTask(input: TaskInput): Promise<Task> {
         stageId,
         input.tags ?? [],
         input.scheduled,
-        input.dueTime ?? null,
+        resolved.dueTime ?? null,
         input.minutes,
         input.priority,
         input.recurrence ? JSON.stringify(input.recurrence) : null,
+        isComplex,
+        resolved.finishDate ?? null,
       ],
     );
     return (await hydrate(tx, rows))[0];
@@ -114,11 +137,27 @@ export async function updateTask(id: string, patch: Partial<TaskInput>): Promise
     if (patch.notes !== undefined) col("notes", patch.notes || null);
     if (patch.tags !== undefined) col("tags", patch.tags);
     if (patch.scheduled !== undefined) col("scheduled", patch.scheduled);
-    if (patch.dueTime !== undefined) col("due_time", patch.dueTime || null);
     if (patch.minutes !== undefined) col("minutes", patch.minutes);
     if (patch.priority !== undefined) col("priority", patch.priority);
     if (patch.recurrence !== undefined)
       col("recurrence", patch.recurrence ? JSON.stringify(patch.recurrence) : null);
+
+    // The complex-task range and the due-time it displaces are kept
+    // consistent as one unit, same pattern as the project/stage block below.
+    if (patch.isComplex !== undefined || patch.finishDate !== undefined || patch.dueTime !== undefined) {
+      const isComplex = patch.isComplex !== undefined ? patch.isComplex : current.isComplex;
+      const scheduled = patch.scheduled !== undefined ? patch.scheduled : current.scheduled;
+      const finishDate = patch.finishDate !== undefined ? patch.finishDate : current.finishDate;
+      const dueTime = patch.dueTime !== undefined ? patch.dueTime || undefined : current.dueTime;
+      const resolved = resolveComplex(isComplex, scheduled, finishDate, dueTime);
+
+      if (patch.isComplex !== undefined) col("is_complex", isComplex);
+      if (resolved.finishDate !== current.finishDate) col("finish_date", resolved.finishDate ?? null);
+      if (resolved.dueTime !== current.dueTime) col("due_time", resolved.dueTime ?? null);
+    } else if (patch.scheduled !== undefined && current.isComplex) {
+      // Re-check the range invariant when only the start day moves.
+      resolveComplex(true, patch.scheduled, current.finishDate, current.dueTime);
+    }
 
     const projectChanged = patch.projectId !== undefined && (patch.projectId || undefined) !== current.projectId;
     const stageChanged = patch.stageId !== undefined && (patch.stageId || undefined) !== current.stageId;

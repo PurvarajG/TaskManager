@@ -121,14 +121,46 @@ export default function TaskPanel() {
             />
           </Field>
 
-          <Field label="Time" htmlFor="task-time">
-            <input
-              id="task-time"
-              type="time"
-              value={task.dueTime ?? ""}
-              onChange={(e) => patchTask(task.id, { dueTime: e.target.value })}
-              className={inputClass}
-            />
+          {task.isComplex ? (
+            <Field label="Finish" htmlFor="task-finish">
+              <input
+                id="task-finish"
+                type="date"
+                min={task.scheduled}
+                value={task.finishDate ?? task.scheduled}
+                onChange={(e) => e.target.value && patchTask(task.id, { finishDate: e.target.value })}
+                className={inputClass}
+              />
+            </Field>
+          ) : (
+            <Field label="Time" htmlFor="task-time">
+              <input
+                id="task-time"
+                type="time"
+                value={task.dueTime ?? ""}
+                onChange={(e) => patchTask(task.id, { dueTime: e.target.value })}
+                className={inputClass}
+              />
+            </Field>
+          )}
+
+          <Field label="Complex task" htmlFor="task-complex">
+            <div className="flex h-9 items-center gap-2 text-sm">
+              <input
+                id="task-complex"
+                type="checkbox"
+                checked={task.isComplex}
+                onChange={(e) => {
+                  const isComplex = e.target.checked;
+                  patchTask(task.id, {
+                    isComplex,
+                    finishDate: isComplex ? (task.finishDate ?? task.scheduled) : undefined,
+                  });
+                }}
+                className="size-4 rounded border-border accent-accent"
+              />
+              <span className="text-muted-foreground">Spans multiple days</span>
+            </div>
           </Field>
 
           <Field label="Estimate" htmlFor="task-estimate">

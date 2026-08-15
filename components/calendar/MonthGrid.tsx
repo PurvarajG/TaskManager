@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useTasks } from "@/lib/store-context";
 import { WEEKDAY_LABELS, type CalendarDay } from "@/lib/calendar";
+import { daysBetween } from "@/lib/parse";
+import { shiftDays } from "@/lib/summary";
 import type { Task } from "@/lib/types";
 
 /**
@@ -36,7 +38,12 @@ export default function MonthGrid({
     setDragTaskId(null);
     setOverDate(null);
     if (!task || task.scheduled === iso) return;
-    patchTask(task.id, { scheduled: iso });
+    if (task.isComplex && task.finishDate) {
+      const delta = daysBetween(task.scheduled, iso);
+      patchTask(task.id, { scheduled: iso, finishDate: shiftDays(task.finishDate, delta) });
+    } else {
+      patchTask(task.id, { scheduled: iso });
+    }
     onAnnounce(`${task.title} moved to ${iso}.`);
   }
 

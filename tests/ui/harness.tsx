@@ -22,6 +22,7 @@ export function makeTask(overrides: Partial<Task> = {}): Task {
     minutes: 30,
     priority: 0,
     status: "open",
+    isComplex: false,
     sortOrder: 0,
     boardOrder: 0,
     createdAt: "2026-03-01T09:00:00.000Z",

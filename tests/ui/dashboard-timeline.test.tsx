@@ -132,6 +132,30 @@ describe("Today dashboard timeline", () => {
     expect(await screen.findByRole("dialog", { name: "Task" })).toBeInTheDocument();
   });
 
+  test("renders a complex task as one spanning bar, clipped at the visible window's edges", async () => {
+    const project = makeProject({ color: "#16a34a" });
+    const task = makeTask({
+      scheduled: "2026-08-12",
+      isComplex: true,
+      finishDate: "2026-08-20",
+      projectId: project.id,
+      title: "Write the report",
+    });
+    const view = renderWorkspace(
+      <DashboardTimeline todayISO="2026-08-14" />,
+      emptyWorkspace({ projects: [project], tasks: [task] }),
+    );
+
+    await screen.findByRole("button", { name: "Write the report" });
+    fireEvent.change(screen.getByLabelText("Timeline range"), { target: { value: "3" } });
+
+    // Visible window is 2026-08-14..2026-08-18 (5 days); the range starts
+    // 2026-08-12 (before the window) and ends 2026-08-20 (after it), so the
+    // bar should be clamped to the full width, starting at the left edge.
+    const bar = view.container.querySelector<HTMLElement>('[data-testid="timeline-bar"]');
+    expect(bar).toHaveStyle({ left: "0%", width: "100%" });
+  });
+
   test("mounts Today in a bounded workspace with its timeline", () => {
     const { container } = renderWorkspace(<Today />);
 

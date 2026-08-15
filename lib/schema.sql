@@ -62,6 +62,12 @@ create table if not exists project_stages (
 alter table tasks add column if not exists stage_id uuid references project_stages(id) on delete set null;
 alter table tasks add column if not exists board_order integer not null default 0;
 
+-- Multi-day task deadlines: an optional start->finish range, gated behind
+-- is_complex so ordinary single-day tasks are unaffected. The range invariant
+-- (finish_date >= scheduled) is enforced in the store layer, not here.
+alter table tasks add column if not exists is_complex boolean not null default false;
+alter table tasks add column if not exists finish_date date;
+
 -- Exactly one general note, for the single owner.
 create table if not exists general_note (
   id text primary key,

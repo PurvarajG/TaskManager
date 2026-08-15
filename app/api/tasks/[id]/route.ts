@@ -14,6 +14,10 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/tasks/[id]
     if (b.notes !== undefined) patch.notes = v.str(b.notes, "Notes");
     if (b.scheduled !== undefined) patch.scheduled = v.isoDate(b.scheduled, "scheduled");
     if (b.dueTime !== undefined) patch.dueTime = v.optionalTime(b.dueTime, "dueTime") ?? "";
+    if (b.isComplex !== undefined) patch.isComplex = v.bool(b.isComplex, "isComplex");
+    if (b.finishDate !== undefined) {
+      patch.finishDate = b.finishDate ? v.isoDate(b.finishDate, "finishDate") : undefined;
+    }
     if (b.minutes !== undefined) patch.minutes = v.duration(b.minutes, "minutes");
     if (b.priority !== undefined) patch.priority = v.priority(b.priority, "priority");
     if (b.tags !== undefined) patch.tags = v.tags(b.tags, "tags");

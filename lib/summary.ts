@@ -20,6 +20,18 @@ function live(tasks: Task[]): Task[] {
   return tasks.filter((t) => t.status !== "trashed");
 }
 
+/** A complex task is due on every day of its range, not just its start day. */
+function isDueOn(task: Task, iso: string): boolean {
+  if (!task.isComplex) return task.scheduled === iso;
+  return task.scheduled <= iso && iso <= task.finishDate!;
+}
+
+/** A complex task isn't overdue until its finish date passes, not its start day. */
+function isOverdue(task: Task, todayISO: string): boolean {
+  const deadline = task.isComplex ? task.finishDate! : task.scheduled;
+  return deadline < todayISO;
+}
+
 /**
  * Every project number is derived here from tasks, stage semantics, and time
  * entries. Nothing is stored, so a rename or a drag can't leave a stale figure
@@ -55,9 +67,9 @@ export function projectSummary(
       stage,
       count: tasks.filter((t) => t.stageId === stage.id).length,
     })),
-    // Overdue means an open task whose day has already passed — a completed
-    // task is never late, however long it sat there.
-    overdue: tasks.filter((t) => t.status === "open" && t.scheduled < todayISO).length,
+    // Overdue means an open task whose deadline has already passed — a
+    // completed task is never late, however long it sat there.
+    overdue: tasks.filter((t) => t.status === "open" && isOverdue(t, todayISO)).length,
     blocked: tasks.filter((t) => t.status === "open" && t.stageId && blockedStageIds.has(t.stageId))
       .length,
     estimatedMinutes: tasks
@@ -98,11 +110,11 @@ export function todaySummary(
 ): TodaySummary {
   const tasks = live(allTasks);
   const blockedStageIds = new Set(allStages.filter((s) => s.kind === "blocked").map((s) => s.id));
-  const openToday = tasks.filter((t) => t.status === "open" && t.scheduled === todayISO);
+  const openToday = tasks.filter((t) => t.status === "open" && isDueOn(t, todayISO));
 
   return {
     dueToday: openToday,
-    overdue: tasks.filter((t) => t.status === "open" && t.scheduled < todayISO),
+    overdue: tasks.filter((t) => t.status === "open" && isOverdue(t, todayISO)),
     blocked: tasks.filter(
       (t) => t.status === "open" && t.stageId && blockedStageIds.has(t.stageId),
     ),
