@@ -15,6 +15,7 @@ const NAV = [
   { label: "All Tasks", href: "/all" },
   { label: "Completed", href: "/completed" },
   { label: "Trash", href: "/trash" },
+  { label: "Settings", href: "/settings" },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {

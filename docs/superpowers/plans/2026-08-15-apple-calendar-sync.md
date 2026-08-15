@@ -36,7 +36,7 @@ node:test (`npm run test:unit`), Vitest + Testing Library (`npm run test:ui`).
       *Acceptance:* no secret → 503; missing/wrong `?token=` → 401; correct → 200.
       *Tests:* extend `tests/ics.test.ts`; add a `PUBLIC_PATHS` case to `tests/proxy.test.ts`.
 
-- [ ] **A3. Settings page**
+- [x] **A3. Settings page** ✅ 5 tests in `tests/ui/settings.test.tsx`
       `app/settings/page.tsx` + `Sidebar` `NAV` entry. Behind the normal cookie gate.
       Shows the copyable `webcal://<origin>/api/calendar-feed?token=…` built
       client-side, or setup instructions when `CALENDAR_FEED_SECRET` is unset.
