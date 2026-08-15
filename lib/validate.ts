@@ -76,10 +76,11 @@ export function optionalTime(value: unknown, field: string): string | undefined 
   return s;
 }
 
+/** Any whole number of minutes — estimates are not capped, see DURATIONS. */
 export function duration(value: unknown, field: string): Duration {
   const n = Number(value);
-  if (!DURATIONS.includes(n as Duration)) fail(`${field} must be one of ${DURATIONS.join(", ")}`);
-  return n as Duration;
+  if (!Number.isInteger(n) || n < 1) fail(`${field} must be a whole number of minutes, at least 1`);
+  return n;
 }
 
 export function priority(value: unknown, field: string): Priority {
@@ -94,9 +95,15 @@ export function stageKind(value: unknown, field: string): StageKind {
   return s as StageKind;
 }
 
-export function minutes(value: unknown, field: string, max = 24 * 60): number {
+export function minutes(value: unknown, field: string, max = Number.MAX_SAFE_INTEGER): number {
   const n = Number(value);
-  if (!Number.isInteger(n) || n < 1 || n > max) fail(`${field} must be 1-${max} minutes`);
+  if (!Number.isInteger(n) || n < 1 || n > max) {
+    fail(
+      max === Number.MAX_SAFE_INTEGER
+        ? `${field} must be a whole number, at least 1`
+        : `${field} must be 1-${max}`,
+    );
+  }
   return n;
 }
 

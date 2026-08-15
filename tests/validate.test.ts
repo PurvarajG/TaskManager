@@ -21,8 +21,6 @@ test("times must be a real 24-hour clock reading", () => {
 test("enums are closed sets", () => {
   assert.equal(v.stageKind("blocked", "kind"), "blocked");
   assert.throws(() => v.stageKind("archived", "kind"), v.Invalid);
-  assert.equal(v.duration(60, "minutes"), 60);
-  assert.throws(() => v.duration(45, "minutes"), v.Invalid);
   assert.equal(v.priority(2, "priority"), 2);
   assert.throws(() => v.priority(4, "priority"), v.Invalid);
 });
@@ -41,6 +39,14 @@ test("required text can't be whitespace, and durations have bounds", () => {
   assert.throws(() => v.minutes(0, "minutes"), v.Invalid);
   assert.throws(() => v.minutes(1.5, "minutes"), v.Invalid);
   assert.equal(v.minutes(90, "minutes"), 90);
+});
+
+test("estimates have no upper bound — a task can be its own miniproject", () => {
+  assert.equal(v.duration(45, "minutes"), 45);
+  assert.equal(v.duration(60 * 24 * 30, "minutes"), 43_200);
+  assert.equal(v.minutes(60 * 40, "minutes"), 2_400, "a tracked session can run past a day");
+  assert.throws(() => v.duration(0, "minutes"), v.Invalid);
+  assert.throws(() => v.duration(12.5, "minutes"), v.Invalid);
 });
 
 test("booleans must be actual booleans, not truthy strings", () => {

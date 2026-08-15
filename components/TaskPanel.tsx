@@ -164,18 +164,39 @@ export default function TaskPanel() {
           </Field>
 
           <Field label="Estimate" htmlFor="task-estimate">
-            <select
-              id="task-estimate"
-              value={task.minutes}
-              onChange={(e) => patchTask(task.id, { minutes: Number(e.target.value) as never })}
-              className={inputClass}
-            >
-              {DURATIONS.map((d) => (
-                <option key={d} value={d}>
-                  {fmt(d)}
-                </option>
-              ))}
-            </select>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <input
+                  id="task-estimate"
+                  type="number"
+                  min={1}
+                  step={5}
+                  value={task.minutes}
+                  onChange={(e) => {
+                    const n = Math.round(Number(e.target.value));
+                    if (Number.isFinite(n) && n >= 1) patchTask(task.id, { minutes: n });
+                  }}
+                  className={`${inputClass} w-28`}
+                />
+                <span className="text-xs text-muted-foreground">minutes ({fmt(task.minutes)})</span>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {DURATIONS.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => patchTask(task.id, { minutes: d })}
+                    className={`rounded-md border px-2 py-1 text-xs transition-colors ${
+                      task.minutes === d
+                        ? "border-accent text-accent"
+                        : "border-border text-muted-foreground hover:border-accent/40"
+                    }`}
+                  >
+                    {fmt(d)}
+                  </button>
+                ))}
+              </div>
+            </div>
           </Field>
 
           <Field label="Priority" htmlFor="task-priority">

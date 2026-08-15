@@ -1,5 +1,4 @@
 import {
-  DURATIONS,
   type Duration,
   type Priority,
   type Recurrence,
@@ -30,10 +29,9 @@ export function daysBetween(fromISO: string, toISO: string): number {
   return Math.round((b - a) / 86_400_000);
 }
 
-function snapDuration(mins: number): Duration {
-  return DURATIONS.reduce((best, d) =>
-    Math.abs(d - mins) < Math.abs(best - mins) ? d : best,
-  );
+/** Estimates are free-form; only round to a whole minute, never to a preset. */
+function toMinutes(mins: number): Duration {
+  return Math.max(1, Math.round(mins));
 }
 
 /** "3pm", "3:30pm", "9am", "15:00" -> "HH:MM" (24h), or null if not a time. */
@@ -110,7 +108,7 @@ export type ParsedQuickAdd = Omit<TaskInput, "projectId"> & { projectName?: stri
  *   #project   assigns/creates a list (first one wins)
  *   @tag       adds a free tag (repeatable)
  *   p1/p2/p3   priority
- *   30m / 2h   duration, snapped to the nearest allowed size
+ *   30m / 2h / 3d   estimate, any length — a task can be its own miniproject
  *   thu / +3d / today / tomorrow   the day to schedule it
  *   3pm / 15:00   a due time on that day
  *   daily / weekly / monthly / every2w   recurrence
@@ -146,10 +144,11 @@ export function parseQuickAdd(raw: string, now = new Date()): ParsedQuickAdd {
       continue;
     }
 
-    const dur = /^(\d+(?:\.\d+)?)(m|min|mins|h|hr|hrs)$/.exec(lower);
+    const dur = /^(\d+(?:\.\d+)?)(m|min|mins|h|hr|hrs|d|day|days)$/.exec(lower);
     if (dur) {
       const n = parseFloat(dur[1]);
-      minutes = snapDuration(dur[2].startsWith("h") ? n * 60 : n);
+      const unit = dur[2][0];
+      minutes = toMinutes(unit === "h" ? n * 60 : unit === "d" ? n * 60 * 24 : n);
       continue;
     }
 

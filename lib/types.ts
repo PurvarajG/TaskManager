@@ -1,5 +1,9 @@
-export const DURATIONS = [15, 30, 60, 120] as const;
-export type Duration = (typeof DURATIONS)[number];
+/**
+ * Quick-pick estimates only. A task can be any whole number of minutes — some
+ * are miniprojects that run for days — so these are shortcuts, not a closed set.
+ */
+export const DURATIONS = [15, 30, 60, 120, 240, 480] as const;
+export type Duration = number;
 
 export type Priority = 0 | 1 | 2 | 3;
 export type Status = "open" | "done" | "trashed";
