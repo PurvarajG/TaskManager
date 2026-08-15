@@ -28,7 +28,7 @@ node:test (`npm run test:unit`), Vitest + Testing Library (`npm run test:ui`).
       *Tests* (`tests/ics.test.ts`): timed, all-day, multi-day, escaping, folding.
       *Acceptance:* open tasks only; feed parses as valid VCALENDAR text.
 
-- [ ] **A2. Feed route + public path**
+- [x] **A2. Feed route + public path** ✅ 6 tests in `tests/calendar-feed.test.ts`, 2 in `tests/proxy.test.ts`
       `app/api/calendar-feed/route.ts` `GET` → `text/calendar; charset=utf-8`, built
       from `store.allTasks()` filtered to `status === "open"`. Add
       `/api/calendar-feed` to `PUBLIC_PATHS` in `proxy.ts`. Token check via

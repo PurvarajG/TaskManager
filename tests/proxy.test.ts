@@ -26,6 +26,17 @@ test("leaves the login surface public", async () => {
   assert.equal((await proxy(new NextRequest("https://app.test/api/auth/login"))).status, 200);
 });
 
+test("lets the calendar feed through, since Apple Calendar can't carry a cookie", async () => {
+  // The route guards itself with CALENDAR_FEED_SECRET instead — see app/api/calendar-feed/route.ts.
+  const response = await proxy(new NextRequest("https://app.test/api/calendar-feed?token=whatever"));
+  assert.equal(response.status, 200);
+});
+
+test("the feed exemption does not extend to any other API path", async () => {
+  assert.equal((await proxy(new NextRequest("https://app.test/api/calendar-feed/all"))).status, 401);
+  assert.equal((await proxy(new NextRequest("https://app.test/api/tasks?token=whatever"))).status, 401);
+});
+
 test("allows a valid session and rejects a tampered session", async () => {
   const token = await createSessionToken(secret);
   const valid = new NextRequest("https://app.test/api/tasks", { headers: { cookie: `${SESSION_COOKIE}=${token}` } });

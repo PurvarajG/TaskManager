@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { safeReturnPath, SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 
-const PUBLIC_PATHS = new Set(["/login", "/api/auth/login"]);
+// `/api/calendar-feed` is exempt because Apple Calendar polls it without a
+// cookie; that route authenticates itself with CALENDAR_FEED_SECRET instead.
+const PUBLIC_PATHS = new Set(["/login", "/api/auth/login", "/api/calendar-feed"]);
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
