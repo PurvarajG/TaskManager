@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { useTasks } from "@/lib/store-context";
+import { externalEventLabel } from "@/lib/external-events-view";
 import { fmt, fmtDate, fmtTime } from "@/lib/format";
+import type { ExternalEvent } from "@/lib/icloud";
 import type { Task } from "@/lib/types";
 import SidePanel from "../ui/SidePanel";
 
@@ -15,10 +17,13 @@ import SidePanel from "../ui/SidePanel";
 export default function DayPanel({
   iso,
   tasks,
+  externalEvents = [],
   onClose,
 }: {
   iso: string;
   tasks: Task[];
+  /** Read-only, from Apple Calendar. Never editable from this app. */
+  externalEvents?: ExternalEvent[];
   onClose: () => void;
 }) {
   const { addTask, openTask, patchTask, projects } = useTasks();
@@ -116,6 +121,28 @@ export default function DayPanel({
               );
             })}
           </ul>
+        )}
+
+        {externalEvents.length > 0 && (
+          <section>
+            <h3 className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+              From Apple Calendar
+            </h3>
+            {/* No buttons, no inputs: nothing in this app can change these. */}
+            <ul className="mt-2 space-y-1.5">
+              {externalEvents.map((event) => (
+                <li
+                  key={event.id}
+                  className="rounded-xl border border-dashed border-border px-3 py-2 text-sm text-muted-foreground"
+                >
+                  <span className="text-foreground">{event.title}</span>
+                  <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.08em]">
+                    {externalEventLabel(event)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </section>
         )}
       </div>
     </SidePanel>

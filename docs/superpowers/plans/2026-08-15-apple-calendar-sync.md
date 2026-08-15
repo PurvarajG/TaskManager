@@ -58,7 +58,7 @@ node:test (`npm run test:unit`), Vitest + Testing Library (`npm run test:ui`).
       with `console.error`. Module-level `Map` cache keyed `"start|end"`, ~5 min TTL.
       *Acceptance:* mocked `getExternalEvents` throwing still yields 200 + `ok: false`.
 
-- [ ] **B3. Calendar page rendering**
+- [x] **B3. Calendar page rendering** ✅ 11 view tests, 6 hook tests, 6 UI tests
       `lib/useExternalEvents.ts` hook keyed on the visible 42-day range
       (`days[0].iso`..`days[41].iso`). `app/calendar/page.tsx` builds
       `externalByDate` alongside `tasksByDate`. `MonthGrid` gains `externalByDate`

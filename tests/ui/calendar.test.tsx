@@ -5,6 +5,7 @@ import MonthGrid from "@/components/calendar/MonthGrid";
 import DayPanel from "@/components/calendar/DayPanel";
 import TaskPanel from "@/components/TaskPanel";
 import { monthGrid } from "@/lib/calendar";
+import type { ExternalEvent } from "@/lib/icloud";
 import { emptyWorkspace, makeProject, makeTask, renderWorkspace } from "./harness";
 
 const TODAY = "2026-03-10";
@@ -222,5 +223,117 @@ describe("day panel", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: "Ship the board" }));
     expect(await screen.findByRole("dialog", { name: "Task" })).toBeInTheDocument();
+  });
+});
+
+describe("imported Apple Calendar events", () => {
+  const external: ExternalEvent = {
+    id: "icloud-1",
+    title: "Dentist",
+    start: "2026-03-10T14:00:00.000Z",
+    end: "2026-03-10T15:00:00.000Z",
+    allDay: false,
+  };
+
+  function externalByDate(events = [external]) {
+    return new Map([[TODAY, events]]);
+  }
+
+  test("renders imported events alongside tasks, without drag or click affordances", async () => {
+    renderWorkspace(
+      <MonthGrid
+        days={monthGrid(2026, 2)}
+        todayISO={TODAY}
+        tasksByDate={tasksByDate()}
+        externalByDate={externalByDate()}
+        onSelectDay={() => {}}
+        onAnnounce={() => {}}
+      />,
+      emptyWorkspace({ tasks: [task], projects: [project] }),
+    );
+
+    const pill = await screen.findByText("Dentist");
+    const marker = pill.closest("[data-external-event]") as HTMLElement;
+
+    expect(marker).not.toBeNull();
+    expect(marker.getAttribute("draggable")).toBeNull();
+    expect(within(marker).queryByRole("button")).toBeNull();
+    // The task marker beside it is still fully interactive.
+    expect(screen.getByRole("button", { name: "Ship the board" })).toBeInTheDocument();
+  });
+
+  test("clicking an imported event does nothing at all", async () => {
+    const selections: string[] = [];
+    const { mock } = renderWorkspace(
+      <MonthGrid
+        days={monthGrid(2026, 2)}
+        todayISO={TODAY}
+        tasksByDate={tasksByDate()}
+        externalByDate={externalByDate()}
+        onSelectDay={(iso) => selections.push(iso)}
+        onAnnounce={() => {}}
+      />,
+      emptyWorkspace({ tasks: [task], projects: [project] }),
+    );
+
+    await userEvent.click(await screen.findByText("Dentist"));
+
+    expect(selections).toEqual([]);
+    // No write of any kind reached the API — the mock only records non-GETs.
+    expect(mock.calls).toEqual([]);
+  });
+
+  test("the grid is unchanged when iCloud is not configured", async () => {
+    renderWorkspace(
+      <MonthGrid
+        days={monthGrid(2026, 2)}
+        todayISO={TODAY}
+        tasksByDate={tasksByDate()}
+        onSelectDay={() => {}}
+        onAnnounce={() => {}}
+      />,
+      emptyWorkspace({ tasks: [task], projects: [project] }),
+    );
+
+    expect(await screen.findByRole("button", { name: "Ship the board" })).toBeInTheDocument();
+    expect(document.querySelector("[data-external-event]")).toBeNull();
+  });
+
+  test("the day panel lists them read-only under their own heading", async () => {
+    renderWorkspace(
+      <DayPanel iso={TODAY} tasks={[task]} externalEvents={[external]} onClose={() => {}} />,
+      emptyWorkspace({ tasks: [task], projects: [project] }),
+    );
+
+    const section = (await screen.findByText("From Apple Calendar")).closest("section") as HTMLElement;
+    expect(within(section).getByText("Dentist")).toBeInTheDocument();
+    expect(within(section).queryByRole("button")).toBeNull();
+    expect(within(section).queryByRole("textbox")).toBeNull();
+    // No "Move date" control, unlike the task above it.
+    expect(within(section).queryByText(/move date/i)).toBeNull();
+  });
+
+  test("an all-day event is labelled as such", async () => {
+    renderWorkspace(
+      <DayPanel
+        iso={TODAY}
+        tasks={[]}
+        externalEvents={[{ ...external, allDay: true, start: TODAY, end: "2026-03-11" }]}
+        onClose={() => {}}
+      />,
+      emptyWorkspace(),
+    );
+
+    expect(await screen.findByText("All day")).toBeInTheDocument();
+  });
+
+  test("the panel shows no Apple Calendar section when there is nothing to show", async () => {
+    renderWorkspace(
+      <DayPanel iso={TODAY} tasks={[task]} onClose={() => {}} />,
+      emptyWorkspace({ tasks: [task], projects: [project] }),
+    );
+
+    expect(await screen.findByText("Ship the board")).toBeInTheDocument();
+    expect(screen.queryByText("From Apple Calendar")).toBeNull();
   });
 });

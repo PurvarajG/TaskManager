@@ -7,6 +7,8 @@ import { useNow } from "@/lib/useNow";
 import { daysBetween, toISODate } from "@/lib/parse";
 import { shiftDays } from "@/lib/summary";
 import { monthGrid, monthLabel, shiftMonth } from "@/lib/calendar";
+import { groupExternalEventsByDate } from "@/lib/external-events-view";
+import { useExternalEvents } from "@/lib/useExternalEvents";
 import type { Task } from "@/lib/types";
 import SectionLabel from "@/components/SectionLabel";
 import MonthGrid from "@/components/calendar/MonthGrid";
@@ -63,6 +65,16 @@ function Calendar() {
     return map;
   }, [tasks]);
 
+  // Computed before the loading bail-out below, so the hook order never varies.
+  const days = useMemo(() => (view ? monthGrid(view.year, view.month) : []), [view]);
+
+  // The visible 42-day window, which is exactly what the grid can display.
+  const { events, ok } = useExternalEvents(days[0]?.iso ?? "", days[days.length - 1]?.iso ?? "");
+  const externalByDate = useMemo(
+    () => (ok ? groupExternalEventsByDate(events) : new Map()),
+    [events, ok],
+  );
+
   if (!view) {
     return (
       <div className="mx-auto max-w-5xl px-6 py-12 sm:px-10 sm:py-16">
@@ -70,8 +82,6 @@ function Calendar() {
       </div>
     );
   }
-
-  const days = monthGrid(view.year, view.month);
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-12 sm:px-10 sm:py-16">
@@ -114,6 +124,7 @@ function Calendar() {
           days={days}
           todayISO={todayISO}
           tasksByDate={tasksByDate}
+          externalByDate={externalByDate}
           onSelectDay={setSelected}
           onAnnounce={setAnnouncement}
         />
@@ -127,6 +138,7 @@ function Calendar() {
         <DayPanel
           iso={selected}
           tasks={tasksByDate.get(selected) ?? []}
+          externalEvents={externalByDate.get(selected) ?? []}
           onClose={() => setSelected(null)}
         />
       )}

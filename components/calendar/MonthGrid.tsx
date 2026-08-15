@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useTasks } from "@/lib/store-context";
 import { WEEKDAY_LABELS, type CalendarDay } from "@/lib/calendar";
+import { externalEventLabel } from "@/lib/external-events-view";
+import type { ExternalEvent } from "@/lib/icloud";
 import { daysBetween } from "@/lib/parse";
 import { shiftDays } from "@/lib/summary";
 import type { Task } from "@/lib/types";
@@ -16,12 +18,15 @@ export default function MonthGrid({
   days,
   todayISO,
   tasksByDate,
+  externalByDate,
   onSelectDay,
   onAnnounce,
 }: {
   days: CalendarDay[];
   todayISO: string;
   tasksByDate: Map<string, Task[]>;
+  /** Read-only events imported from Apple Calendar; absent when not configured. */
+  externalByDate?: Map<string, ExternalEvent[]>;
   onSelectDay: (iso: string) => void;
   onAnnounce: (message: string) => void;
 }) {
@@ -63,6 +68,7 @@ export default function MonthGrid({
       <div className="grid grid-cols-7 gap-1.5">
         {days.map((day) => {
           const dayTasks = tasksByDate.get(day.iso) ?? [];
+          const dayExternal = externalByDate?.get(day.iso) ?? [];
           const isToday = day.iso === todayISO;
 
           return (
@@ -144,6 +150,31 @@ export default function MonthGrid({
                     className="px-1 font-mono text-[9px] text-muted-foreground hover:text-foreground"
                   >
                     +{dayTasks.length - 3} more
+                  </button>
+                )}
+
+                {/*
+                  Imported events are outlined rather than filled, and are plain
+                  divs: not draggable, not clickable. They're reference material
+                  for planning, and nothing here can edit them in Apple Calendar.
+                */}
+                {dayExternal.slice(0, 2).map((event) => (
+                  <div
+                    key={event.id}
+                    data-external-event
+                    title={`${event.title} — ${externalEventLabel(event)} (Apple Calendar)`}
+                    className="flex items-center gap-1 rounded border border-dashed border-border px-1 py-0.5 text-[10px] leading-tight text-muted-foreground"
+                  >
+                    <span className="truncate">{event.title}</span>
+                  </div>
+                ))}
+
+                {dayExternal.length > 2 && (
+                  <button
+                    onClick={() => onSelectDay(day.iso)}
+                    className="px-1 font-mono text-[9px] text-muted-foreground hover:text-foreground"
+                  >
+                    +{dayExternal.length - 2} more from Apple Calendar
                   </button>
                 )}
               </div>
