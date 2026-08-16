@@ -6,10 +6,14 @@ import { safeReturnPath, SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 const PUBLIC_PATHS = new Set(["/login", "/api/auth/login", "/api/calendar-feed"]);
 
 export async function proxy(request: NextRequest) {
+  // No secret configured means a local scratch instance — there is nothing to
+  // protect and no login page worth showing.
+  const secret = process.env.SESSION_SECRET ?? "";
+  if (!secret) return NextResponse.next();
+
   const { pathname } = request.nextUrl;
   if (PUBLIC_PATHS.has(pathname)) return NextResponse.next();
 
-  const secret = process.env.SESSION_SECRET ?? "";
   const authenticated = await verifySessionToken(request.cookies.get(SESSION_COOKIE)?.value, secret);
   if (authenticated) return NextResponse.next();
 

@@ -25,6 +25,13 @@ export interface Driver extends Tx {
 async function createDriver(): Promise<Driver> {
   const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
 
+  // The lab is a scratch instance. If a real connection string is in scope —
+  // .env.local carries the production Neon URL — refuse to start rather than
+  // migrate somebody's live data.
+  if (process.env.LAB_MODE === "1" && connectionString) {
+    throw new Error("LAB_MODE is set but a remote database is configured — refusing to connect");
+  }
+
   if (connectionString) {
     const postgres = (await import("postgres")).default;
     const sql = postgres(connectionString, {
