@@ -159,3 +159,101 @@ export const PROJECT_COLORS = [
   "#16a34a",
   "#0891b2",
 ] as const;
+
+// ── Time tracking lab ────────────────────────────────────────────────────
+
+/** What a category *means*, independent of its name — summaries read this, never the name. */
+export type CategoryKind = "work" | "rest" | "upkeep" | "unclassified";
+
+export type SegmentSource = "timer" | "manual" | "backfill";
+
+export type Category = {
+  id: string;
+  name: string;
+  color: string;
+  kind: CategoryKind;
+  sortOrder: number;
+  archived: boolean;
+  createdAt: string;
+};
+
+export type CategoryInput = {
+  name: string;
+  color: string;
+  kind: CategoryKind;
+};
+
+export type Activity = {
+  id: string;
+  categoryId: string;
+  name: string;
+  typicalMinutes?: number;
+  isPreset: boolean;
+  sortOrder: number;
+  archived: boolean;
+  createdAt: string;
+};
+
+export type ActivityInput = {
+  categoryId: string;
+  name: string;
+  typicalMinutes?: number;
+  isPreset?: boolean;
+};
+
+/** The continuous life timeline. Exactly one of `taskId` / `activityId` is ever set. */
+export type Segment = {
+  id: string;
+  startedAt: string;
+  /** Absent while running. */
+  endedAt?: string;
+  categoryId: string;
+  activityId?: string;
+  taskId?: string;
+  note?: string;
+  source: SegmentSource;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** Derived on read, never persisted — the whole point is that nothing has to run overnight. */
+export type Gap = {
+  startedAt: string;
+  endedAt: string;
+  minutes: number;
+};
+
+export type TrackingSettings = {
+  dayStartHour: number;
+  wakingStartHour: number;
+  wakingEndHour: number;
+  minGapMinutes: number;
+  moduleOrder: string[];
+  hiddenModules: string[];
+  updatedAt: string;
+};
+
+/** There is exactly one tracking-settings row, and this fixed uuid is its primary key. */
+export const TRACKING_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
+
+/** Starting points seeded once, on an empty `categories` table — fully user-editable after. */
+export const DEFAULT_CATEGORIES: CategoryInput[] = [
+  { name: "Focus Work", color: "cat-indigo", kind: "work" },
+  { name: "Admin", color: "cat-slate", kind: "upkeep" },
+  { name: "Sleep", color: "cat-violet", kind: "rest" },
+  { name: "Health", color: "cat-emerald", kind: "upkeep" },
+  { name: "Travel", color: "cat-amber", kind: "upkeep" },
+  { name: "Personal", color: "cat-rose", kind: "rest" },
+  { name: "Unclassified", color: "cat-neutral", kind: "unclassified" },
+];
+
+/** Preset activities seeded once per default category, keyed by category name. */
+export const DEFAULT_ACTIVITIES: Record<string, string[]> = {
+  "Focus Work": ["Deep work", "Meetings", "Email"],
+  Admin: ["Admin", "Finances", "Planning"],
+  Sleep: ["Sleep", "Nap"],
+  Health: ["Exercise", "Meals", "Hygiene"],
+  Travel: ["Commute", "Travel"],
+  Personal: ["Family", "Social", "Leisure"],
+  Unclassified: [],
+};
