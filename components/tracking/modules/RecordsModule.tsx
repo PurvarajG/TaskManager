@@ -5,7 +5,7 @@ import { fmt } from "@/lib/format";
 import { useTasks } from "@/lib/store-context";
 import CategoryPicker from "../CategoryPicker";
 import MetaLabel from "../MetaLabel";
-import { segmentLabel } from "../segment-label";
+import { segmentLabel, segmentSubject } from "../segment-label";
 
 function clockLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
@@ -13,7 +13,7 @@ function clockLabel(iso: string): string {
 
 /** A plain editable table of the day's segments — the fallback when a module above doesn't cover it. */
 export default function RecordsModule({ now }: { now: Date }) {
-  const { segments, categories, activities, tasks, patchSegment, deleteSegment } = useTasks();
+  const { segments, categories, activities, tasks, projects, patchSegment, deleteSegment, openTask } = useTasks();
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [ascending, setAscending] = useState(true);
 
@@ -99,7 +99,28 @@ export default function RecordsModule({ now }: { now: Date }) {
                       onChange={(categoryId) => patchSegment(segment.id, { categoryId })}
                     />
                   </td>
-                  <td className="truncate py-2 pr-3">{segmentLabel(segment, categories, activities, tasks)}</td>
+                  <td className="truncate py-2 pr-3">
+                    {(() => {
+                      const subject = segmentSubject(segment, categories, activities, tasks, projects);
+                      if (!subject.task) return subject.label;
+                      return (
+                        <button
+                          type="button"
+                          onClick={() => openTask(subject.task!.id)}
+                          className="inline-flex max-w-full items-center gap-1.5 truncate text-left hover:underline"
+                        >
+                          {subject.project && (
+                            <span
+                              aria-hidden
+                              className="size-1.5 shrink-0 rounded-full"
+                              style={{ background: subject.project.color }}
+                            />
+                          )}
+                          <span className="truncate">{subject.label}</span>
+                        </button>
+                      );
+                    })()}
+                  </td>
                   <td className="whitespace-nowrap py-2 pr-3 font-mono text-xs tabular-nums text-muted-foreground">
                     {fmt(minutes)}
                   </td>

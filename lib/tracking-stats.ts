@@ -1,5 +1,5 @@
 import { wakingWindow } from "./tracking-day";
-import type { Category, CategoryKind, Segment, TrackingSettings } from "./types";
+import type { Category, CategoryKind, Project, Segment, Task, TrackingSettings } from "./types";
 
 function minutesBetween(fromISO: string, toISO: string): number {
   return (new Date(toISO).getTime() - new Date(fromISO).getTime()) / 60_000;
@@ -65,4 +65,35 @@ export function minutesByKind(
   }
   for (const kind of Object.keys(totals) as CategoryKind[]) totals[kind] = Math.round(totals[kind]);
   return totals;
+}
+
+export type ProjectMinutes = { project: Project | null; minutes: number };
+
+/**
+ * Time by project, through the task each segment is linked to — only
+ * task-linked segments count, since an activity was never anyone's project.
+ * A task whose project was deleted (or was never assigned one) lands in the
+ * `project: null` "No project" bucket, so the total minutes tracked on tasks
+ * always adds up.
+ */
+export function minutesByProject(
+  segments: Segment[],
+  tasks: Task[],
+  projects: Project[],
+  now: Date,
+): ProjectMinutes[] {
+  const totals = new Map<string | null, number>();
+  for (const s of segments) {
+    if (!s.taskId) continue;
+    const task = tasks.find((t) => t.id === s.taskId);
+    const projectId = task?.projectId ?? null;
+    const minutes = minutesBetween(s.startedAt, s.endedAt ?? now.toISOString());
+    totals.set(projectId, (totals.get(projectId) ?? 0) + minutes);
+  }
+  return [...totals.entries()]
+    .map(([projectId, minutes]) => ({
+      project: projectId ? (projects.find((p) => p.id === projectId) ?? null) : null,
+      minutes: Math.round(minutes),
+    }))
+    .sort((a, b) => b.minutes - a.minutes);
 }

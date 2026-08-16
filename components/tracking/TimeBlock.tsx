@@ -13,6 +13,8 @@ export default function TimeBlock({
   label,
   density = "sparse",
   faded = false,
+  /** A task's project colour — rendered as a small dot ahead of the label, since a task-linked block belongs to something bigger than its category. */
+  projectColor,
   onClick,
   style,
   className = "",
@@ -22,6 +24,7 @@ export default function TimeBlock({
   density?: "sparse" | "continuous";
   /** Completed/inactive states dim without changing the palette. */
   faded?: boolean;
+  projectColor?: string;
   onClick?: () => void;
   style?: CSSProperties;
   className?: string;
@@ -44,7 +47,12 @@ export default function TimeBlock({
         borderLeftColor: sparse ? undefined : categoryColorVar(color),
       }}
     >
-      <span className="block truncate">{label}</span>
+      <span className="flex items-center gap-1 truncate">
+        {projectColor && (
+          <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ background: projectColor }} />
+        )}
+        <span className="truncate">{label}</span>
+      </span>
     </Tag>
   );
 }

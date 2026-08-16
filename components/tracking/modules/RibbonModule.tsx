@@ -8,7 +8,7 @@ import CategoryPicker from "../CategoryPicker";
 import GapBlock from "../GapBlock";
 import GapFillForm from "../GapFillForm";
 import MetaLabel from "../MetaLabel";
-import { segmentLabel } from "../segment-label";
+import { segmentSubject } from "../segment-label";
 import TimeBlock from "../TimeBlock";
 
 const PX_PER_HOUR = 40;
@@ -25,7 +25,8 @@ function minutesFromStart(iso: string, dayStart: Date): number {
  * rather than left blank so it can't be mistaken for "nothing happened here".
  */
 export default function RibbonModule({ dayISO, isToday }: { dayISO: string; isToday: boolean }) {
-  const { segments, gaps, categories, activities, tasks, settings, deleteSegment, patchSegment } = useTasks();
+  const { segments, gaps, categories, activities, tasks, projects, settings, deleteSegment, patchSegment } =
+    useTasks();
   const [selected, setSelected] = useState<{ kind: "segment"; segment: Segment } | { kind: "gap"; gap: Gap } | null>(
     null,
   );
@@ -65,11 +66,13 @@ export default function RibbonModule({ dayISO, isToday }: { dayISO: string; isTo
             );
             if (bottom <= 0 || top >= TOTAL_HEIGHT || bottom <= top) return null;
             const category = categories.find((c) => c.id === segment.categoryId);
+            const subject = segmentSubject(segment, categories, activities, tasks, projects);
             return (
               <TimeBlock
                 key={segment.id}
                 color={category?.color ?? "cat-neutral"}
-                label={segmentLabel(segment, categories, activities, tasks)}
+                label={subject.label}
+                projectColor={subject.project?.color}
                 density="continuous"
                 onClick={() => setSelected({ kind: "segment", segment })}
                 style={{ position: "absolute", top, height: Math.max(bottom - top, 4), left: 0, right: 0 }}
