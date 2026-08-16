@@ -14,6 +14,7 @@ function entry(taskId: string, overrides: Partial<TimeEntry> = {}): TimeEntry {
   return {
     id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
     taskId,
+    categoryId: "00000000-0000-0000-0000-000000000002",
     startedAt: new Date(Date.now() - 90_000).toISOString(),
     createdAt: "2026-03-01T09:00:00.000Z",
     updatedAt: "2026-03-01T09:00:00.000Z",

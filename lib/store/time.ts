@@ -20,6 +20,7 @@ function rowToTimeEntry(r: SegmentRow): TimeEntry {
   return {
     id: r.id,
     taskId: r.task_id as string,
+    categoryId: r.category_id,
     startedAt: startedAt.toISOString(),
     endedAt: endedAt ? endedAt.toISOString() : undefined,
     minutes: endedAt ? elapsedMinutes(startedAt.toISOString(), endedAt.toISOString()) : undefined,

@@ -133,6 +133,7 @@ export type QuickTodo = {
 export type TimeEntry = {
   id: string;
   taskId: string;
+  categoryId: string;
   startedAt: string;
   /** Absent while the timer is still running. */
   endedAt?: string;

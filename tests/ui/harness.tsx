@@ -1,7 +1,18 @@
 import { render } from "@testing-library/react";
 import { vi } from "vitest";
 import { TasksProvider } from "@/lib/store-context";
-import type { GeneralNote, Project, ProjectStage, QuickTodo, Task, TimeEntry } from "@/lib/types";
+import { FOCUS_WORK_CATEGORY_ID } from "@/lib/types";
+import type {
+  Activity,
+  Category,
+  GeneralNote,
+  Project,
+  ProjectStage,
+  QuickTodo,
+  Task,
+  TimeEntry,
+  TrackingSettings,
+} from "@/lib/types";
 
 export type Workspace = {
   tasks: Task[];
@@ -11,7 +22,23 @@ export type Workspace = {
   quickTodos: QuickTodo[];
   timeEntries: TimeEntry[];
   running: TimeEntry | null;
+  categories: Category[];
+  activities: Activity[];
+  trackingSettings: TrackingSettings;
 };
+
+export function makeCategory(overrides: Partial<Category> = {}): Category {
+  return {
+    id: FOCUS_WORK_CATEGORY_ID,
+    name: "Focus Work",
+    color: "cat-indigo",
+    kind: "work",
+    sortOrder: 0,
+    archived: false,
+    createdAt: "2026-03-01T09:00:00.000Z",
+    ...overrides,
+  };
+}
 
 export function makeTask(overrides: Partial<Task> = {}): Task {
   return {
@@ -63,6 +90,17 @@ export function emptyWorkspace(overrides: Partial<Workspace> = {}): Workspace {
     quickTodos: [],
     timeEntries: [],
     running: null,
+    categories: [makeCategory()],
+    activities: [],
+    trackingSettings: {
+      dayStartHour: 4,
+      wakingStartHour: 7,
+      wakingEndHour: 23,
+      minGapMinutes: 10,
+      moduleOrder: [],
+      hiddenModules: [],
+      updatedAt: "2026-03-01T09:00:00.000Z",
+    },
     ...overrides,
   };
 }
@@ -95,6 +133,9 @@ export function renderWorkspace(ui: React.ReactNode, workspace: Workspace = empt
     "/api/note": workspace.note,
     "/api/quick-todos": workspace.quickTodos,
     "/api/time-entries": { entries: workspace.timeEntries, running: workspace.running },
+    "/api/categories": workspace.categories,
+    "/api/activities": workspace.activities,
+    "/api/tracking-settings": workspace.trackingSettings,
   };
 
   vi.stubGlobal(

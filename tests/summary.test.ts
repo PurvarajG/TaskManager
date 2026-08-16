@@ -40,6 +40,7 @@ function entry(taskId: string, startedAt: string, minutes: number): TimeEntry {
   return {
     id: Math.random().toString(36).slice(2),
     taskId,
+    categoryId: "00000000-0000-0000-0000-000000000002",
     startedAt,
     endedAt: startedAt,
     minutes,

@@ -5,7 +5,12 @@ import { useTasks } from "@/lib/store-context";
 import { fmt, fmtDate } from "@/lib/format";
 import { toISODate } from "@/lib/parse";
 import type { Task } from "@/lib/types";
+import CategoryDot from "./tracking/CategoryDot";
 import { inputClass, labelClass } from "./ui/Field";
+
+function clockLabel(iso: string): string {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
 
 function clock(startedAt: string, now: number): string {
   const seconds = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
@@ -48,6 +53,7 @@ export default function TaskTime({ task }: { task: Task }) {
     addManualEntry,
     patchTimeEntry,
     deleteTimeEntry,
+    categories,
   } = useTasks();
 
   const isRunning = running?.taskId === task.id;
@@ -89,32 +95,53 @@ export default function TaskTime({ task }: { task: Task }) {
 
       {entries.length > 0 && (
         <ul className="space-y-1.5">
-          {entries.map((entry) => (
-            <li key={entry.id} className="flex items-center gap-2 text-sm">
-              <span className="w-28 shrink-0 font-mono text-[11px] text-muted-foreground">
-                {fmtDate(entry.startedAt.slice(0, 10))}
-              </span>
-              <input
-                type="number"
-                min={1}
-                aria-label={`Minutes recorded on ${fmtDate(entry.startedAt.slice(0, 10))}`}
-                defaultValue={entry.minutes}
-                onBlur={(e) => {
-                  const next = Number(e.target.value);
-                  if (next > 0 && next !== entry.minutes) patchTimeEntry(entry.id, { minutes: next });
-                }}
-                className="h-8 w-20 rounded-lg border border-border bg-card px-2 text-sm outline-none focus:border-accent/40"
-              />
-              <span className="flex-1 truncate text-muted-foreground">{entry.note}</span>
-              <button
-                onClick={() => deleteTimeEntry(entry.id)}
-                aria-label="Delete time entry"
-                className="px-1 text-muted-foreground hover:text-foreground"
-              >
-                ×
-              </button>
-            </li>
-          ))}
+          {entries.map((entry) => {
+            const category = categories.find((c) => c.id === entry.categoryId);
+            return (
+              <li key={entry.id} className="flex items-center gap-2 text-sm">
+                {category && (
+                  <span
+                    className="flex shrink-0 items-center gap-1.5 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground"
+                    title={category.name}
+                  >
+                    <CategoryDot color={category.color} />
+                    {category.name}
+                  </span>
+                )}
+                <span className="w-40 shrink-0 truncate font-mono text-[11px] text-muted-foreground">
+                  {fmtDate(entry.startedAt.slice(0, 10))} {clockLabel(entry.startedAt)}
+                  {entry.endedAt ? ` – ${clockLabel(entry.endedAt)}` : ""}
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  aria-label={`Minutes recorded on ${fmtDate(entry.startedAt.slice(0, 10))}`}
+                  defaultValue={entry.minutes}
+                  onBlur={(e) => {
+                    const next = Number(e.target.value);
+                    if (next > 0 && next !== entry.minutes) patchTimeEntry(entry.id, { minutes: next });
+                  }}
+                  className="h-8 w-16 shrink-0 rounded-lg border border-border bg-card px-2 text-sm outline-none focus:border-accent/40"
+                />
+                <input
+                  defaultValue={entry.note ?? ""}
+                  placeholder="Note"
+                  aria-label={`Note for the session on ${fmtDate(entry.startedAt.slice(0, 10))}`}
+                  onBlur={(e) => {
+                    if (e.target.value !== (entry.note ?? "")) patchTimeEntry(entry.id, { note: e.target.value });
+                  }}
+                  className="min-w-0 flex-1 truncate rounded-lg border border-transparent bg-transparent px-2 py-1 text-sm text-muted-foreground outline-none transition-colors hover:border-border focus:border-accent/40 focus:bg-card focus:text-foreground"
+                />
+                <button
+                  onClick={() => deleteTimeEntry(entry.id)}
+                  aria-label="Delete time entry"
+                  className="shrink-0 px-1 text-muted-foreground hover:text-foreground"
+                >
+                  ×
+                </button>
+              </li>
+            );
+          })}
         </ul>
       )}
 

@@ -16,7 +16,6 @@ import type {
   Status,
   Subtask,
   Task,
-  TimeEntry,
   TrackingSettings,
 } from "../types";
 
@@ -78,17 +77,6 @@ export type QuickTodoRow = {
   title: string;
   done: boolean;
   sort_order: number;
-  created_at: string;
-  updated_at: string;
-};
-
-export type TimeEntryRow = {
-  id: string;
-  task_id: string;
-  started_at: string;
-  ended_at: string | null;
-  minutes: number | null;
-  note: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -213,19 +201,6 @@ export function rowToQuickTodo(r: QuickTodoRow): QuickTodo {
     title: r.title,
     done: r.done,
     sortOrder: r.sort_order,
-    createdAt: ts(r.created_at),
-    updatedAt: ts(r.updated_at),
-  };
-}
-
-export function rowToTimeEntry(r: TimeEntryRow): TimeEntry {
-  return {
-    id: r.id,
-    taskId: r.task_id,
-    startedAt: ts(r.started_at),
-    endedAt: r.ended_at ? ts(r.ended_at) : undefined,
-    minutes: r.minutes ?? undefined,
-    note: r.note ?? undefined,
     createdAt: ts(r.created_at),
     updatedAt: ts(r.updated_at),
   };
