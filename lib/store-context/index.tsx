@@ -2,18 +2,23 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import type {
+  Activity,
+  Category,
   GeneralNote,
   Project,
   ProjectStage,
   QuickTodo,
   Task,
   TimeEntry,
+  TrackingSettings,
 } from "../types";
 import { useNote, type NoteApi } from "./use-note";
 import { useQuickTodos, type QuickTodosApi } from "./use-quick-todos";
+import { useSegments, type SegmentsApi } from "./use-segments";
 import { useStages, type StagesApi } from "./use-stages";
 import { useTasksState, type TasksApi } from "./use-tasks";
 import { useTime, type TimeApi } from "./use-time";
+import { useTrackingConfig, type TrackingConfigApi } from "./use-tracking-config";
 
 export { RequestFailed } from "./request";
 export type { SaveState } from "./use-note";
@@ -22,7 +27,9 @@ type WorkspaceValue = TasksApi &
   StagesApi &
   NoteApi &
   QuickTodosApi &
-  TimeApi & {
+  TimeApi &
+  SegmentsApi &
+  TrackingConfigApi & {
     ready: boolean;
     error: string | null;
     dismissError: () => void;
@@ -51,6 +58,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const tasks = useTasksState(onError, onStagesCreated);
   const note = useNote();
   const time = useTime(onError);
+  const segments = useSegments(onError);
+  const trackingConfig = useTrackingConfig(onError);
 
   const { setTasks } = tasks;
   const onTaskCreated = useCallback(
@@ -66,6 +75,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
   const { loadNote } = note;
   const { setQuickTodos } = quickTodos;
   const { setTimeEntries, setRunning } = time;
+  const { setCategories, setActivities } = segments;
+  const { setSettings } = trackingConfig;
 
   useEffect(() => {
     Promise.all([
@@ -75,15 +86,21 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       fetch("/api/note").then((r) => r.json()),
       fetch("/api/quick-todos").then((r) => r.json()),
       fetch("/api/time-entries").then((r) => r.json()),
+      fetch("/api/categories").then((r) => r.json()),
+      fetch("/api/activities").then((r) => r.json()),
+      fetch("/api/tracking-settings").then((r) => r.json()),
     ])
       .then(
-        ([t, p, s, n, q, time]: [
+        ([t, p, s, n, q, time, cats, acts, settings]: [
           Task[],
           Project[],
           ProjectStage[],
           GeneralNote,
           QuickTodo[],
           { entries: TimeEntry[]; running: TimeEntry | null },
+          Category[],
+          Activity[],
+          TrackingSettings,
         ]) => {
           setTasks(t);
           setProjects(p);
@@ -92,11 +109,25 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
           setQuickTodos(q);
           setTimeEntries(time.entries);
           setRunning(time.running);
+          setCategories(cats);
+          setActivities(acts);
+          setSettings(settings);
         },
       )
       .catch(() => setError("Couldn't load your workspace"))
       .finally(() => setReady(true));
-  }, [setTasks, setProjects, setStages, loadNote, setQuickTodos, setTimeEntries, setRunning]);
+  }, [
+    setTasks,
+    setProjects,
+    setStages,
+    loadNote,
+    setQuickTodos,
+    setTimeEntries,
+    setRunning,
+    setCategories,
+    setActivities,
+    setSettings,
+  ]);
 
   const dismissError = useCallback(() => setError(null), []);
   const openTask = useCallback((id: string) => setOpenTaskId(id), []);
@@ -109,6 +140,8 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       ...note,
       ...quickTodos,
       ...time,
+      ...segments,
+      ...trackingConfig,
       ready,
       error,
       dismissError,
@@ -116,7 +149,21 @@ export function TasksProvider({ children }: { children: React.ReactNode }) {
       openTask,
       closeTask,
     }),
-    [tasks, stages, note, quickTodos, time, ready, error, dismissError, openTaskId, openTask, closeTask],
+    [
+      tasks,
+      stages,
+      note,
+      quickTodos,
+      time,
+      segments,
+      trackingConfig,
+      ready,
+      error,
+      dismissError,
+      openTaskId,
+      openTask,
+      closeTask,
+    ],
   );
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
