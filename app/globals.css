@@ -24,6 +24,17 @@
   --shadow-accent-lg: 0 8px 24px rgba(0, 82, 255, 0.35);
 
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Category palette. Categories store the token name ("cat-indigo"), never a
+     hex value, so recolouring the theme recolours every category with it. */
+  --color-cat-indigo: #4f46e5;
+  --color-cat-slate: #475569;
+  --color-cat-violet: #7c3aed;
+  --color-cat-emerald: #059669;
+  --color-cat-amber: #d97706;
+  --color-cat-rose: #e11d48;
+  --color-cat-cyan: #0891b2;
+  --color-cat-neutral: #737373;
 }
 
 /* Dark palette follows the OS by default; an explicit toggle (data-theme on
@@ -39,6 +50,16 @@
     --color-accent-foreground: #ffffff;
     --color-border: #23272e;
     --color-card: #14171c;
+
+    /* Lighter, less saturated than the light palette so tints stay legible on #0b0d10. */
+    --color-cat-indigo: #818cf8;
+    --color-cat-slate: #94a3b8;
+    --color-cat-violet: #a78bfa;
+    --color-cat-emerald: #34d399;
+    --color-cat-amber: #fbbf24;
+    --color-cat-rose: #fb7185;
+    --color-cat-cyan: #22d3ee;
+    --color-cat-neutral: #a3a3a3;
   }
 }
 :root[data-theme="dark"] {
@@ -51,6 +72,15 @@
   --color-accent-foreground: #ffffff;
   --color-border: #23272e;
   --color-card: #14171c;
+
+  --color-cat-indigo: #818cf8;
+  --color-cat-slate: #94a3b8;
+  --color-cat-violet: #a78bfa;
+  --color-cat-emerald: #34d399;
+  --color-cat-amber: #fbbf24;
+  --color-cat-rose: #fb7185;
+  --color-cat-cyan: #22d3ee;
+  --color-cat-neutral: #a3a3a3;
 }
 
 body {
