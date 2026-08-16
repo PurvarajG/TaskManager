@@ -185,13 +185,14 @@ export async function updateSegment(
       sets.push(`category_id = $${i++}`);
       vals.push(patch.categoryId);
     }
+    // Empty string is the "clear this relation" sentinel, same convention as tasks.ts.
     if (patch.activityId !== undefined) {
       sets.push(`activity_id = $${i++}`);
-      vals.push(patch.activityId);
+      vals.push(patch.activityId || null);
     }
     if (patch.taskId !== undefined) {
       sets.push(`task_id = $${i++}`);
-      vals.push(patch.taskId);
+      vals.push(patch.taskId || null);
     }
     if (patch.note !== undefined) {
       sets.push(`note = $${i++}`);

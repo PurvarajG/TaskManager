@@ -23,6 +23,18 @@ test("enums are closed sets", () => {
   assert.throws(() => v.stageKind("archived", "kind"), v.Invalid);
   assert.equal(v.priority(2, "priority"), 2);
   assert.throws(() => v.priority(4, "priority"), v.Invalid);
+  assert.equal(v.categoryKind("upkeep", "kind"), "upkeep");
+  assert.throws(() => v.categoryKind("hobby", "kind"), v.Invalid);
+});
+
+test("an hour is a whole 0-23, and a string list rejects non-lists", () => {
+  assert.equal(v.hour(4, "dayStartHour"), 4);
+  assert.equal(v.hour(23, "dayStartHour"), 23);
+  assert.throws(() => v.hour(24, "dayStartHour"), v.Invalid);
+  assert.throws(() => v.hour(-1, "dayStartHour"), v.Invalid);
+  assert.throws(() => v.hour(4.5, "dayStartHour"), v.Invalid);
+  assert.deepEqual(v.stringList(["now", "ribbon"], "moduleOrder"), ["now", "ribbon"]);
+  assert.throws(() => v.stringList("now", "moduleOrder"), v.Invalid);
 });
 
 test("ids must be well-formed before they reach SQL", () => {

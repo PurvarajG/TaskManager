@@ -47,8 +47,9 @@ export async function updateActivity(
     vals.push(patch.name);
   }
   if (patch.typicalMinutes !== undefined) {
+    // 0 is the "clear this" sentinel — not a legal duration, so it never collides with real data.
     sets.push(`typical_minutes = $${i++}`);
-    vals.push(patch.typicalMinutes);
+    vals.push(patch.typicalMinutes || null);
   }
   if (patch.isPreset !== undefined) {
     sets.push(`is_preset = $${i++}`);
@@ -69,6 +70,12 @@ export async function archiveActivity(id: string): Promise<Activity | null> {
     [id],
   );
   return rows.length ? rowToActivity(rows[0]) : null;
+}
+
+/** Unlike categories, no in-use guard: segments referencing this activity just lose the link. */
+export async function deleteActivity(id: string): Promise<boolean> {
+  const rows = await db.query<{ id: string }>(`delete from activities where id = $1 returning id`, [id]);
+  return rows.length > 0;
 }
 
 export async function reorderActivities(categoryId: string, orderedIds: string[]): Promise<void> {

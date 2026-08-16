@@ -1,4 +1,12 @@
-import { DURATIONS, STAGE_KINDS, type Duration, type Priority, type StageKind } from "./types";
+import {
+  CATEGORY_KINDS,
+  DURATIONS,
+  STAGE_KINDS,
+  type CategoryKind,
+  type Duration,
+  type Priority,
+  type StageKind,
+} from "./types";
 
 /**
  * Hand-rolled because the payloads are small and the app ships no validation
@@ -121,4 +129,23 @@ export function bool(value: unknown, field: string): boolean {
 export function tags(value: unknown, field: string): string[] {
   if (!Array.isArray(value)) fail(`${field} must be a list`);
   return value.map((v) => nonEmpty(v, field, 60).toLowerCase()).slice(0, 25);
+}
+
+export function categoryKind(value: unknown, field: string): CategoryKind {
+  const s = str(value, field, 20);
+  if (!CATEGORY_KINDS.includes(s as CategoryKind)) {
+    fail(`${field} must be one of ${CATEGORY_KINDS.join(", ")}`);
+  }
+  return s as CategoryKind;
+}
+
+export function hour(value: unknown, field: string): number {
+  const n = Number(value);
+  if (!Number.isInteger(n) || n < 0 || n > 23) fail(`${field} must be an hour, 0-23`);
+  return n;
+}
+
+export function stringList(value: unknown, field: string): string[] {
+  if (!Array.isArray(value)) fail(`${field} must be a list`);
+  return value.map((v) => str(v, field, 40));
 }

@@ -165,6 +165,8 @@ export const PROJECT_COLORS = [
 /** What a category *means*, independent of its name — summaries read this, never the name. */
 export type CategoryKind = "work" | "rest" | "upkeep" | "unclassified";
 
+export const CATEGORY_KINDS: CategoryKind[] = ["work", "rest", "upkeep", "unclassified"];
+
 export type SegmentSource = "timer" | "manual" | "backfill";
 
 export type Category = {
