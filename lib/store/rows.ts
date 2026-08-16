@@ -53,6 +53,7 @@ export type ProjectRow = {
   archived: boolean;
   sort_order: number;
   created_at: string;
+  default_category_id: string | null;
 };
 
 export type StageRow = {
@@ -156,6 +157,7 @@ export function rowToProject(r: ProjectRow): Project {
     archived: r.archived,
     sortOrder: r.sort_order,
     createdAt: ts(r.created_at),
+    defaultCategoryId: r.default_category_id ?? undefined,
   };
 }
 

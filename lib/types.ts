@@ -103,11 +103,13 @@ export type Project = {
   archived: boolean;
   sortOrder: number;
   createdAt: string;
+  defaultCategoryId?: string;
 };
 
 export type ProjectInput = {
   name: string;
   color?: string;
+  defaultCategoryId?: string;
 };
 
 /** There is exactly one general note, and this is its primary key. */

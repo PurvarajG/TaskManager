@@ -1,17 +1,18 @@
 import { randomUUID } from "node:crypto";
 import { withTransaction } from "../db";
 import type { Tx } from "../db";
-import { FOCUS_WORK_CATEGORY_ID, MIN_TRACKED_MINUTES, type TimeEntry } from "../types";
+import { MIN_TRACKED_MINUTES, type TimeEntry } from "../types";
 import { db, type Q, type SegmentRow } from "./rows";
 import { TimerConflict } from "./segments";
+import { resolveTaskCategoryId } from "./task-category";
 
 export { TimerConflict } from "./segments";
 
 /**
  * Presents the pre-segments TimeEntry shape over the same `segments` table, so
  * TaskTime, TimerButton and TimerStrip keep working unchanged. Every task
- * timer lands in the fixed Focus Work category — the tracking dashboard is
- * where a session gets reclassified into something else.
+ * timer lands in the category its project defaults to (Focus Work if the
+ * project has none set) — see resolveTaskCategoryId.
  */
 function rowToTimeEntry(r: SegmentRow): TimeEntry {
   const startedAt = new Date(r.started_at);
@@ -54,11 +55,12 @@ async function anyRunning(q: Q): Promise<SegmentRow | null> {
 }
 
 async function insertRunning(tx: Tx, taskId: string): Promise<TimeEntry> {
+  const categoryId = await resolveTaskCategoryId(taskId, tx);
   const rows = await tx.query<SegmentRow>(
     `insert into segments (id, started_at, category_id, task_id, source, running_lock)
      values ($1, now(), $2, $3, 'timer', true)
      returning *`,
-    [randomUUID(), FOCUS_WORK_CATEGORY_ID, taskId],
+    [randomUUID(), categoryId, taskId],
   );
   return rowToTimeEntry(rows[0]);
 }
@@ -106,11 +108,12 @@ export async function addManualEntry(input: {
   minutes: number;
   note?: string;
 }): Promise<TimeEntry> {
+  const categoryId = await resolveTaskCategoryId(input.taskId);
   const rows = await db.query<SegmentRow>(
     `insert into segments (id, started_at, ended_at, category_id, task_id, note, source)
      values ($1, $2, $3::timestamptz + make_interval(mins => $4::int), $5, $6, $7, 'manual')
      returning *`,
-    [randomUUID(), input.startedAt, input.startedAt, input.minutes, FOCUS_WORK_CATEGORY_ID, input.taskId, input.note ?? null],
+    [randomUUID(), input.startedAt, input.startedAt, input.minutes, categoryId, input.taskId, input.note ?? null],
   );
   return rowToTimeEntry(rows[0]);
 }

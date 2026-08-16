@@ -10,6 +10,9 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/projects/[
       ...(b.name !== undefined ? { name: v.nonEmpty(b.name, "Project name", 120) } : {}),
       ...(b.color !== undefined ? { color: v.str(b.color, "color", 20) } : {}),
       ...(b.archived !== undefined ? { archived: v.bool(b.archived, "archived") } : {}),
+      ...(b.defaultCategoryId !== undefined
+        ? { defaultCategoryId: v.optionalUuid(b.defaultCategoryId, "defaultCategoryId") ?? "" }
+        : {}),
     });
   });
 }

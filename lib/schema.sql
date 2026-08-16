@@ -170,3 +170,8 @@ create index if not exists segments_started_idx on segments (started_at);
 create index if not exists segments_task_idx on segments (task_id);
 create index if not exists segments_category_idx on segments (category_id);
 create index if not exists activities_category_idx on activities (category_id, sort_order);
+
+-- A project's own timer sessions inherit this category instead of the
+-- hardcoded Focus Work default. Nullable + on delete set null so archiving
+-- or deleting a category can never orphan a project.
+alter table projects add column if not exists default_category_id uuid references categories(id) on delete set null;

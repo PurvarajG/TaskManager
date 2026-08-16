@@ -67,14 +67,22 @@ async function main() {
   const sleepActivity = activities.find((a) => a.categoryId === sleep.id && a.name === "Sleep")!;
   const deepWork = activities.find((a) => a.categoryId === focusWork.id && a.name === "Deep work")!;
 
+  // Two projects, one with a default category other than Focus Work, so a
+  // task timer's category inheritance (lib/store/task-category.ts) has
+  // something real to exercise: Atlas's tasks land in Admin instead of
+  // Focus Work; Homebase has no default and falls through as before.
+  const admin = byName("Admin");
+  const { project: atlas } = await store.addProject({ name: "Atlas Launch", defaultCategoryId: admin.id });
+  const { project: homebase } = await store.addProject({ name: "Homebase" });
+
   const tasks = [];
-  for (const title of [
-    "Write the Q3 roadmap doc",
-    "Fix the flaky login test",
-    "Prep the client deck",
-    "Review PR backlog",
-  ]) {
-    tasks.push(await store.addTask({ title, scheduled: "2026-01-01", minutes: 60, priority: 1 }));
+  for (const [title, projectId] of [
+    ["Write the Q3 roadmap doc", atlas.id],
+    ["Fix the flaky login test", homebase.id],
+    ["Prep the client deck", atlas.id],
+    ["Review PR backlog", homebase.id],
+  ] as const) {
+    tasks.push(await store.addTask({ title, scheduled: "2026-01-01", minutes: 60, priority: 1, projectId }));
   }
 
   const today = new Date();

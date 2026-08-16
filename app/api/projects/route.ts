@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     return store.addProject({
       name: v.nonEmpty(b.name, "Project name", 120),
       color: v.optionalStr(b.color, "color", 20),
+      defaultCategoryId: v.optionalUuid(b.defaultCategoryId, "defaultCategoryId"),
     });
   }, 201);
 }

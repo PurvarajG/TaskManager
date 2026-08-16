@@ -26,10 +26,10 @@ export async function addProject(
     );
     const color = input.color ?? PROJECT_COLORS[Number(count) % PROJECT_COLORS.length];
     const rows = await tx.query<ProjectRow>(
-      `insert into projects (id, name, color, sort_order)
-       values ($1,$2,$3, coalesce((select max(sort_order)+1 from projects), 0))
+      `insert into projects (id, name, color, default_category_id, sort_order)
+       values ($1,$2,$3,$4, coalesce((select max(sort_order)+1 from projects), 0))
        returning *`,
-      [randomUUID(), input.name, color],
+      [randomUUID(), input.name, color, input.defaultCategoryId || null],
     );
     const project = rowToProject(rows[0]);
     return { project, stages: await createDefaultStages(tx, project.id) };
@@ -63,6 +63,11 @@ export async function updateProject(
   if (patch.archived !== undefined) {
     sets.push(`archived = $${i++}`);
     vals.push(patch.archived);
+  }
+  // Empty string is the "clear this relation" sentinel, same convention as segments.ts.
+  if (patch.defaultCategoryId !== undefined) {
+    sets.push(`default_category_id = $${i++}`);
+    vals.push(patch.defaultCategoryId || null);
   }
   if (sets.length === 0) return getProject(id);
   vals.push(id);

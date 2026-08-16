@@ -101,6 +101,35 @@ test("manual entries are editable and deletable; running entries are not", async
   assert.equal(await db.store.deleteTimeEntry(entry.id), true);
 });
 
+test("a task timer inherits its project's default category", async () => {
+  const category = await db.store.addCategory({ name: "Client Work", color: "#ff0000", kind: "work" });
+  const { project } = await db.store.addProject({ name: "Acme" });
+  await db.store.updateProject(project.id, { defaultCategoryId: category.id });
+  const t = await task("Project-scoped");
+  await db.store.updateTask(t.id, { projectId: project.id });
+
+  await db.store.startTimer(t.id);
+  const running = await db.store.runningEntry();
+  const [segment] = await db.query<{ category_id: string }>(
+    `select category_id from segments where id = $1`,
+    [running!.id],
+  );
+  assert.equal(segment.category_id, category.id);
+  await db.store.stopTimer();
+});
+
+test("a task with no project (or no default category) still falls back to Focus Work", async () => {
+  const t = await task("No project");
+  await db.store.startTimer(t.id);
+  const running = await db.store.runningEntry();
+  const [segment] = await db.query<{ category_id: string }>(
+    `select category_id from segments where id = $1`,
+    [running!.id],
+  );
+  assert.equal(segment.category_id, FOCUS_WORK_CATEGORY_ID);
+  await db.store.stopTimer();
+});
+
 test("totals count stopped and manual entries only", async () => {
   const t = await task("Totals");
   await db.store.addManualEntry({

@@ -7,6 +7,7 @@ import { PROJECT_COLORS, type Project } from "@/lib/types";
 import SidePanel from "./ui/SidePanel";
 import { Field, SavingInput } from "./ui/Field";
 import { labelClass } from "./ui/Field";
+import CategoryPicker from "./tracking/CategoryPicker";
 
 /**
  * Reached from an explicit Settings action in the project header, rather than
@@ -20,7 +21,7 @@ export default function ProjectSettings({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const { tasks, updateProject, deleteProject } = useTasks();
+  const { tasks, categories, updateProject, deleteProject } = useTasks();
   const [confirming, setConfirming] = useState(false);
 
   const affected = tasks.filter((t) => t.projectId === project.id).length;
@@ -57,6 +58,17 @@ export default function ProjectSettings({
               </button>
             ))}
           </div>
+        </Field>
+
+        <Field label="Timer category">
+          <CategoryPicker
+            categories={categories}
+            value={project.defaultCategoryId}
+            onChange={(categoryId) => updateProject(project.id, { defaultCategoryId: categoryId })}
+          />
+          <p className="mt-1 text-xs text-muted-foreground">
+            Starting a timer on one of this project&apos;s tasks lands here instead of Focus Work.
+          </p>
         </Field>
 
         <div className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3">
