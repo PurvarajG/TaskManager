@@ -58,12 +58,14 @@ export type SegmentsApi = {
   addCategory: (input: CategoryInput) => Promise<void>;
   patchCategory: (id: string, patch: Partial<CategoryInput> & { archived?: boolean }) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
+  reorderCategories: (ids: string[]) => Promise<void>;
   addActivity: (input: ActivityInput) => Promise<void>;
   patchActivity: (
     id: string,
     patch: Partial<ActivityInput> & { archived?: boolean },
   ) => Promise<void>;
   deleteActivity: (id: string) => Promise<void>;
+  reorderActivities: (categoryId: string, ids: string[]) => Promise<void>;
 };
 
 export function useSegments(onError: (message: string) => void): SegmentsApi {
@@ -288,6 +290,26 @@ export function useSegments(onError: (message: string) => void): SegmentsApi {
     [onError],
   );
 
+  const reorderCategories = useCallback(
+    async (ids: string[]) => {
+      let before: Category[] = [];
+      const order = new Map(ids.map((id, i) => [id, i]));
+      setCategories((prev) => {
+        before = prev;
+        return prev
+          .map((c) => (order.has(c.id) ? { ...c, sortOrder: order.get(c.id)! } : c))
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+      });
+      try {
+        await request("/api/categories/reorder", { method: "POST", body: JSON.stringify({ ids }) });
+      } catch (error) {
+        setCategories(before);
+        onError((error as Error).message);
+      }
+    },
+    [onError],
+  );
+
   const addActivity = useCallback(
     async (input: ActivityInput) => {
       try {
@@ -341,6 +363,29 @@ export function useSegments(onError: (message: string) => void): SegmentsApi {
     [onError],
   );
 
+  const reorderActivities = useCallback(
+    async (categoryId: string, ids: string[]) => {
+      let before: Activity[] = [];
+      const order = new Map(ids.map((id, i) => [id, i]));
+      setActivities((prev) => {
+        before = prev;
+        return prev
+          .map((a) => (order.has(a.id) ? { ...a, sortOrder: order.get(a.id)! } : a))
+          .sort((a, b) => a.sortOrder - b.sortOrder);
+      });
+      try {
+        await request("/api/activities/reorder", {
+          method: "POST",
+          body: JSON.stringify({ categoryId, ids }),
+        });
+      } catch (error) {
+        setActivities(before);
+        onError((error as Error).message);
+      }
+    },
+    [onError],
+  );
+
   return {
     segments,
     setSegments,
@@ -367,8 +412,10 @@ export function useSegments(onError: (message: string) => void): SegmentsApi {
     addCategory,
     patchCategory,
     deleteCategory,
+    reorderCategories,
     addActivity,
     patchActivity,
     deleteActivity,
+    reorderActivities,
   };
 }

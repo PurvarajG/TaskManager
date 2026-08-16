@@ -11,16 +11,8 @@ import SignalsModule from "@/components/tracking/modules/SignalsModule";
 import UnaccountedModule from "@/components/tracking/modules/UnaccountedModule";
 import { useTasks } from "@/lib/store-context";
 import { currentTrackingDayISO, dayWindow, shiftTrackingDay } from "@/lib/tracking-day";
+import { MODULE_TITLE } from "@/lib/tracking-modules";
 import { useNow } from "@/lib/useNow";
-
-const MODULE_TITLE: Record<string, string> = {
-  now: "Now",
-  unaccounted: "Unaccounted",
-  ribbon: "Day ribbon",
-  rollups: "Roll-ups",
-  signals: "Signals",
-  records: "Records",
-};
 
 export default function TrackingPage() {
   const { settings, categories, segments, ready, loadSegments, loadGaps } = useTasks();
@@ -114,6 +106,13 @@ export default function TrackingPage() {
           >
             ›
           </button>
+          <a
+            href="/tracking/settings"
+            aria-label="Tracking settings"
+            className="ml-1 flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
+          >
+            ⚙
+          </a>
         </div>
       </div>
 

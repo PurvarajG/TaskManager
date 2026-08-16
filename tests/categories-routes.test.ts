@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import test, { after, before } from "node:test";
 import { DELETE as deleteActivity, PATCH as patchActivity } from "../app/api/activities/[id]/route";
+import { POST as reorderActivities } from "../app/api/activities/reorder/route";
 import { GET as listActivities, POST as addActivity } from "../app/api/activities/route";
 import { DELETE as deleteCategory, PATCH as patchCategory } from "../app/api/categories/[id]/route";
+import { POST as reorderCategories } from "../app/api/categories/reorder/route";
 import { GET as listCategories, POST as addCategory } from "../app/api/categories/route";
 import { GET as getSettings, PATCH as patchSettings } from "../app/api/tracking-settings/route";
 import { freshDb, type TestDb } from "./helpers/db";
@@ -104,4 +106,35 @@ test("tracking settings can be read and patched", async () => {
 test("an out-of-range hour is a 400", async () => {
   const res = await patchSettings(req("/api/tracking-settings", body({ dayStartHour: 24 }, "PATCH")));
   assert.equal(res.status, 400);
+});
+
+test("categories can be reordered", async () => {
+  const categories = await (await listCategories()).json();
+  const reversed = [...categories].reverse().map((c: { id: string }) => c.id);
+
+  const res = await reorderCategories(req("/api/categories/reorder", body({ ids: reversed })));
+  assert.equal(res.status, 200);
+
+  const reordered = await (await listCategories()).json();
+  assert.deepEqual(
+    reordered.map((c: { id: string }) => c.id),
+    reversed,
+  );
+});
+
+test("activities can be reordered within a category", async () => {
+  const categories = await (await listCategories()).json();
+  const categoryId = categories.find((c: { name: string }) => c.name === "Focus Work").id;
+
+  const listed = await (await listActivities(req(`/api/activities?categoryId=${categoryId}`))).json();
+  const reversed = [...listed].reverse().map((a: { id: string }) => a.id);
+
+  const res = await reorderActivities(req("/api/activities/reorder", body({ categoryId, ids: reversed })));
+  assert.equal(res.status, 200);
+
+  const reordered = await (await listActivities(req(`/api/activities?categoryId=${categoryId}`))).json();
+  assert.deepEqual(
+    reordered.map((a: { id: string }) => a.id),
+    reversed,
+  );
 });

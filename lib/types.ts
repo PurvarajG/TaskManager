@@ -167,6 +167,18 @@ export type CategoryKind = "work" | "rest" | "upkeep" | "unclassified";
 
 export const CATEGORY_KINDS: CategoryKind[] = ["work", "rest", "upkeep", "unclassified"];
 
+/** The `--color-cat-*` theme tokens (see app/globals.css) a category can be recoloured to. */
+export const CATEGORY_COLOR_TOKENS = [
+  "cat-indigo",
+  "cat-slate",
+  "cat-violet",
+  "cat-emerald",
+  "cat-amber",
+  "cat-rose",
+  "cat-cyan",
+  "cat-neutral",
+] as const;
+
 export type SegmentSource = "timer" | "manual" | "backfill";
 
 export type Category = {
