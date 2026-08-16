@@ -5,7 +5,8 @@ import type { Activity, ActivityInput, Category, CategoryInput, Gap, Segment } f
 import { request, RequestFailed } from "./request";
 
 export type SegmentInput = {
-  categoryId: string;
+  /** Required unless `taskId` is set — a task-linked segment's category is server-resolved. */
+  categoryId?: string;
   activityId?: string;
   taskId?: string;
   note?: string;

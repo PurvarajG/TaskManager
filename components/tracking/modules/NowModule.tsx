@@ -5,6 +5,7 @@ import { useTasks } from "@/lib/store-context";
 import CategoryDot from "../CategoryDot";
 import MetaLabel from "../MetaLabel";
 import { segmentLabel } from "../segment-label";
+import TaskPicker from "../TaskPicker";
 
 /**
  * The live control: what's running right now, and one tap to switch it.
@@ -12,7 +13,8 @@ import { segmentLabel } from "../segment-label";
  * separately start — so the timeline is never briefly tracking nothing.
  */
 export default function NowModule() {
-  const { categories, activities, runningSegment, tasks, startSegment, switchSegment, stopSegment } = useTasks();
+  const { categories, activities, runningSegment, tasks, projects, startSegment, switchSegment, stopSegment } =
+    useTasks();
 
   const elapsed = useElapsed(runningSegment?.startedAt);
   const runningCategory = categories.find((c) => c.id === runningSegment?.categoryId);
@@ -29,6 +31,15 @@ export default function NowModule() {
       switchSegment({ categoryId, activityId });
     } else {
       startSegment({ categoryId, activityId });
+    }
+  }
+
+  function startTask(taskId: string) {
+    if (runningSegment?.taskId === taskId) return;
+    if (runningSegment) {
+      switchSegment({ taskId });
+    } else {
+      startSegment({ taskId });
     }
   }
 
@@ -52,6 +63,17 @@ export default function NowModule() {
       ) : (
         <p className="text-sm text-muted-foreground">Nothing is being tracked. Pick something below.</p>
       )}
+
+      <div>
+        <MetaLabel className="mb-2 block">Start a task</MetaLabel>
+        <TaskPicker
+          tasks={tasks}
+          projects={projects}
+          value={runningSegment?.taskId}
+          onChange={startTask}
+          placeholder="Time a task…"
+        />
+      </div>
 
       {presets.length > 0 ? (
         <div>

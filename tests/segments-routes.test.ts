@@ -101,6 +101,23 @@ test("fillGap rejects an overlapping span with 400", async () => {
   assert.equal(overlapping.status, 400);
 });
 
+test("starting a segment with a taskId resolves its category server-side, ignoring a client categoryId", async () => {
+  const wrongCategory = (await db.query<{ id: string }>(`select id from categories where id <> $1 limit 1`, [
+    categoryId,
+  ]))[0].id;
+  const { store } = await import("../lib/store");
+  const admin = await store.addCategory({ name: "Client Work Route Test", color: "cat-slate", kind: "work" });
+  const { project } = await store.addProject({ name: "Route Test Project", defaultCategoryId: admin.id });
+  const task = await store.addTask({ title: "Route test task", scheduled: "2026-05-02", minutes: 30, priority: 0, projectId: project.id });
+
+  const started = await POST(req("/api/segments", body({ categoryId: wrongCategory, taskId: task.id })));
+  assert.equal(started.status, 201);
+  const payload = await started.json();
+  assert.equal(payload.categoryId, admin.id, "the task's project category wins over whatever the client sent");
+
+  await stop();
+});
+
 test("GET gaps returns the day's untracked spans", async () => {
   const res = await gaps(req("/api/segments/gaps?date=2026-05-01"));
   assert.equal(res.status, 200);

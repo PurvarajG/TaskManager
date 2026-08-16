@@ -3,6 +3,7 @@ import { withTransaction } from "../db";
 import type { Tx } from "../db";
 import type { Gap, Segment, TrackingSettings } from "../types";
 import { db, rowToSegment, type Q, type SegmentRow } from "./rows";
+import { resolveTaskCategoryId } from "./task-category";
 
 /** Thrown when a second segment would start while one is already running; APIs map it to 409. */
 export class TimerConflict extends Error {
@@ -15,11 +16,23 @@ export class TimerConflict extends Error {
 export class SegmentOverlap extends Error {}
 
 export type StartSegmentInput = {
-  categoryId: string;
+  /** Ignored when `taskId` is set — the task's project decides, via resolveTaskCategoryId. */
+  categoryId?: string;
   activityId?: string;
   taskId?: string;
   note?: string;
 };
+
+/**
+ * A task-linked segment always gets its category from the task's project,
+ * never from the client, so the dashboard's own category picker and a task's
+ * own timer button can never disagree about where a session lands.
+ */
+async function resolveCategoryId(tx: Q, input: { categoryId?: string; taskId?: string }): Promise<string> {
+  if (input.taskId) return resolveTaskCategoryId(input.taskId, tx);
+  if (!input.categoryId) throw new Error("categoryId is required when taskId is not set");
+  return input.categoryId;
+}
 
 export async function listSegments(fromISO: string, toISO: string): Promise<Segment[]> {
   const rows = await db.query<SegmentRow>(
@@ -42,11 +55,12 @@ export async function getSegment(id: string, q: Q = db): Promise<Segment | null>
 }
 
 async function insertRunning(tx: Tx, input: StartSegmentInput): Promise<Segment> {
+  const categoryId = await resolveCategoryId(tx, input);
   const rows = await tx.query<SegmentRow>(
     `insert into segments (id, started_at, category_id, activity_id, task_id, note, source, running_lock)
      values ($1, now(), $2, $3, $4, $5, 'timer', true)
      returning *`,
-    [randomUUID(), input.categoryId, input.activityId ?? null, input.taskId ?? null, input.note ?? null],
+    [randomUUID(), categoryId, input.activityId ?? null, input.taskId ?? null, input.note ?? null],
   );
   return rowToSegment(rows[0]);
 }
@@ -85,13 +99,15 @@ export async function stopSegment(): Promise<Segment | null> {
 export async function addManualSegment(input: {
   startedAt: string;
   endedAt: string;
-  categoryId: string;
+  /** Ignored when `taskId` is set — see resolveCategoryId. */
+  categoryId?: string;
   activityId?: string;
   taskId?: string;
   note?: string;
 }): Promise<Segment> {
   return withTransaction(async (tx) => {
     await assertNoOverlap(tx, input.startedAt, input.endedAt);
+    const categoryId = await resolveCategoryId(tx, input);
     const rows = await tx.query<SegmentRow>(
       `insert into segments (id, started_at, ended_at, category_id, activity_id, task_id, note, source)
        values ($1, $2, $3, $4, $5, $6, $7, 'manual')
@@ -100,7 +116,7 @@ export async function addManualSegment(input: {
         randomUUID(),
         input.startedAt,
         input.endedAt,
-        input.categoryId,
+        categoryId,
         input.activityId ?? null,
         input.taskId ?? null,
         input.note ?? null,

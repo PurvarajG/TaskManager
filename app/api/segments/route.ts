@@ -23,9 +23,12 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   return handle(async () => {
     const b = v.body(await json(request));
-    const categoryId = v.uuid(b.categoryId, "categoryId");
-    const activityId = b.activityId !== undefined ? v.optionalUuid(b.activityId, "activityId") : undefined;
     const taskId = b.taskId !== undefined ? v.optionalUuid(b.taskId, "taskId") : undefined;
+    // A task-linked segment gets its category from the task's project server-side
+    // (see resolveCategoryId in lib/store/segments.ts) — a client categoryId is
+    // only required, and only honoured, when there's no task.
+    const categoryId = taskId ? undefined : v.uuid(b.categoryId, "categoryId");
+    const activityId = b.activityId !== undefined ? v.optionalUuid(b.activityId, "activityId") : undefined;
     const note = v.optionalStr(b.note, "note", 500);
 
     if (b.startedAt !== undefined && b.endedAt !== undefined) {
