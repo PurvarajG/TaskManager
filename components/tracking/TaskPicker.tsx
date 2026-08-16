@@ -16,6 +16,8 @@ export default function TaskPicker({
   onChange,
   label = "Task",
   placeholder = "Pick a task",
+  /** Adds a "No task" entry that calls onChange("") — for retro-linking, where unlinking is a real choice. */
+  clearable = false,
 }: {
   tasks: Task[];
   projects: Project[];
@@ -23,6 +25,7 @@ export default function TaskPicker({
   onChange: (taskId: string) => void;
   label?: string;
   placeholder?: string;
+  clearable?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -83,6 +86,19 @@ export default function TaskPicker({
             className="w-full border-b border-border bg-transparent px-3 py-2 text-sm outline-none"
           />
           <div className="max-h-64 overflow-y-auto">
+            {clearable && value && (
+              <button
+                type="button"
+                onClick={() => {
+                  onChange("");
+                  setOpen(false);
+                  setQuery("");
+                }}
+                className="flex w-full items-center px-3 py-2 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                No task
+              </button>
+            )}
             {filtered.length === 0 && (
               <p className="px-3 py-2 text-sm text-muted-foreground">No open tasks match.</p>
             )}

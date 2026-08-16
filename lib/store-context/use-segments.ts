@@ -40,8 +40,10 @@ export type SegmentsApi = {
   fillGap: (input: {
     startedAt: string;
     endedAt: string;
-    categoryId: string;
+    /** Required unless `taskId` is set — a task-linked fill's category is server-resolved. */
+    categoryId?: string;
     activityId?: string;
+    taskId?: string;
     note?: string;
   }) => Promise<void>;
   patchSegment: (

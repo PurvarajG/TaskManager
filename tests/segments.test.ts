@@ -70,6 +70,46 @@ test("fillGap rejects a span that overlaps a tracked segment", async () => {
   assert.equal(filled.source, "backfill");
 });
 
+test("fillGap accepts a taskId, resolving its category and forcing source: backfill", async () => {
+  const admin = await db.store.addCategory({ name: "Fill Gap Admin", color: "cat-slate", kind: "work" });
+  const { project } = await db.store.addProject({ name: "Fill Gap Project", defaultCategoryId: admin.id });
+  const task = await db.store.addTask({
+    title: "Fill gap task",
+    scheduled: "2026-03-06",
+    minutes: 30,
+    priority: 0,
+    projectId: project.id,
+  });
+
+  const filled = await db.store.fillGap({
+    startedAt: "2026-03-06T13:00:00.000Z",
+    endedAt: "2026-03-06T14:00:00.000Z",
+    taskId: task.id,
+  });
+  assert.equal(filled.source, "backfill");
+  assert.equal(filled.taskId, task.id);
+  assert.equal(filled.categoryId, admin.id, "the task's project category wins, not a caller-supplied one");
+  assert.equal(filled.activityId, undefined, "a task-linked fill is never also an activity");
+});
+
+test("retro-linking a task onto an activity segment clears the activity", async () => {
+  const task = await db.store.addTask({ title: "Retro-link task", scheduled: "2026-03-07", minutes: 30, priority: 0 });
+  const seg = await db.store.addManualSegment({
+    startedAt: "2026-03-07T15:00:00.000Z",
+    endedAt: "2026-03-07T16:00:00.000Z",
+    categoryId,
+    activityId,
+  });
+  assert.equal(seg.activityId, activityId);
+
+  const linked = await db.store.updateSegment(seg.id, { taskId: task.id, activityId: "" });
+  assert.equal(linked?.taskId, task.id);
+  assert.equal(linked?.activityId, undefined);
+
+  const unlinked = await db.store.updateSegment(seg.id, { taskId: "" });
+  assert.equal(unlinked?.taskId, undefined);
+});
+
 test("segments are editable and deletable", async () => {
   const seg = await db.store.addManualSegment({
     startedAt: "2026-03-07T09:00:00.000Z",

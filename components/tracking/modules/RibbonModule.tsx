@@ -9,6 +9,7 @@ import GapBlock from "../GapBlock";
 import GapFillForm from "../GapFillForm";
 import MetaLabel from "../MetaLabel";
 import { segmentSubject } from "../segment-label";
+import TaskPicker from "../TaskPicker";
 import TimeBlock from "../TimeBlock";
 
 const PX_PER_HOUR = 40;
@@ -134,17 +135,19 @@ function SegmentEditor({
   onCancel,
 }: {
   segment: Segment;
-  onSave: (patch: { categoryId?: string; note?: string }) => void;
+  onSave: (patch: { categoryId?: string; note?: string; taskId?: string; activityId?: string }) => void;
   onDelete: () => void;
   onCancel: () => void;
 }) {
-  const { categories } = useTasks();
+  const { categories, tasks, projects } = useTasks();
   const [categoryId, setCategoryId] = useState(segment.categoryId);
   const [note, setNote] = useState(segment.note ?? "");
+  const [taskId, setTaskId] = useState(segment.taskId ?? "");
 
   return (
     <>
       <CategoryPicker categories={categories} value={categoryId} onChange={setCategoryId} />
+      <TaskPicker tasks={tasks} projects={projects} value={taskId || undefined} onChange={setTaskId} clearable />
       <input
         value={note}
         onChange={(e) => setNote(e.target.value)}
@@ -152,7 +155,13 @@ function SegmentEditor({
         className="min-w-0 flex-1 rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none focus:border-accent/40"
       />
       <button
-        onClick={() => onSave({ categoryId, note })}
+        onClick={() =>
+          onSave({
+            categoryId,
+            note,
+            ...(taskId !== (segment.taskId ?? "") ? { taskId, activityId: taskId ? "" : undefined } : {}),
+          })
+        }
         className="min-h-11 shrink-0 rounded-lg bg-gradient-to-r from-accent to-accent-secondary px-3 py-2 text-sm font-medium text-accent-foreground hover:brightness-110 sm:min-h-9"
       >
         Save

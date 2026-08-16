@@ -118,6 +118,31 @@ test("starting a segment with a taskId resolves its category server-side, ignori
   await stop();
 });
 
+test("POST /api/segments/fill accepts a taskId and resolves its category server-side", async () => {
+  const { store } = await import("../lib/store");
+  const admin = await store.addCategory({ name: "Fill Route Admin", color: "cat-slate", kind: "work" });
+  const { project } = await store.addProject({ name: "Fill Route Project", defaultCategoryId: admin.id });
+  const task = await store.addTask({
+    title: "Fill route task",
+    scheduled: "2026-04-04",
+    minutes: 30,
+    priority: 0,
+    projectId: project.id,
+  });
+
+  const res = await fill(
+    req(
+      "/api/segments/fill",
+      body({ startedAt: "2026-04-04T09:00:00.000Z", endedAt: "2026-04-04T10:00:00.000Z", taskId: task.id }),
+    ),
+  );
+  assert.equal(res.status, 201);
+  const payload = await res.json();
+  assert.equal(payload.taskId, task.id);
+  assert.equal(payload.categoryId, admin.id);
+  assert.equal(payload.source, "backfill");
+});
+
 test("GET gaps returns the day's untracked spans", async () => {
   const res = await gaps(req("/api/segments/gaps?date=2026-05-01"));
   assert.equal(res.status, 200);

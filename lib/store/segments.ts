@@ -130,17 +130,22 @@ export async function addManualSegment(input: {
 export async function fillGap(input: {
   startedAt: string;
   endedAt: string;
-  categoryId: string;
+  /** Ignored when `taskId` is set — see resolveCategoryId. */
+  categoryId?: string;
   activityId?: string;
+  taskId?: string;
   note?: string;
 }): Promise<Segment> {
   return withTransaction(async (tx) => {
     await assertNoOverlap(tx, input.startedAt, input.endedAt);
+    const categoryId = await resolveCategoryId(tx, input);
+    // A task-linked backfill is never also an activity — same one-subject rule as a live segment.
+    const activityId = input.taskId ? undefined : input.activityId;
     const rows = await tx.query<SegmentRow>(
-      `insert into segments (id, started_at, ended_at, category_id, activity_id, note, source)
-       values ($1, $2, $3, $4, $5, $6, 'backfill')
+      `insert into segments (id, started_at, ended_at, category_id, activity_id, task_id, note, source)
+       values ($1, $2, $3, $4, $5, $6, $7, 'backfill')
        returning *`,
-      [randomUUID(), input.startedAt, input.endedAt, input.categoryId, input.activityId ?? null, input.note ?? null],
+      [randomUUID(), input.startedAt, input.endedAt, categoryId, activityId ?? null, input.taskId ?? null, input.note ?? null],
     );
     return rowToSegment(rows[0]);
   });
