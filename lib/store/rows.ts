@@ -1,17 +1,23 @@
 import { query } from "../db";
 import type { Tx } from "../db";
 import type {
+  Activity,
+  Category,
+  CategoryKind,
   Duration,
   Priority,
   Project,
   ProjectStage,
   QuickTodo,
   Recurrence,
+  Segment,
+  SegmentSource,
   StageKind,
   Status,
   Subtask,
   Task,
   TimeEntry,
+  TrackingSettings,
 } from "../types";
 
 /** Every store module reads through this so it works inside or outside a transaction. */
@@ -83,6 +89,51 @@ export type TimeEntryRow = {
   minutes: number | null;
   note: string | null;
   created_at: string;
+  updated_at: string;
+};
+
+export type CategoryRow = {
+  id: string;
+  name: string;
+  color: string;
+  kind: string;
+  sort_order: number;
+  archived: boolean;
+  created_at: string;
+};
+
+export type ActivityRow = {
+  id: string;
+  category_id: string;
+  name: string;
+  typical_minutes: number | null;
+  is_preset: boolean;
+  sort_order: number;
+  archived: boolean;
+  created_at: string;
+};
+
+export type SegmentRow = {
+  id: string;
+  started_at: string;
+  ended_at: string | null;
+  category_id: string;
+  activity_id: string | null;
+  task_id: string | null;
+  note: string | null;
+  source: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export type TrackingSettingsRow = {
+  id: string;
+  day_start_hour: number;
+  waking_start_hour: number;
+  waking_end_hour: number;
+  min_gap_minutes: number;
+  module_order: string[];
+  hidden_modules: string[];
   updated_at: string;
 };
 
@@ -174,6 +225,58 @@ export function rowToTimeEntry(r: TimeEntryRow): TimeEntry {
     minutes: r.minutes ?? undefined,
     note: r.note ?? undefined,
     createdAt: ts(r.created_at),
+    updatedAt: ts(r.updated_at),
+  };
+}
+
+export function rowToCategory(r: CategoryRow): Category {
+  return {
+    id: r.id,
+    name: r.name,
+    color: r.color,
+    kind: r.kind as CategoryKind,
+    sortOrder: r.sort_order,
+    archived: r.archived,
+    createdAt: ts(r.created_at),
+  };
+}
+
+export function rowToActivity(r: ActivityRow): Activity {
+  return {
+    id: r.id,
+    categoryId: r.category_id,
+    name: r.name,
+    typicalMinutes: r.typical_minutes ?? undefined,
+    isPreset: r.is_preset,
+    sortOrder: r.sort_order,
+    archived: r.archived,
+    createdAt: ts(r.created_at),
+  };
+}
+
+export function rowToSegment(r: SegmentRow): Segment {
+  return {
+    id: r.id,
+    startedAt: ts(r.started_at),
+    endedAt: r.ended_at ? ts(r.ended_at) : undefined,
+    categoryId: r.category_id,
+    activityId: r.activity_id ?? undefined,
+    taskId: r.task_id ?? undefined,
+    note: r.note ?? undefined,
+    source: r.source as SegmentSource,
+    createdAt: ts(r.created_at),
+    updatedAt: ts(r.updated_at),
+  };
+}
+
+export function rowToTrackingSettings(r: TrackingSettingsRow): TrackingSettings {
+  return {
+    dayStartHour: r.day_start_hour,
+    wakingStartHour: r.waking_start_hour,
+    wakingEndHour: r.waking_end_hour,
+    minGapMinutes: r.min_gap_minutes,
+    moduleOrder: r.module_order,
+    hiddenModules: r.hidden_modules,
     updatedAt: ts(r.updated_at),
   };
 }

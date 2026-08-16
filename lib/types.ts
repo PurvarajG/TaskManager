@@ -236,6 +236,13 @@ export type TrackingSettings = {
 /** There is exactly one tracking-settings row, and this fixed uuid is its primary key. */
 export const TRACKING_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
 
+/**
+ * Fixed rather than looked up by name: task-linked segments (started from a
+ * task's own timer button, not the tracking dashboard) default into this
+ * category, and it must keep working even after the user renames "Focus Work".
+ */
+export const FOCUS_WORK_CATEGORY_ID = "00000000-0000-0000-0000-000000000002";
+
 /** Starting points seeded once, on an empty `categories` table — fully user-editable after. */
 export const DEFAULT_CATEGORIES: CategoryInput[] = [
   { name: "Focus Work", color: "cat-indigo", kind: "work" },

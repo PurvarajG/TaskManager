@@ -114,9 +114,11 @@ test("the single-timer index holds after migration re-runs", async () => {
   const { backfill } = await import("../lib/migrate");
   await db.withTransaction(backfill);
 
+  // Time is tracked in `segments` now — see lib/store/segments.ts.
   await assert.rejects(() =>
     db.query(
-      `insert into time_entries (id, task_id, started_at, running_lock) values ($1,$2,now(),true)`,
+      `insert into segments (id, started_at, category_id, task_id, running_lock)
+       values ($1, now(), (select id from categories limit 1), $2, true)`,
       [randomUUID(), task.id],
     ),
   );

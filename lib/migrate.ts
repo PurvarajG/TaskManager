@@ -6,9 +6,13 @@ import {
   DEFAULT_ACTIVITIES,
   DEFAULT_CATEGORIES,
   DEFAULT_STAGES,
+  FOCUS_WORK_CATEGORY_ID,
   GENERAL_NOTE_ID,
   TRACKING_SETTINGS_ID,
 } from "./types";
+
+/** The one default category with a fixed id — see FOCUS_WORK_CATEGORY_ID. */
+const FIXED_CATEGORY_IDS: Record<string, string> = { "Focus Work": FOCUS_WORK_CATEGORY_ID };
 
 function sql(file: string): string {
   return readFileSync(path.join(process.cwd(), "lib", file), "utf8");
@@ -114,7 +118,7 @@ async function seedDefaultCategories(tx: Tx): Promise<void> {
     await tx.query(
       `insert into categories (id, name, color, kind, sort_order)
        values ($1, $2, $3, $4, $5)`,
-      [randomUUID(), category.name, category.color, category.kind, i],
+      [FIXED_CATEGORY_IDS[category.name] ?? randomUUID(), category.name, category.color, category.kind, i],
     );
   }
 }
@@ -141,20 +145,20 @@ async function seedDefaultActivities(tx: Tx): Promise<void> {
 
 /**
  * Superseded by `segments`, but existing time_entries rows must land there
- * once — reusing the same id keeps the migration idempotent, and the
- * "Focus Work" default category gives every migrated row somewhere to roll up.
+ * once — reusing the same id keeps the migration idempotent, and the fixed
+ * Focus Work category id gives every migrated row somewhere to roll up.
  */
 async function migrateTimeEntriesToSegments(tx: Tx): Promise<void> {
   await tx.query(
     `insert into segments (id, started_at, ended_at, category_id, task_id, note, source, running_lock, created_at, updated_at)
      select t.id, t.started_at,
             coalesce(t.ended_at, t.started_at + make_interval(mins => t.minutes)),
-            (select id from categories where name = 'Focus Work'),
+            $1,
             t.task_id, t.note, 'timer',
             case when t.ended_at is null then true else null end,
             t.created_at, t.updated_at
        from time_entries t
-      where not exists (select 1 from segments s where s.id = t.id)
-        and exists (select 1 from categories where name = 'Focus Work')`,
+      where not exists (select 1 from segments s where s.id = t.id)`,
+    [FOCUS_WORK_CATEGORY_ID],
   );
 }

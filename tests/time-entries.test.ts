@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
+import { randomUUID } from "node:crypto";
 import test, { after, before } from "node:test";
 import { TimerConflict } from "../lib/store/time";
+import { FOCUS_WORK_CATEGORY_ID } from "../lib/types";
 import { freshDb, type TestDb } from "./helpers/db";
 
 let db: TestDb;
@@ -22,11 +24,12 @@ test("only one timer may run, and the database is what enforces it", async () =>
   await assert.rejects(() => db.store.startTimer(b.id), TimerConflict);
 
   // Bypassing the store entirely still fails: the unique index is the guard.
+  // (Time is tracked in `segments` now — see lib/store/segments.ts.)
   await assert.rejects(() =>
     db.query(
-      `insert into time_entries (id, task_id, started_at, running_lock)
-       values ('11111111-1111-1111-1111-111111111111', $1, now(), true)`,
-      [b.id],
+      `insert into segments (id, started_at, category_id, task_id, running_lock)
+       values ($1, now(), $2, $3, true)`,
+      [randomUUID(), FOCUS_WORK_CATEGORY_ID, b.id],
     ),
   );
 

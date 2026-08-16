@@ -1,4 +1,10 @@
-import { StageConflict, TaskInvariantError, TimerConflict } from "./store";
+import {
+  CategoryInUse,
+  SegmentOverlap,
+  StageConflict,
+  TaskInvariantError,
+  TimerConflict,
+} from "./store";
 import { Invalid } from "./validate";
 
 /**
@@ -15,7 +21,7 @@ export async function handle<T>(fn: () => Promise<T>, status = 200): Promise<Res
     }
     return Response.json(result, { status });
   } catch (error) {
-    if (error instanceof Invalid || error instanceof TaskInvariantError) {
+    if (error instanceof Invalid || error instanceof TaskInvariantError || error instanceof SegmentOverlap) {
       return Response.json({ error: error.message }, { status: 400 });
     }
     if (error instanceof TimerConflict) {
@@ -24,7 +30,7 @@ export async function handle<T>(fn: () => Promise<T>, status = 200): Promise<Res
         { status: 409 },
       );
     }
-    if (error instanceof StageConflict) {
+    if (error instanceof StageConflict || error instanceof CategoryInUse) {
       return Response.json({ error: error.message }, { status: 409 });
     }
     console.error("Unhandled API failure", error);
