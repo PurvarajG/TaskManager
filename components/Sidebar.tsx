@@ -11,6 +11,7 @@ import LogoutButton from "./LogoutButton";
 const NAV = [
   { label: "Today", href: "/" },
   { label: "Calendar", href: "/calendar" },
+  { label: "Tracking", href: "/tracking" },
   { label: "Next 7 Days", href: "/upcoming" },
   { label: "All Tasks", href: "/all" },
   { label: "Completed", href: "/completed" },
