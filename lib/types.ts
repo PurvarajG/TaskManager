@@ -263,6 +263,9 @@ export const TRACKING_SETTINGS_ID = "00000000-0000-0000-0000-000000000001";
  */
 export const FOCUS_WORK_CATEGORY_ID = "00000000-0000-0000-0000-000000000002";
 
+/** There is exactly one auth-settings row, and this fixed uuid is its primary key. */
+export const AUTH_SETTINGS_ID = "00000000-0000-0000-0000-000000000003";
+
 /** Starting points seeded once, on an empty `categories` table — fully user-editable after. */
 export const DEFAULT_CATEGORIES: CategoryInput[] = [
   { name: "Focus Work", color: "cat-indigo", kind: "work" },

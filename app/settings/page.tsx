@@ -1,5 +1,6 @@
 import SectionLabel from "@/components/SectionLabel";
 import CalendarFeed from "@/components/settings/CalendarFeed";
+import PasscodeForm from "@/components/settings/PasscodeForm";
 
 /**
  * A server component so the feed token is read straight from the environment.
@@ -28,6 +29,13 @@ export default function SettingsPage() {
         <SectionLabel>Subscribe to your tasks</SectionLabel>
         <div className="mt-5">
           <CalendarFeed token={token} />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <SectionLabel>Passcode</SectionLabel>
+        <div className="mt-5">
+          <PasscodeForm />
         </div>
       </section>
     </div>

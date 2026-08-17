@@ -180,6 +180,15 @@ alter table projects add column if not exists default_category_id uuid reference
 -- state survives a reload instead of every card re-expanding.
 alter table tracking_settings add column if not exists collapsed_modules text[] not null default array[]::text[];
 
+-- Single-row DB-backed passcode. Both columns nullable: an empty row means
+-- "fall back to APP_PASSWORD", which is also the account-recovery path.
+create table if not exists auth_settings (
+  id uuid primary key,
+  password_hash text,
+  password_salt text,
+  updated_at timestamptz not null default now()
+);
+
 -- Which preset activities show as quick-start chips on the NOW card, distinct
 -- from is_preset (which only marks eligibility). See backfill() in migrate.ts
 -- for the one-time pin given to existing installs.
