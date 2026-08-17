@@ -63,12 +63,19 @@ describe("timer conflicts", () => {
     mock.failNext("/api/time-entries", 409, "Another task is already being timed", {
       runningTaskId: taskA.id,
     });
-
     await userEvent.click(await screen.findByRole("button", { name: "Start timer" }));
 
     const dialog = await screen.findByRole("alertdialog", { name: "A timer is already running" });
     expect(dialog).toHaveTextContent("Write the plan");
 
+    mock.respondNext(
+      "/api/time-entries",
+      {
+        stopped: { ...running, endedAt: new Date().toISOString(), minutes: 2 },
+        started: entry(taskB.id, { id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd" }),
+      },
+      "POST",
+    );
     await userEvent.click(screen.getByRole("button", { name: /Stop it and start/ }));
     await waitFor(() =>
       expect(mock.calls).toContainEqual({
