@@ -8,21 +8,24 @@ import { PROJECT_COLORS } from "@/lib/types";
 import ThemeToggle from "./ThemeToggle";
 import LogoutButton from "./LogoutButton";
 
-const NAV = [
-  { label: "Today", href: "/" },
-  { label: "Calendar", href: "/calendar" },
-  { label: "Tracking", href: "/tracking" },
-  { label: "Next 7 Days", href: "/upcoming" },
-  { label: "All Tasks", href: "/all" },
-  { label: "Completed", href: "/completed" },
-  { label: "Trash", href: "/trash" },
-  { label: "Settings", href: "/settings" },
+export const NAV = [
+  { key: "today", label: "Today", href: "/" },
+  { key: "calendar", label: "Calendar", href: "/calendar" },
+  { key: "tracking", label: "Tracking", href: "/tracking" },
+  { key: "upcoming", label: "Next 7 Days", href: "/upcoming" },
+  { key: "all", label: "All Tasks", href: "/all" },
+  { key: "completed", label: "Completed", href: "/completed" },
+  { key: "trash", label: "Trash", href: "/trash" },
+  { key: "settings", label: "Settings", href: "/settings" },
 ];
+
+/** The one nav entry that can never be hidden — without it there is no way to undo hiding. */
+export const UNHIDEABLE_NAV_KEY = "settings";
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { tasks, projects, addProject, deleteProject } = useTasks();
+  const { tasks, projects, addProject, deleteProject, settings } = useTasks();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState("");
   const [q, setQ] = useState("");
@@ -68,7 +71,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
       </form>
 
       <nav className="flex flex-col gap-1">
-        {NAV.map((item) => {
+        {/* settings is null before the first fetch — show the full nav rather than flashing an empty sidebar. */}
+        {(settings ? NAV.filter((item) => !settings.hiddenNavItems.includes(item.key)) : NAV).map((item) => {
           const active = pathname === item.href;
           return (
             <Link

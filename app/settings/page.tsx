@@ -1,6 +1,7 @@
 import SectionLabel from "@/components/SectionLabel";
 import CalendarFeed from "@/components/settings/CalendarFeed";
 import PasscodeForm from "@/components/settings/PasscodeForm";
+import NavVisibility from "@/components/settings/NavVisibility";
 
 /**
  * A server component so the feed token is read straight from the environment.
@@ -36,6 +37,13 @@ export default function SettingsPage() {
         <SectionLabel>Passcode</SectionLabel>
         <div className="mt-5">
           <PasscodeForm />
+        </div>
+      </section>
+
+      <section className="mt-10">
+        <SectionLabel>Sidebar</SectionLabel>
+        <div className="mt-5">
+          <NavVisibility />
         </div>
       </section>
     </div>

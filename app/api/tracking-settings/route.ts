@@ -19,6 +19,9 @@ export async function PATCH(request: Request) {
       ...(b.collapsedModules !== undefined
         ? { collapsedModules: v.stringList(b.collapsedModules, "collapsedModules") }
         : {}),
+      ...(b.hiddenNavItems !== undefined
+        ? { hiddenNavItems: v.stringList(b.hiddenNavItems, "hiddenNavItems") }
+        : {}),
     });
   });
 }

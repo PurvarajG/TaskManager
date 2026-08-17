@@ -125,6 +125,7 @@ export type TrackingSettingsRow = {
   module_order: string[];
   hidden_modules: string[];
   collapsed_modules: string[];
+  hidden_nav_items: string[];
   updated_at: string;
 };
 
@@ -258,6 +259,7 @@ export function rowToTrackingSettings(r: TrackingSettingsRow): TrackingSettings 
     moduleOrder: r.module_order,
     hiddenModules: r.hidden_modules,
     collapsedModules: r.collapsed_modules,
+    hiddenNavItems: r.hidden_nav_items,
     updatedAt: ts(r.updated_at),
   };
 }

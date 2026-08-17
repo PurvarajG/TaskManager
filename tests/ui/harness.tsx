@@ -100,6 +100,7 @@ export function emptyWorkspace(overrides: Partial<Workspace> = {}): Workspace {
       moduleOrder: [],
       hiddenModules: [],
       collapsedModules: [],
+      hiddenNavItems: [],
       updatedAt: "2026-03-01T09:00:00.000Z",
     },
     ...overrides,

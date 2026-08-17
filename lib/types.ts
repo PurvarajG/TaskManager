@@ -250,6 +250,7 @@ export type TrackingSettings = {
   moduleOrder: string[];
   hiddenModules: string[];
   collapsedModules: string[];
+  hiddenNavItems: string[];
   updatedAt: string;
 };
 

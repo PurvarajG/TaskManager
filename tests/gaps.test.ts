@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS: TrackingSettings = {
   moduleOrder: [],
   hiddenModules: [],
   collapsedModules: [],
+  hiddenNavItems: [],
   updatedAt: new Date().toISOString(),
 };
 
