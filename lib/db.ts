@@ -20,7 +20,18 @@ export interface Tx {
 export interface Driver extends Tx {
   exec(text: string): Promise<void>;
   transaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T>;
+  /**
+   * Runs `fn` with a cluster-wide lock held, so only one process at a time can
+   * be inside it. PGlite has a single writer already, so there it is a no-op.
+   */
+  withMigrationLock<T>(fn: () => Promise<T>): Promise<T>;
 }
+
+/**
+ * Arbitrary but fixed: the advisory-lock key this app uses to serialise
+ * migrations. Any constant works as long as it never changes.
+ */
+const MIGRATION_LOCK_KEY = 8_413_207_741;
 
 async function createDriver(): Promise<Driver> {
   const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
@@ -53,6 +64,30 @@ async function createDriver(): Promise<Driver> {
           });
         }) as never;
       },
+      // Every cold instance runs the migration on its first query. On a fresh
+      // deploy a burst of traffic wakes several at once, and concurrent
+      // `alter table` statements taking AccessExclusiveLock in different
+      // orders deadlock (40P01) — which surfaced as blanket 500s across the
+      // tracking dashboard. A session-level advisory lock on a reserved
+      // connection makes the losers wait instead of race.
+      async withMigrationLock(fn) {
+        const reserved = await sql.reserve();
+        try {
+          // Without a cap, a stuck holder would hang every other instance for
+          // the whole function lifetime. Failing fast is the better outcome.
+          await reserved.unsafe(`set statement_timeout = 60000`);
+          await reserved.unsafe(`select pg_advisory_lock($1)`, [MIGRATION_LOCK_KEY] as never[]);
+          try {
+            return await fn();
+          } finally {
+            await reserved.unsafe(`select pg_advisory_unlock($1)`, [MIGRATION_LOCK_KEY] as never[]);
+          }
+        } finally {
+          // The connection goes back to the pool, so leave no session state on it.
+          await reserved.unsafe(`reset statement_timeout`).catch(() => {});
+          reserved.release();
+        }
+      },
     };
   }
 
@@ -79,6 +114,9 @@ async function createDriver(): Promise<Driver> {
       );
       return result as never;
     },
+    async withMigrationLock(fn) {
+      return fn();
+    },
   };
 }
 
@@ -94,7 +132,14 @@ export function resetDriverForTests(): void {
 async function ready(): Promise<Driver> {
   if (!driverPromise) driverPromise = createDriver();
   const driver = await driverPromise;
-  if (!migratePromise) migratePromise = runMigrations(driver);
+  if (!migratePromise) {
+    // A failed migration must not be cached as "done" — clear it so the next
+    // request retries instead of every later query inheriting the rejection.
+    migratePromise = runMigrations(driver).catch((err) => {
+      migratePromise = null;
+      throw err;
+    });
+  }
   await migratePromise;
   return driver;
 }

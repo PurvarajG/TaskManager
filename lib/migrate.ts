@@ -30,9 +30,13 @@ function sql(file: string): string {
  * overwrites anything the user has customised.
  */
 export async function runMigrations(driver: Driver): Promise<void> {
-  await driver.exec(sql("schema.sql"));
-  await driver.transaction(backfill);
-  await driver.exec(sql("constraints.sql"));
+  // Held across all three passes: on Postgres, two instances running the
+  // additive DDL at the same time deadlock on AccessExclusiveLock.
+  await driver.withMigrationLock(async () => {
+    await driver.exec(sql("schema.sql"));
+    await driver.transaction(backfill);
+    await driver.exec(sql("constraints.sql"));
+  });
 }
 
 export async function backfill(tx: Tx): Promise<void> {
