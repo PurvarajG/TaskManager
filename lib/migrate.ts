@@ -47,6 +47,7 @@ export async function backfill(tx: Tx): Promise<void> {
   await seedDefaultCategories(tx);
   await seedDefaultActivities(tx);
   await migrateTimeEntriesToSegments(tx);
+  await backfillPinnedActivities(tx);
 }
 
 /** Every project needs its four default stages — but only if it has none. */
@@ -139,12 +140,34 @@ async function seedDefaultActivities(tx: Tx): Promise<void> {
     if (!presets) continue;
     for (const [i, name] of presets.entries()) {
       await tx.query(
-        `insert into activities (id, category_id, name, is_preset, sort_order)
-         values ($1, $2, $3, true, $4)`,
-        [randomUUID(), category.id, name, i],
+        `insert into activities (id, category_id, name, is_preset, pinned, sort_order)
+         values ($1, $2, $3, true, $4, $5)`,
+        [randomUUID(), category.id, name, i === 0, i],
       );
     }
   }
+}
+
+/**
+ * Existing installs get `pinned = false` on every row from the column
+ * default, which would render an empty pinned row on the NOW card. Run once:
+ * if nothing is pinned anywhere yet, pin the lowest-sort_order preset
+ * activity per category.
+ */
+async function backfillPinnedActivities(tx: Tx): Promise<void> {
+  const pinned = await tx.query<{ n: number }>(`select count(*)::int as n from activities where pinned`);
+  if (pinned[0].n > 0) return;
+
+  await tx.query(
+    `update activities a set pinned = true
+       from (
+         select distinct on (category_id) id
+           from activities
+          where is_preset and not archived
+          order by category_id, sort_order asc, created_at asc
+       ) first
+      where a.id = first.id`,
+  );
 }
 
 /**

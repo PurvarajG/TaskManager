@@ -22,11 +22,18 @@ export async function getActivity(id: string, q: Q = db): Promise<Activity | nul
 
 export async function addActivity(input: ActivityInput): Promise<Activity> {
   const rows = await db.query<ActivityRow>(
-    `insert into activities (id, category_id, name, typical_minutes, is_preset, sort_order)
-     values ($1, $2, $3, $4, $5,
+    `insert into activities (id, category_id, name, typical_minutes, is_preset, pinned, sort_order)
+     values ($1, $2, $3, $4, $5, $6,
        coalesce((select max(sort_order)+1 from activities where category_id=$2), 0))
      returning *`,
-    [randomUUID(), input.categoryId, input.name, input.typicalMinutes ?? null, input.isPreset ?? false],
+    [
+      randomUUID(),
+      input.categoryId,
+      input.name,
+      input.typicalMinutes ?? null,
+      input.isPreset ?? false,
+      input.pinned ?? false,
+    ],
   );
   return rowToActivity(rows[0]);
 }
@@ -54,6 +61,10 @@ export async function updateActivity(
   if (patch.isPreset !== undefined) {
     sets.push(`is_preset = $${i++}`);
     vals.push(patch.isPreset);
+  }
+  if (patch.pinned !== undefined) {
+    sets.push(`pinned = $${i++}`);
+    vals.push(patch.pinned);
   }
   if (sets.length === 0) return getActivity(id);
   vals.push(id);

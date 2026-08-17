@@ -206,6 +206,7 @@ export type Activity = {
   name: string;
   typicalMinutes?: number;
   isPreset: boolean;
+  pinned: boolean;
   sortOrder: number;
   archived: boolean;
   createdAt: string;
@@ -216,6 +217,7 @@ export type ActivityInput = {
   name: string;
   typicalMinutes?: number;
   isPreset?: boolean;
+  pinned?: boolean;
 };
 
 /** The continuous life timeline. Exactly one of `taskId` / `activityId` is ever set. */

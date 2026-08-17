@@ -8,6 +8,7 @@ import type { Gap, TrackingSettings } from "@/lib/types";
 import CategoryDot from "../CategoryDot";
 import GapFillForm from "../GapFillForm";
 import MetaLabel from "../MetaLabel";
+import { presetChips } from "../presets";
 
 function clockLabel(iso: string): string {
   return new Date(iso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
@@ -26,10 +27,7 @@ export default function UnaccountedModule({ dayISO }: { dayISO: string }) {
   const { gaps, categories, activities, settings, fillGap } = useTasks();
   const [expanded, setExpanded] = useState<string | null>(null);
 
-  const presets = activities
-    .filter((a) => a.isPreset && !a.archived)
-    .map((a) => ({ activity: a, category: categories.find((c) => c.id === a.categoryId) }))
-    .filter((p): p is { activity: (typeof activities)[number]; category: NonNullable<typeof p.category> } => !!p.category);
+  const { pinned } = presetChips(activities, categories);
 
   if (gaps.length === 0) {
     return <p className="text-sm text-muted-foreground">All accounted for.</p>;
@@ -50,7 +48,7 @@ export default function UnaccountedModule({ dayISO }: { dayISO: string }) {
               {label && <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-accent">{label}</span>}
 
               <div className="ml-auto flex flex-wrap items-center gap-1.5">
-                {presets.slice(0, 4).map(({ activity, category }) => (
+                {pinned.slice(0, 4).map(({ activity, category }) => (
                   <button
                     key={activity.id}
                     onClick={() =>
@@ -66,7 +64,7 @@ export default function UnaccountedModule({ dayISO }: { dayISO: string }) {
                   onClick={() => setExpanded(expanded === key ? null : key)}
                   className="min-h-11 rounded-full px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted sm:min-h-8"
                 >
-                  More
+                  Something else…
                 </button>
               </div>
             </div>

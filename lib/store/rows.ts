@@ -97,6 +97,7 @@ export type ActivityRow = {
   name: string;
   typical_minutes: number | null;
   is_preset: boolean;
+  pinned: boolean;
   sort_order: number;
   archived: boolean;
   created_at: string;
@@ -226,6 +227,7 @@ export function rowToActivity(r: ActivityRow): Activity {
     name: r.name,
     typicalMinutes: r.typical_minutes ?? undefined,
     isPreset: r.is_preset,
+    pinned: r.pinned,
     sortOrder: r.sort_order,
     archived: r.archived,
     createdAt: ts(r.created_at),

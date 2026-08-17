@@ -179,3 +179,8 @@ alter table projects add column if not exists default_category_id uuid reference
 -- Which modules the user has collapsed on the tracking dashboard, so the
 -- state survives a reload instead of every card re-expanding.
 alter table tracking_settings add column if not exists collapsed_modules text[] not null default array[]::text[];
+
+-- Which preset activities show as quick-start chips on the NOW card, distinct
+-- from is_preset (which only marks eligibility). See backfill() in migrate.ts
+-- for the one-time pin given to existing installs.
+alter table activities add column if not exists pinned boolean not null default false;

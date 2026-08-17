@@ -9,7 +9,7 @@ const categories: Category[] = [
   { id: "cat-1", name: "Focus Work", color: "cat-indigo", kind: "work", sortOrder: 0, archived: false, createdAt: now },
 ];
 const activities: Activity[] = [
-  { id: "act-1", categoryId: "cat-1", name: "Deep work", isPreset: true, sortOrder: 0, archived: false, createdAt: now },
+  { id: "act-1", categoryId: "cat-1", name: "Deep work", isPreset: true, pinned: false, sortOrder: 0, archived: false, createdAt: now },
 ];
 const projects: Project[] = [
   { id: "proj-1", name: "Atlas Launch", color: "#0052ff", archived: false, sortOrder: 0, createdAt: now },

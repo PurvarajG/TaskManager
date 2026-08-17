@@ -108,6 +108,7 @@ function ActivityRow({
     categoryId?: string;
     typicalMinutes?: number;
     isPreset?: boolean;
+    pinned?: boolean;
     archived?: boolean;
   }) => void;
   onDelete: () => void;
@@ -169,6 +170,24 @@ function ActivityRow({
         <span
           className={`absolute top-0.5 size-4 rounded-full bg-card transition-all ${
             activity.isPreset ? "left-[18px]" : "left-0.5"
+          }`}
+        />
+      </button>
+
+      <button
+        role="switch"
+        aria-checked={activity.pinned}
+        aria-label={activity.pinned ? `Unpin ${activity.name}` : `Pin ${activity.name}`}
+        disabled={!activity.isPreset}
+        onClick={() => onPatch({ pinned: !activity.pinned })}
+        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors disabled:opacity-40 ${
+          activity.pinned ? "bg-accent" : "bg-border"
+        }`}
+        title="Pinned"
+      >
+        <span
+          className={`absolute top-0.5 size-4 rounded-full bg-card transition-all ${
+            activity.pinned ? "left-[18px]" : "left-0.5"
           }`}
         />
       </button>

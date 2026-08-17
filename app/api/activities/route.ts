@@ -17,6 +17,7 @@ export async function POST(request: Request) {
       name: v.nonEmpty(b.name, "Activity name", 80),
       typicalMinutes: b.typicalMinutes !== undefined ? v.minutes(b.typicalMinutes, "typicalMinutes") : undefined,
       isPreset: b.isPreset !== undefined ? v.bool(b.isPreset, "isPreset") : undefined,
+      pinned: b.pinned !== undefined ? v.bool(b.pinned, "pinned") : undefined,
     });
   }, 201);
 }

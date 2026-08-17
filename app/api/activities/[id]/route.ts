@@ -15,6 +15,7 @@ export async function PATCH(request: Request, ctx: RouteContext<"/api/activities
         ? { typicalMinutes: b.typicalMinutes === null ? 0 : v.minutes(b.typicalMinutes, "typicalMinutes") }
         : {}),
       ...(b.isPreset !== undefined ? { isPreset: v.bool(b.isPreset, "isPreset") } : {}),
+      ...(b.pinned !== undefined ? { pinned: v.bool(b.pinned, "pinned") } : {}),
     });
   });
 }

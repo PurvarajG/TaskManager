@@ -1,9 +1,12 @@
 "use client";
 
+import { useState } from "react";
 import { useElapsed } from "@/components/TaskTime";
 import { useTasks } from "@/lib/store-context";
 import CategoryDot from "../CategoryDot";
 import MetaLabel from "../MetaLabel";
+import { presetChips } from "../presets";
+import QuickAddActivity from "../QuickAddActivity";
 import { segmentLabel } from "../segment-label";
 import TaskPicker from "../TaskPicker";
 
@@ -15,15 +18,20 @@ import TaskPicker from "../TaskPicker";
 export default function NowModule() {
   const { categories, activities, runningSegment, tasks, projects, startSegment, switchSegment, stopSegment } =
     useTasks();
+  const [showAll, setShowAll] = useState(false);
 
   const elapsed = useElapsed(runningSegment?.startedAt);
   const runningCategory = categories.find((c) => c.id === runningSegment?.categoryId);
   const runningLabel = runningSegment ? segmentLabel(runningSegment, categories, activities, tasks) : "";
 
-  const presets = activities
-    .filter((a) => a.isPreset && !a.archived)
-    .map((a) => ({ activity: a, category: categories.find((c) => c.id === a.categoryId) }))
-    .filter((p): p is { activity: (typeof activities)[number]; category: NonNullable<typeof p.category> } => !!p.category);
+  const { pinned, rest } = presetChips(activities, categories);
+  // The running activity's chip must always be visible even if unpinned.
+  const runningChip =
+    runningSegment?.activityId && !pinned.some((c) => c.activity.id === runningSegment.activityId)
+      ? rest.find((c) => c.activity.id === runningSegment.activityId)
+      : undefined;
+  const visiblePinned = runningChip ? [...pinned, runningChip] : pinned;
+  const hiddenRest = runningChip ? rest.filter((c) => c.activity.id !== runningChip.activity.id) : rest;
 
   function start(categoryId: string, activityId: string) {
     if (runningSegment?.activityId === activityId) return;
@@ -75,11 +83,17 @@ export default function NowModule() {
         />
       </div>
 
-      {presets.length > 0 ? (
-        <div>
-          <MetaLabel className="mb-2 block">Quick start</MetaLabel>
-          <div className="flex flex-wrap gap-2">
-            {presets.map(({ activity, category }) => {
+      <div>
+        <div className="mb-2 flex items-center justify-between">
+          <MetaLabel>Quick start</MetaLabel>
+          <a href="/tracking/settings" className="font-mono text-[10px] uppercase tracking-[0.1em] text-accent hover:underline">
+            Manage →
+          </a>
+        </div>
+
+        {visiblePinned.length > 0 || hiddenRest.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {visiblePinned.map(({ activity, category }) => {
               const active = runningSegment?.activityId === activity.id;
               return (
                 <button
@@ -97,17 +111,48 @@ export default function NowModule() {
                 </button>
               );
             })}
+
+            <QuickAddActivity />
+
+            {hiddenRest.length > 0 && (
+              <button
+                onClick={() => setShowAll((v) => !v)}
+                className="min-h-11 rounded-full px-2.5 py-1.5 text-sm text-muted-foreground hover:bg-muted sm:min-h-9"
+              >
+                {showAll ? "⌃ Show fewer" : `⌄ Show all (${hiddenRest.length} more)`}
+              </button>
+            )}
+
+            {showAll &&
+              hiddenRest.map(({ activity, category }) => {
+                const active = runningSegment?.activityId === activity.id;
+                return (
+                  <button
+                    key={activity.id}
+                    onClick={() => start(category.id, activity.id)}
+                    disabled={active}
+                    className={`flex min-h-11 items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors sm:min-h-9 ${
+                      active
+                        ? "border-accent/40 bg-accent/10 text-accent"
+                        : "border-border bg-card hover:border-accent/30"
+                    }`}
+                  >
+                    <CategoryDot color={category.color} />
+                    {activity.name}
+                  </button>
+                );
+              })}
           </div>
-        </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">
-          No quick-start presets yet.{" "}
-          <a href="/tracking/settings" className="text-accent hover:underline">
-            Add some in settings
-          </a>
-          .
-        </p>
-      )}
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            No quick-start presets yet.{" "}
+            <a href="/tracking/settings" className="text-accent hover:underline">
+              Add some in settings
+            </a>
+            .
+          </p>
+        )}
+      </div>
     </div>
   );
 }
