@@ -247,6 +247,7 @@ export type TrackingSettings = {
   minGapMinutes: number;
   moduleOrder: string[];
   hiddenModules: string[];
+  collapsedModules: string[];
   updatedAt: string;
 };
 

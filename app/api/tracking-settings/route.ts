@@ -16,6 +16,9 @@ export async function PATCH(request: Request) {
       ...(b.minGapMinutes !== undefined ? { minGapMinutes: v.minutes(b.minGapMinutes, "minGapMinutes") } : {}),
       ...(b.moduleOrder !== undefined ? { moduleOrder: v.stringList(b.moduleOrder, "moduleOrder") } : {}),
       ...(b.hiddenModules !== undefined ? { hiddenModules: v.stringList(b.hiddenModules, "hiddenModules") } : {}),
+      ...(b.collapsedModules !== undefined
+        ? { collapsedModules: v.stringList(b.collapsedModules, "collapsedModules") }
+        : {}),
     });
   });
 }

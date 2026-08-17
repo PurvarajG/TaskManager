@@ -14,6 +14,7 @@ const DEFAULT_SETTINGS: TrackingSettings = {
   minGapMinutes: 10,
   moduleOrder: [],
   hiddenModules: [],
+  collapsedModules: [],
   updatedAt: new Date().toISOString(),
 };
 

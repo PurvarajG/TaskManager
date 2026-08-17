@@ -175,3 +175,7 @@ create index if not exists activities_category_idx on activities (category_id, s
 -- hardcoded Focus Work default. Nullable + on delete set null so archiving
 -- or deleting a category can never orphan a project.
 alter table projects add column if not exists default_category_id uuid references categories(id) on delete set null;
+
+-- Which modules the user has collapsed on the tracking dashboard, so the
+-- state survives a reload instead of every card re-expanding.
+alter table tracking_settings add column if not exists collapsed_modules text[] not null default array[]::text[];

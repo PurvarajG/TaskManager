@@ -11,11 +11,11 @@ import SignalsModule from "@/components/tracking/modules/SignalsModule";
 import UnaccountedModule from "@/components/tracking/modules/UnaccountedModule";
 import { useTasks } from "@/lib/store-context";
 import { currentTrackingDayISO, dayWindow, shiftTrackingDay } from "@/lib/tracking-day";
-import { MODULE_TITLE } from "@/lib/tracking-modules";
+import { MODULE_COLUMN, MODULE_TITLE } from "@/lib/tracking-modules";
 import { useNow } from "@/lib/useNow";
 
 export default function TrackingPage() {
-  const { settings, categories, segments, ready, loadSegments, loadGaps } = useTasks();
+  const { settings, categories, segments, ready, loadSegments, loadGaps, patchSettings } = useTasks();
   const now = useNow();
   const [dayISO, setDayISO] = useState<string | null>(null);
 
@@ -45,7 +45,7 @@ export default function TrackingPage() {
 
   if (!now || !settings || !dayISO) {
     return (
-      <div className="mx-auto max-w-4xl px-6 py-12 sm:px-10 sm:py-16">
+      <div className="mx-auto max-w-6xl px-6 py-8 sm:px-8 sm:py-10">
         <div className="h-10 w-64 rounded-lg bg-muted" />
       </div>
     );
@@ -53,7 +53,7 @@ export default function TrackingPage() {
 
   if (ready && categories.length === 0) {
     return (
-      <div className="mx-auto max-w-4xl px-6 py-12 sm:px-10 sm:py-16">
+      <div className="mx-auto max-w-6xl px-6 py-8 sm:px-8 sm:py-10">
         <SectionLabel>Tracking</SectionLabel>
         <p className="mt-6 text-sm text-muted-foreground">
           No categories yet.{" "}
@@ -75,9 +75,33 @@ export default function TrackingPage() {
   });
 
   const order = settings.moduleOrder.filter((key) => !settings.hiddenModules.includes(key));
+  const main = order.filter((k) => MODULE_COLUMN[k] !== "side");
+  const side = order.filter((k) => MODULE_COLUMN[k] === "side");
+
+  const renderModule = (key: string) => (
+    <ModuleCard
+      key={key}
+      title={MODULE_TITLE[key] ?? key}
+      collapsed={settings.collapsedModules.includes(key)}
+      onToggleCollapse={() =>
+        patchSettings({
+          collapsedModules: settings.collapsedModules.includes(key)
+            ? settings.collapsedModules.filter((k) => k !== key)
+            : [...settings.collapsedModules, key],
+        })
+      }
+    >
+      {key === "now" && <NowModule />}
+      {key === "unaccounted" && <UnaccountedModule dayISO={dayISO} />}
+      {key === "ribbon" && <RibbonModule dayISO={dayISO} isToday={isToday} />}
+      {key === "rollups" && <RollupsModule dayISO={dayISO} todayISO={todayISO} now={now} />}
+      {key === "signals" && <SignalsModule dayISO={dayISO} todayISO={todayISO} now={now} />}
+      {key === "records" && <RecordsModule now={now} />}
+    </ModuleCard>
+  );
 
   return (
-    <div className="mx-auto max-w-4xl px-6 py-12 sm:px-10 sm:py-16">
+    <div className="mx-auto max-w-6xl px-6 py-8 sm:px-8 sm:py-10">
       <SectionLabel pulse={isToday}>Tracking</SectionLabel>
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -116,17 +140,11 @@ export default function TrackingPage() {
         </div>
       </div>
 
-      <div className="mt-8 space-y-5">
-        {order.map((key) => (
-          <ModuleCard key={key} title={MODULE_TITLE[key] ?? key}>
-            {key === "now" && <NowModule />}
-            {key === "unaccounted" && <UnaccountedModule dayISO={dayISO} />}
-            {key === "ribbon" && <RibbonModule dayISO={dayISO} isToday={isToday} />}
-            {key === "rollups" && <RollupsModule dayISO={dayISO} todayISO={todayISO} now={now} />}
-            {key === "signals" && <SignalsModule dayISO={dayISO} todayISO={todayISO} now={now} />}
-            {key === "records" && <RecordsModule now={now} />}
-          </ModuleCard>
-        ))}
+      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+        <div className="min-w-0 space-y-4">{main.map(renderModule)}</div>
+        {side.length > 0 && (
+          <div className="min-w-0 space-y-4 lg:sticky lg:top-6">{side.map(renderModule)}</div>
+        )}
       </div>
     </div>
   );

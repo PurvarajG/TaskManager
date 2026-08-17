@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTasks } from "@/lib/store-context";
 import { dayWindow } from "@/lib/tracking-day";
-import type { Gap, Segment } from "@/lib/types";
+import type { Gap, Segment, TrackingSettings } from "@/lib/types";
 import CategoryPicker from "../CategoryPicker";
 import GapBlock from "../GapBlock";
 import GapFillForm from "../GapFillForm";
@@ -12,18 +12,40 @@ import { segmentSubject } from "../segment-label";
 import TaskPicker from "../TaskPicker";
 import TimeBlock from "../TimeBlock";
 
-const PX_PER_HOUR = 40;
-const TOTAL_HEIGHT = PX_PER_HOUR * 24;
+const PX_PER_HOUR = 32;
+const MAX_RIBBON_PX = 560; // scroll inside the card past this, never grow the page
 
 function minutesFromStart(iso: string, dayStart: Date): number {
   return (new Date(iso).getTime() - dayStart.getTime()) / 60_000;
 }
+
+/** windowStartHour/windowHours/windowStart/height for either the cropped
+ * (waking-hours) or full (24h) ribbon window, anchored off the tracking day's
+ * own start. */
+function ribbonWindow(kind: "full" | "cropped", settings: TrackingSettings, dayStart: Date) {
+  const windowStartHour = kind === "full" ? settings.dayStartHour : settings.wakingStartHour;
+  const windowHours =
+    kind === "full" ? 24 : (settings.wakingEndHour - settings.wakingStartHour + 24) % 24 || 24;
+  const windowStart = new Date(
+    dayStart.getTime() + ((windowStartHour - settings.dayStartHour + 24) % 24) * 60 * 60_000,
+  );
+  return { windowStartHour, windowHours, windowStart, height: windowHours * PX_PER_HOUR };
+}
+
+function formatMinutes(total: number): string {
+  const m = Math.round(total);
+  return `${Math.floor(m / 60)}h ${String(m % 60).padStart(2, "0")}m`;
+}
+
+const pad = (h: number) => String(h).padStart(2, "0");
 
 /**
  * The vertical continuous day. Reuses DashboardTimeline's geometry approach
  * (percentage offsets, repeating gridlines) rotated to vertical — an hour
  * rail on the left, blocks proportional to duration, absence rendered dashed
  * rather than left blank so it can't be mistaken for "nothing happened here".
+ * Crops to the waking window by default; a toggle expands to the full day,
+ * scrolling inside the card rather than growing the page.
  */
 export default function RibbonModule({ dayISO, isToday }: { dayISO: string; isToday: boolean }) {
   const { segments, gaps, categories, activities, tasks, projects, settings, deleteSegment, patchSegment } =
@@ -31,78 +53,124 @@ export default function RibbonModule({ dayISO, isToday }: { dayISO: string; isTo
   const [selected, setSelected] = useState<{ kind: "segment"; segment: Segment } | { kind: "gap"; gap: Gap } | null>(
     null,
   );
+  const dayStart = settings ? dayWindow(dayISO, settings).start : null;
 
-  if (!settings) return null;
-  const { start: dayStart, end: dayEnd } = dayWindow(dayISO, settings);
+  // Auto-expand when a segment is currently running and started outside the
+  // cropped window — otherwise a night-shift day opens looking empty.
+  const [full, setFull] = useState(() => {
+    if (!settings || !dayStart) return false;
+    const running = segments.find((s) => !s.endedAt);
+    if (!running) return false;
+    const cropped = ribbonWindow("cropped", settings, dayStart);
+    const startMin = minutesFromStart(running.startedAt, cropped.windowStart);
+    return startMin < 0 || startMin >= cropped.windowHours * 60;
+  });
+
+  if (!settings || !dayStart) return null;
+  const { end: dayEnd } = dayWindow(dayISO, settings);
   const now = new Date();
-  const nowOffset = isToday ? (minutesFromStart(now.toISOString(), dayStart) / 1440) * TOTAL_HEIGHT : null;
 
-  const hours = Array.from({ length: 24 }, (_, i) => (settings.dayStartHour + i) % 24);
+  const cropped = ribbonWindow("cropped", settings, dayStart);
+  const { windowStartHour, windowHours, windowStart, height } = full
+    ? ribbonWindow("full", settings, dayStart)
+    : cropped;
+  const y = (iso: string) => (minutesFromStart(iso, windowStart) / (windowHours * 60)) * height;
+
+  const hours = Array.from({ length: windowHours }, (_, i) => (windowStartHour + i) % 24);
+  const gridlineStop = 100 / windowHours;
+  const nowOffset = isToday ? y(now.toISOString()) : null;
+
+  // Minutes hidden by the crop — always measured against the cropped window,
+  // regardless of which mode is currently rendered.
+  const isOutsideCropped = (startISO: string, endISO: string) => {
+    const top = minutesFromStart(startISO, cropped.windowStart);
+    const bottom = minutesFromStart(endISO, cropped.windowStart);
+    return bottom <= 0 || top >= cropped.windowHours * 60;
+  };
+  let outsideMinutes = 0;
+  for (const segment of segments) {
+    const endISO = segment.endedAt ?? (isToday ? now.toISOString() : dayEnd.toISOString());
+    if (isOutsideCropped(segment.startedAt, endISO)) {
+      outsideMinutes += (new Date(endISO).getTime() - new Date(segment.startedAt).getTime()) / 60_000;
+    }
+  }
+  for (const gap of gaps) {
+    if (isOutsideCropped(gap.startedAt, gap.endedAt)) outsideMinutes += gap.minutes;
+  }
 
   return (
     <div className="space-y-3">
-      <div className="flex">
-        <div className="relative w-10 shrink-0 sm:w-12">
-          {hours.map((hour, i) => (
-            <div key={i} className="absolute -translate-y-1/2" style={{ top: (i / 24) * TOTAL_HEIGHT }}>
-              <MetaLabel>{String(hour).padStart(2, "0")}:00</MetaLabel>
-            </div>
-          ))}
-        </div>
+      <div className="overflow-y-auto" style={{ maxHeight: MAX_RIBBON_PX }}>
+        <div className="flex">
+          <div className="relative w-10 shrink-0 sm:w-12">
+            {hours.map((hour, i) => (
+              <div key={i} className="absolute -translate-y-1/2" style={{ top: (i / windowHours) * height }}>
+                <MetaLabel>{pad(hour)}:00</MetaLabel>
+              </div>
+            ))}
+          </div>
 
-        <div
-          className="relative min-w-0 flex-1 rounded-lg border border-border/70"
-          style={{
-            height: TOTAL_HEIGHT,
-            backgroundImage:
-              "repeating-linear-gradient(to bottom, transparent 0, transparent calc(4.1666% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) calc(4.1666% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) 4.1666%)",
-          }}
-        >
-          {segments.map((segment) => {
-            const top = Math.max(0, (minutesFromStart(segment.startedAt, dayStart) / 1440) * TOTAL_HEIGHT);
-            const endISO = segment.endedAt ?? (isToday ? now.toISOString() : dayEnd.toISOString());
-            const bottom = Math.min(
-              TOTAL_HEIGHT,
-              (minutesFromStart(endISO, dayStart) / 1440) * TOTAL_HEIGHT,
-            );
-            if (bottom <= 0 || top >= TOTAL_HEIGHT || bottom <= top) return null;
-            const category = categories.find((c) => c.id === segment.categoryId);
-            const subject = segmentSubject(segment, categories, activities, tasks, projects);
-            return (
-              <TimeBlock
-                key={segment.id}
-                color={category?.color ?? "cat-neutral"}
-                label={subject.label}
-                projectColor={subject.project?.color}
-                density="continuous"
-                onClick={() => setSelected({ kind: "segment", segment })}
-                style={{ position: "absolute", top, height: Math.max(bottom - top, 4), left: 0, right: 0 }}
+          <div
+            className="relative min-w-0 flex-1 rounded-lg border border-border/70"
+            style={{
+              height,
+              backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent calc(${gridlineStop}% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) calc(${gridlineStop}% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) ${gridlineStop}%)`,
+            }}
+          >
+            {segments.map((segment) => {
+              const top = Math.max(0, y(segment.startedAt));
+              const endISO = segment.endedAt ?? (isToday ? now.toISOString() : dayEnd.toISOString());
+              const bottom = Math.min(height, y(endISO));
+              if (bottom <= 0 || top >= height || bottom <= top) return null;
+              const category = categories.find((c) => c.id === segment.categoryId);
+              const subject = segmentSubject(segment, categories, activities, tasks, projects);
+              return (
+                <TimeBlock
+                  key={segment.id}
+                  color={category?.color ?? "cat-neutral"}
+                  label={subject.label}
+                  projectColor={subject.project?.color}
+                  density="continuous"
+                  onClick={() => setSelected({ kind: "segment", segment })}
+                  style={{ position: "absolute", top, height: Math.max(bottom - top, 4), left: 0, right: 0 }}
+                />
+              );
+            })}
+
+            {gaps.map((gap) => {
+              const top = Math.max(0, y(gap.startedAt));
+              const bottom = Math.min(height, y(gap.endedAt));
+              if (bottom <= 0 || top >= height || bottom <= top) return null;
+              return (
+                <GapBlock
+                  key={`${gap.startedAt}-${gap.endedAt}`}
+                  label={`${gap.minutes}m untracked`}
+                  onClick={() => setSelected({ kind: "gap", gap })}
+                  style={{ position: "absolute", top, height: Math.max(bottom - top, 4), left: 0, right: 0 }}
+                />
+              );
+            })}
+
+            {nowOffset !== null && nowOffset >= 0 && nowOffset <= height && (
+              <div
+                aria-label="Now"
+                className="pointer-events-none absolute inset-x-0 z-10 h-px bg-accent"
+                style={{ top: nowOffset }}
               />
-            );
-          })}
-
-          {gaps.map((gap) => {
-            const top = (minutesFromStart(gap.startedAt, dayStart) / 1440) * TOTAL_HEIGHT;
-            const bottom = (minutesFromStart(gap.endedAt, dayStart) / 1440) * TOTAL_HEIGHT;
-            return (
-              <GapBlock
-                key={`${gap.startedAt}-${gap.endedAt}`}
-                label={`${gap.minutes}m untracked`}
-                onClick={() => setSelected({ kind: "gap", gap })}
-                style={{ position: "absolute", top, height: Math.max(bottom - top, 4), left: 0, right: 0 }}
-              />
-            );
-          })}
-
-          {nowOffset !== null && nowOffset >= 0 && nowOffset <= TOTAL_HEIGHT && (
-            <div
-              aria-label="Now"
-              className="pointer-events-none absolute inset-x-0 z-10 h-px bg-accent"
-              style={{ top: nowOffset }}
-            />
-          )}
+            )}
+          </div>
         </div>
       </div>
+
+      {(full || outsideMinutes > 0) && (
+        <button type="button" onClick={() => setFull((v) => !v)} className="block">
+          <MetaLabel>
+            {full
+              ? "⌃ show waking hours only"
+              : `⌃ ${formatMinutes(outsideMinutes)} outside ${pad(settings.wakingStartHour)}:00–${pad(settings.wakingEndHour)}:00 — show full day`}
+          </MetaLabel>
+        </button>
+      )}
 
       {selected && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2.5">

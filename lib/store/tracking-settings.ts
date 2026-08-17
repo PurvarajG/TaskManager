@@ -39,6 +39,10 @@ export async function updateTrackingSettings(
     sets.push(`hidden_modules = $${i++}`);
     vals.push(patch.hiddenModules);
   }
+  if (patch.collapsedModules !== undefined) {
+    sets.push(`collapsed_modules = $${i++}`);
+    vals.push(patch.collapsedModules);
+  }
   if (sets.length === 0) return getTrackingSettings();
 
   const rows = await db.query<TrackingSettingsRow>(

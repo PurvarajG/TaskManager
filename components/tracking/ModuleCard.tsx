@@ -14,26 +14,34 @@ export default function ModuleCard({
   action,
   collapsible = true,
   defaultCollapsed = false,
+  collapsed: collapsedProp,
+  onToggleCollapse,
   children,
 }: {
   title: string;
   action?: React.ReactNode;
   collapsible?: boolean;
   defaultCollapsed?: boolean;
+  /** Controlled collapse state — when paired with `onToggleCollapse`, the caller
+   *  owns persistence. Omit both to fall back to local state. */
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
   children: React.ReactNode;
 }) {
-  const [collapsed, setCollapsed] = useState(defaultCollapsed);
+  const [localCollapsed, setLocalCollapsed] = useState(defaultCollapsed);
+  const collapsed = onToggleCollapse ? (collapsedProp ?? false) : localCollapsed;
+  const toggle = onToggleCollapse ?? (() => setLocalCollapsed((v) => !v));
 
   return (
     <section className="overflow-hidden rounded-xl border border-border/70 bg-card">
-      <div className="flex items-center justify-between gap-3 bg-muted/30 px-4 py-2.5">
+      <div className="flex items-center justify-between gap-3 bg-muted/30 px-3.5 py-2">
         <SectionLabel>{title}</SectionLabel>
         <div className="flex shrink-0 items-center gap-2">
           {action}
           {collapsible && (
             <button
               type="button"
-              onClick={() => setCollapsed((v) => !v)}
+              onClick={toggle}
               aria-expanded={!collapsed}
               aria-label={collapsed ? `Expand ${title}` : `Collapse ${title}`}
               className="flex size-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -49,7 +57,7 @@ export default function ModuleCard({
         </div>
       </div>
 
-      {!collapsed && <div className="p-4">{children}</div>}
+      {!collapsed && <div className="p-3.5">{children}</div>}
     </section>
   );
 }

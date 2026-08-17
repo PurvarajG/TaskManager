@@ -123,6 +123,7 @@ export type TrackingSettingsRow = {
   min_gap_minutes: number;
   module_order: string[];
   hidden_modules: string[];
+  collapsed_modules: string[];
   updated_at: string;
 };
 
@@ -254,6 +255,7 @@ export function rowToTrackingSettings(r: TrackingSettingsRow): TrackingSettings 
     minGapMinutes: r.min_gap_minutes,
     moduleOrder: r.module_order,
     hiddenModules: r.hidden_modules,
+    collapsedModules: r.collapsed_modules,
     updatedAt: ts(r.updated_at),
   };
 }
