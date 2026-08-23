@@ -1,7 +1,8 @@
 {
-  "name": "dayplan",
+  "name": "tempo",
   "version": "0.1.0",
   "private": true,
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +12,11 @@
     "test:unit": "tsx --test tests/*.test.ts",
     "test:ui": "vitest run",
     "dev:lab": "LAB_MODE=1 PGLITE_DIR=.data/lab POSTGRES_URL= DATABASE_URL= POSTGRES_URL_NON_POOLING= SESSION_SECRET= next dev -p 3001",
-    "seed:lab": "LAB_MODE=1 PGLITE_DIR=.data/lab tsx scripts/seed-lab.ts"
+    "seed:lab": "LAB_MODE=1 PGLITE_DIR=.data/lab tsx scripts/seed-lab.ts",
+    "electron:icon": "node scripts/make-icon.mjs",
+    "electron:dev": "electron .",
+    "electron:pack": "npm run electron:icon && next build && electron-builder --dir --arm64",
+    "electron:build": "npm run electron:icon && next build && electron-builder --arm64"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.5.4",
@@ -31,6 +36,8 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.5",
+    "electron": "43.4.0",
+    "electron-builder": "^26.15.3",
     "eslint": "^9",
     "eslint-config-next": "16.3.0",
     "jsdom": "^30.0.1",
@@ -38,5 +45,48 @@
     "tsx": "^4.23.12",
     "typescript": "^5",
     "vitest": "^3.2.7"
+  },
+  "build": {
+    "appId": "com.purvarajsinh.tempo",
+    "productName": "Tempo",
+    "asar": false,
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "electron/**/*",
+      ".next/**/*",
+      "public/**/*",
+      "lib/**/*.sql",
+      "next.config.ts",
+      "package.json",
+      "node_modules/**/*",
+      "!node_modules/electron/**/*",
+      "!node_modules/electron-builder/**/*",
+      "!.next/cache/**/*",
+      "!.next/dev/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "identity": null
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage",
+      "category": "Office"
+    },
+    "npmRebuild": false,
+    "afterPack": "scripts/electron-after-pack.js"
   }
 }
