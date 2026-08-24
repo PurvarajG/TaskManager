@@ -1,9 +1,12 @@
 import { readFile } from "node:fs/promises";
+import { execFile as execFileCallback } from "node:child_process";
+import { promisify } from "node:util";
 import { describe, expect, it, vi } from "vitest";
 import worker from "../../site/worker/index.js";
 
 const downloadUrl =
   "https://github.com/PurvarajG/TaskManager/releases/latest/download/Tempo-latest-arm64.dmg";
+const execFile = promisify(execFileCallback);
 
 describe("Tempo download site", () => {
   it("offers the stable Apple-silicon DMG and accurate local-first trust copy", async () => {
@@ -32,6 +35,17 @@ describe("Tempo download site", () => {
 
     expect(packageJson).toContain('"build": "node build.mjs"');
     expect(worker).toContain("env.ASSETS.fetch");
+  });
+
+  it("places public assets in the Sites client directory", async () => {
+    await execFile(process.execPath, ["build.mjs"], { cwd: "site" });
+
+    await expect(readFile("site/dist/client/index.html", "utf8")).resolves.toContain(
+      "Tempo — Your day, at a glance",
+    );
+    await expect(readFile("site/dist/client/styles.css", "utf8")).resolves.toContain(
+      ".site-shell",
+    );
   });
 
   it("serves the static document for the public root URL", async () => {
