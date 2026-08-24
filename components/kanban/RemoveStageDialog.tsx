@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTasks } from "@/lib/store-context";
 import type { ProjectStage } from "@/lib/types";
-import { inputClass, labelClass } from "../ui/Field";
+import { labelClass, selectClass } from "../ui/Field";
 
 /**
  * Removing a column can't proceed until its tasks have somewhere to go. The
@@ -36,7 +36,7 @@ export default function RemoveStageDialog({
       aria-label={`Remove the ${stage.name} column`}
       className="fixed inset-0 z-[60] flex items-center justify-center p-4"
     >
-      <div className="absolute inset-0 bg-black/30" onClick={onClose} aria-hidden />
+      <div className="no-drag absolute inset-0 bg-black/30" onClick={onClose} aria-hidden />
       <div className="relative w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl">
         <h2 className="font-display text-lg">Remove &ldquo;{stage.name}&rdquo;</h2>
         <p className="mt-1.5 text-sm text-muted-foreground">
@@ -54,7 +54,7 @@ export default function RemoveStageDialog({
               id="stage-destination"
               value={destination}
               onChange={(e) => setDestination(e.target.value)}
-              className={inputClass}
+              className={selectClass}
             >
               <option value="">Choose a column…</option>
               {siblings.map((s) => (

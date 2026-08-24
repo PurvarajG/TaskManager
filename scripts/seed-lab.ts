@@ -5,10 +5,9 @@
  *
  *   npm run seed:lab
  *
- * Three guards, because this must never touch the real database: LAB_MODE=1,
- * a PGLITE_DIR that isn't the real local dev directory, and no connection
- * string in scope. Each is independently sufficient to catch a mistake the
- * others miss.
+ * Two guards, because this must never touch the real database: LAB_MODE=1 and
+ * a PGLITE_DIR that isn't the real local dev directory. Each independently
+ * catches a mistake the other misses.
  */
 import { store } from "../lib/store";
 import type { Activity, Category } from "../lib/types";
@@ -20,9 +19,6 @@ function requireLabGuards(): void {
   const dir = process.env.PGLITE_DIR;
   if (!dir || dir.endsWith("pglite")) {
     throw new Error("Refusing to seed: PGLITE_DIR must point at a lab-only directory, not the real dev database.");
-  }
-  if (process.env.POSTGRES_URL || process.env.DATABASE_URL) {
-    throw new Error("Refusing to seed: a remote connection string is configured.");
   }
 }
 

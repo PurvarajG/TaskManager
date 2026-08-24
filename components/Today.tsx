@@ -62,7 +62,7 @@ export default function Today() {
 
   return (
     <div className="mx-auto max-w-6xl px-6 py-12 sm:px-10 sm:py-16 lg:flex lg:h-dvh lg:max-w-none lg:flex-col lg:overflow-hidden lg:px-8 lg:py-4 xl:px-10">
-      <header className="shrink-0 animate-fade-up">
+      <header className="shrink-0">
         <SectionLabel pulse>Today</SectionLabel>
 
         <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:mt-3 lg:text-3xl">
@@ -109,23 +109,21 @@ export default function Today() {
         className="mt-10 grid gap-10 lg:mt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_18rem] lg:grid-rows-[minmax(0,1fr)] lg:gap-x-6"
       >
         <div data-testid="today-primary-pane" data-density="compact" className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-          <div className="animate-fade-up" style={{ animationDelay: "0.08s" }}>
-            <QuickAdd compact />
-          </div>
+          <QuickAdd id="tempo-quick-add" compact />
 
-          <div className="mt-8 animate-fade-up lg:mt-4" style={{ animationDelay: "0.12s" }}>
+          <div className="mt-8 lg:mt-4">
             <DashboardTimeline todayISO={todayISO} />
           </div>
 
           {ready && today.length === 0 && (
-            <p className="mt-10 rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground animate-fade-up">
+            <p className="mt-10 rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground">
               Nothing on today. Either you&apos;re done, or nothing&apos;s captured yet.
             </p>
           )}
 
           {/* The one thing. Inverted so it can't be confused with the list. */}
           {upNext && (
-            <section className="mt-10 animate-fade-up lg:mt-4" style={{ animationDelay: "0.16s" }}>
+            <section className="mt-10 lg:mt-4">
               <div className="relative overflow-hidden rounded-2xl bg-foreground p-7 text-background shadow-xl lg:rounded-xl lg:p-4">
                 <div className="dot-texture pointer-events-none absolute inset-0" />
                 <div className="relative">
@@ -135,7 +133,7 @@ export default function Today() {
                     </span>
                   </span>
 
-                  <h2 className="mt-5 font-display text-3xl leading-[1.15] tracking-[-0.01em] lg:mt-2 lg:text-xl">
+                  <h2 className="select-text mt-5 font-display text-3xl leading-[1.15] tracking-[-0.01em] lg:mt-2 lg:text-xl">
                     {upNext.title}
                   </h2>
 
@@ -164,7 +162,7 @@ export default function Today() {
           )}
 
           {rest.length > 0 && (
-            <section className="mt-12 animate-fade-up lg:mt-5" style={{ animationDelay: "0.24s" }}>
+            <section className="mt-12 lg:mt-5">
               <SectionLabel>Then</SectionLabel>
               <ul className="mt-5 space-y-2.5 lg:mt-3 lg:space-y-1.5">
                 {rest.map((t) => (

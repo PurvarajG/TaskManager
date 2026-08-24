@@ -17,7 +17,7 @@
   --color-card: #ffffff;
 
   --font-display: var(--font-calistoga), Georgia, serif;
-  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
   --shadow-accent: 0 4px 14px rgba(0, 82, 255, 0.25);
@@ -90,6 +90,27 @@ body {
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "kern" 1;
   transition: background-color 0.2s var(--ease-out-soft), color 0.2s var(--ease-out-soft);
+  user-select: none;
+}
+
+/* The desktop window is transparent (backgroundColor in electron/main.js) so
+   the vibrancy material behind it can show through — an opaque body would
+   paint over that material everywhere, including behind the sidebar, and
+   the "sidebar" vibrancy effect would never be visible. Only the desktop
+   build's window is actually transparent, so only there does body give up
+   its paint; the web build has no material behind it and keeps the themed
+   background. THEME_INIT in app/layout.tsx stamps data-desktop before paint. */
+:root[data-desktop] body {
+  background: transparent;
+}
+
+/* Selection stays off for chrome (nav labels, buttons) but must work for
+   anything the user actually typed or wants to copy. */
+input,
+textarea,
+[contenteditable="true"],
+.select-text {
+  user-select: text;
 }
 
 /* The signature gradient, as text. */
@@ -100,6 +121,40 @@ body {
   color: transparent;
 }
 
+/* macOS drag regions. Anything interactive inside a drag area — button,
+   link, input, anything with onClick — must opt back out with .no-drag, or
+   the pointer is consumed by window-dragging instead of reaching it, with
+   no visual sign anything is wrong. */
+.drag-region {
+  -webkit-app-region: drag;
+}
+.no-drag {
+  -webkit-app-region: no-drag;
+}
+
+/* Overlay scrollbars: keep the track invisible and only tint the thumb on
+   hover. Deliberately no scrollbar-gutter: stable here — applied to `*` it
+   reserves 8px on the root itself, which is a permanent gap in the window
+   the desktop build's vibrancy shows straight through, whether or not
+   anything is scrollable. */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+*::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 9999px;
+}
+*:hover::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--color-foreground) 20%, transparent);
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--color-foreground) 35%, transparent);
+}
+
 /* Texture on the inverted card — felt more than seen. */
 .dot-texture {
   background-image: radial-gradient(circle, #fff 1px, transparent 1px);
@@ -108,7 +163,7 @@ body {
 }
 
 @keyframes fade-up {
-  from { opacity: 0; transform: translateY(14px); }
+  from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: none; }
 }
 @keyframes pulse-dot {
@@ -117,7 +172,7 @@ body {
 }
 
 .animate-fade-up {
-  animation: fade-up 0.7s var(--ease-out-soft) both;
+  animation: fade-up 0.18s var(--ease-out-soft) both;
 }
 .animate-pulse-dot {
   animation: pulse-dot 2s ease-in-out infinite;
@@ -184,6 +239,14 @@ button {
   *::before,
   *::after {
     animation: none !important;
+    transition: none !important;
+  }
+
+  /* The `*` selector above doesn't reach UA-generated pseudo-elements like
+     the range thumb, so its hover/active scale transition needs its own
+     override. */
+  .timeline-range::-webkit-slider-thumb,
+  .timeline-range::-moz-range-thumb {
     transition: none !important;
   }
 }

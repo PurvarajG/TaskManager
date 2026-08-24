@@ -5,7 +5,7 @@ import { useTasks } from "@/lib/store-context";
 import { fmt, PRIORITY_LABEL } from "@/lib/format";
 import { DURATIONS, type Priority, type RecurrenceFreq } from "@/lib/types";
 import SidePanel from "./ui/SidePanel";
-import { Field, inputClass, SavingInput } from "./ui/Field";
+import { Field, inputClass, selectClass, SavingInput } from "./ui/Field";
 import TaskTime from "./TaskTime";
 import SubtaskList from "./SubtaskList";
 
@@ -81,7 +81,7 @@ export default function TaskPanel() {
               id="task-project"
               value={task.projectId ?? ""}
               onChange={(e) => patchTask(task.id, { projectId: e.target.value })}
-              className={inputClass}
+              className={selectClass}
             >
               <option value="">No project</option>
               {projects
@@ -100,7 +100,7 @@ export default function TaskPanel() {
               value={task.stageId ?? ""}
               disabled={!task.projectId}
               onChange={(e) => patchTask(task.id, { stageId: e.target.value })}
-              className={`${inputClass} disabled:opacity-50`}
+              className={`${selectClass} disabled:opacity-50`}
             >
               {!task.projectId && <option value="">Needs a project</option>}
               {stages.map((s) => (
@@ -206,7 +206,7 @@ export default function TaskPanel() {
               onChange={(e) =>
                 patchTask(task.id, { priority: Number(e.target.value) as Priority })
               }
-              className={inputClass}
+              className={selectClass}
             >
               <option value={0}>None</option>
               {[1, 2, 3].map((p) => (
@@ -244,7 +244,7 @@ export default function TaskPanel() {
                   : undefined,
               })
             }
-            className={inputClass}
+            className={selectClass}
           >
             <option value="">Never</option>
             <option value="daily">Daily</option>

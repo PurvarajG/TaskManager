@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { inputClass } from "@/components/ui/Field";
+import { inputClass, selectClass } from "@/components/ui/Field";
 import { useTasks } from "@/lib/store-context";
 
 /**
@@ -72,7 +72,7 @@ export default function QuickAddActivity() {
             value={categoryId}
             onChange={(e) => setCategoryId(e.target.value)}
             aria-label="Category"
-            className={inputClass}
+            className={selectClass}
           >
             {activeCategories.map((c) => (
               <option key={c.id} value={c.id}>

@@ -43,7 +43,7 @@ next-env.d.ts
 # personal task data — never commit
 /data
 
-# local PGlite database (dev only; real deploys use POSTGRES_URL/DATABASE_URL)
+# local PGlite database used by browser-only development
 /.data
 
 # Editor/sync duplicate artifacts ("file 2.ts")

@@ -41,10 +41,10 @@ app name is unchanged, the userData path is unchanged, the PGLITE_DIR passed to 
 unchanged, and the legacy migration still cannot overwrite an existing Tempo database. Confirm
 by reading the code and by listing (never modifying) the real directory.
 
-**Environment blanking.** The packaged app deliberately blanks POSTGRES_URL, DATABASE_URL,
-SESSION_SECRET, and APP_PASSWORD so a developer's .env.local can never leak into a shipped
-build and point it at production data. Verify every one of those is still blanked in the child
-env, and that any newly added env var follows the same rule.
+**Environment isolation.** The packaged app must set PGLITE_DIR to its user-data directory;
+the data layer is PGlite-only, so ambient remote-database and login variables have no runtime
+effect. Verify CALENDAR_FEED_SECRET and the iCloud credentials come from settings.json rather
+than an ambient .env file, and that PGLITE_DIR still points at the user-data directory.
 
 **Server start mode.** The child runs `next start` when packaged and `next dev` when not,
 keyed on `app.isPackaged`. Verify a packaged build cannot land in dev mode.

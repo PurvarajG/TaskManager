@@ -12,11 +12,13 @@ describe("calendar feed settings", () => {
     expect(screen.queryByRole("button", { name: /copy/i })).not.toBeInTheDocument();
   });
 
-  test("shows a subscribable webcal URL carrying the token", () => {
+  test("shows a subscribable URL carrying the token", () => {
     render(<CalendarFeed token="s3cret-token" />);
 
     const field = screen.getByRole("textbox") as HTMLInputElement;
-    expect(field.value).toBe(`webcal://${window.location.host}/api/calendar-feed?token=s3cret-token`);
+    expect(field.value).toBe(
+      `${window.location.protocol}//${window.location.host}/api/calendar-feed?token=s3cret-token`,
+    );
     expect(field).toHaveAttribute("readonly");
   });
 
@@ -35,7 +37,7 @@ describe("calendar feed settings", () => {
     await userEvent.click(screen.getByRole("button", { name: /copy/i }));
 
     expect(writeText).toHaveBeenCalledWith(
-      `webcal://${window.location.host}/api/calendar-feed?token=s3cret-token`,
+      `${window.location.protocol}//${window.location.host}/api/calendar-feed?token=s3cret-token`,
     );
     expect(await screen.findByRole("button", { name: /copied/i })).toBeInTheDocument();
   });

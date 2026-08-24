@@ -1,23 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-/**
- * The one guard that holds regardless of env-file precedence: LAB_MODE must
- * never be allowed to run against a real connection string.
- */
-test("LAB_MODE refuses to start when a remote database is configured", async () => {
+test("LAB_MODE uses local PGlite even when a remote database is configured", async () => {
   process.env.LAB_MODE = "1";
   process.env.POSTGRES_URL = "postgres://x";
+  process.env.PGLITE_DIR = "memory://";
   try {
     const db = await import("../lib/db");
     db.resetDriverForTests();
-    await assert.rejects(
-      () => db.query("select 1"),
-      /LAB_MODE is set but a remote database is configured/,
-    );
+    const rows = await db.query<{ value: number }>("select 1 as value");
+    assert.equal(rows[0]?.value, 1);
   } finally {
     delete process.env.LAB_MODE;
     delete process.env.POSTGRES_URL;
+    delete process.env.PGLITE_DIR;
     (await import("../lib/db")).resetDriverForTests();
   }
 });

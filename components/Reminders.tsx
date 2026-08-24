@@ -36,7 +36,11 @@ export default function Reminders() {
   const dismissed = state === null || state === "unsupported" || state.endsWith(":1");
 
   useEffect(() => {
-    if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+    // Electron notifications need no in-page permission — macOS prompts for
+    // that itself the first time one is shown. The web build still gates on
+    // the browser's Notification permission below.
+    const native = Boolean(window.tempo?.notify);
+    if (!native && (typeof Notification === "undefined" || Notification.permission !== "granted")) return;
 
     const check = () => {
       const now = new Date();
@@ -48,7 +52,11 @@ export default function Reminders() {
         if (t.dueTime !== hhmm) continue;
         if (fired.current.has(t.id)) continue;
         fired.current.add(t.id);
-        new Notification(t.title, { body: "Due now", tag: t.id });
+        if (window.tempo?.notify) {
+          window.tempo.notify(t.title, { body: "Due now", tag: t.id });
+        } else {
+          new Notification(t.title, { body: "Due now", tag: t.id });
+        }
       }
     };
 
@@ -67,6 +75,8 @@ export default function Reminders() {
     for (const notify of promptListeners) notify();
   }
 
+  // Electron notifications need no permission prompt at all.
+  if (typeof window !== "undefined" && window.tempo?.notify) return null;
   if (dismissed || permission !== "default") return null;
 
   return (

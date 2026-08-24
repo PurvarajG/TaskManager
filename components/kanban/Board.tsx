@@ -7,7 +7,7 @@ import type { Project, ProjectStage, StageKind } from "@/lib/types";
 import { STAGE_KINDS } from "@/lib/types";
 import Column from "./Column";
 import RemoveStageDialog from "./RemoveStageDialog";
-import { inputClass, labelClass } from "../ui/Field";
+import { inputClass, labelClass, selectClass } from "../ui/Field";
 
 export default function Board({ project, todayISO }: { project: Project; todayISO: string }) {
   const { tasks, stagesFor, moveTask, addStage } = useTasks();
@@ -142,7 +142,7 @@ function AddColumn({
           id="new-column-kind"
           value={kind}
           onChange={(e) => setKind(e.target.value as StageKind)}
-          className={inputClass}
+          className={selectClass}
         >
           {/* A second done column is refused by the server, so it isn't offered. */}
           {STAGE_KINDS.filter((k) => k !== "done").map((k) => (

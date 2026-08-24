@@ -6,7 +6,15 @@ export const labelClass =
   "font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground";
 
 export const inputClass =
-  "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus:border-accent/40 focus:ring-2 focus:ring-accent/20";
+  "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none transition-colors placeholder:text-muted-foreground/60 focus-visible:border-accent/40 focus-visible:ring-2 focus-visible:ring-accent/20";
+
+// <select> doesn't get Chromium's "always focus-visible on click" treatment
+// that text inputs do — it's judged like a button, so a mouse click never
+// matches :focus-visible. Combined with inputClass's outline-none, that left
+// selects with no focus indicator at all outside keyboard nav. Kept on plain
+// :focus instead, same as before this phase touched anything.
+export const selectClass =
+  "w-full rounded-lg border border-border bg-card px-3 py-2 text-sm outline-none transition-colors focus:border-accent/40 focus:ring-2 focus:ring-accent/20";
 
 export function Field({
   label,

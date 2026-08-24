@@ -34,7 +34,7 @@ test("the feed is a well-formed VCALENDAR with CRLF line endings", () => {
 
   const l = lines(feed);
   assert.ok(l.includes("VERSION:2.0"));
-  assert.ok(l.includes("PRODID:-//DayPlan//Task Feed//EN"));
+  assert.ok(l.includes("PRODID:-//Tempo//Task Feed//EN"));
   assert.ok(l.includes("BEGIN:VEVENT"));
   assert.ok(l.includes("END:VEVENT"));
 });

@@ -4,10 +4,12 @@ import { useState } from "react";
 import { useTasks } from "@/lib/store-context";
 
 export default function QuickAdd({
+  id,
   projectId,
   autoFocus = true,
   compact = false,
 }: {
+  id?: string;
   projectId?: string;
   autoFocus?: boolean;
   compact?: boolean;
@@ -39,6 +41,7 @@ export default function QuickAdd({
     >
       <div className="relative">
         <input
+          id={id}
           autoFocus={autoFocus}
           value={text}
           onChange={(e) => setText(e.target.value)}

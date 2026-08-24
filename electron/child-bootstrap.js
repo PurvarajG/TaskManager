@@ -18,3 +18,14 @@ if (process.platform === "darwin") {
     set: () => {},
   });
 }
+
+// electron/main.js kills this child on a normal quit, but a force-quit, a
+// crash, or `kill -9` on the main process skips that entirely — the child
+// gets reparented to launchd (ppid 1) and keeps running, still holding the
+// PGlite data directory open. PGlite has no real cross-process lock, so an
+// orphan left running this way silently corrupts the next launch's database
+// instead of merely failing to start. Polling ppid and exiting the moment
+// it becomes 1 bounds how long an orphan can live to one tick of this timer.
+setInterval(() => {
+  if (process.ppid === 1) process.exit(0);
+}, 3000).unref();

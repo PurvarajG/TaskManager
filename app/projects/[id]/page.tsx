@@ -46,7 +46,7 @@ export default function ProjectPage() {
 
       <h1 className="mt-5 flex items-center gap-3 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl">
         <span className="size-3 shrink-0 rounded-full" style={{ background: project.color }} />
-        {project.name}
+        <span className="select-text">{project.name}</span>
       </h1>
 
       {/* Plain counts, not a score: every figure here is recomputed from tasks,

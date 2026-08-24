@@ -8,7 +8,7 @@ import type { Task } from "./types";
  * updating it.
  */
 
-const PRODID = "-//DayPlan//Task Feed//EN";
+const PRODID = "-//Tempo//Task Feed//EN";
 
 /** RFC 5545 §3.3.11: backslash, semicolon, comma and newline are reserved in TEXT. */
 export function escapeIcsText(value: string): string {
@@ -82,6 +82,9 @@ function utcStamp(date: Date): string {
 function eventLines(task: Task, dtstamp: string): string[] {
   const lines = [
     "BEGIN:VEVENT",
+    // Deliberately still "@dayplan" after the Tempo rename: the UID has to be
+    // stable across refetches, and changing it would make Apple Calendar
+    // duplicate every event it has already imported.
     `UID:${task.id}@dayplan`,
     `DTSTAMP:${dtstamp}`,
   ];
@@ -118,7 +121,7 @@ export function buildIcsFeed(tasks: Task[], now = new Date()): string {
     `PRODID:${PRODID}`,
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    "X-WR-CALNAME:DayPlan Tasks",
+    "X-WR-CALNAME:Tempo Tasks",
     ...tasks.filter((task) => task.status === "open").flatMap((task) => eventLines(task, dtstamp)),
     "END:VCALENDAR",
   ];

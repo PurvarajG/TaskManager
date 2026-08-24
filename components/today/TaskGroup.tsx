@@ -46,7 +46,7 @@ export default function TaskGroup({
                       style={{ background: project.color }}
                     />
                   )}
-                  <span className="min-w-0 flex-1 truncate">{task.title}</span>
+                  <span className="select-text min-w-0 flex-1 truncate">{task.title}</span>
                   <span className="shrink-0 font-mono text-[10px] uppercase text-muted-foreground">
                     {fmt(task.minutes)}
                   </span>

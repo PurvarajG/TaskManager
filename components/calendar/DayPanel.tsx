@@ -6,6 +6,7 @@ import { externalEventLabel } from "@/lib/external-events-view";
 import { fmt, fmtDate, fmtTime } from "@/lib/format";
 import type { ExternalEvent } from "@/lib/icloud";
 import type { Task } from "@/lib/types";
+import { hasTextSelection } from "@/lib/selection";
 import SidePanel from "../ui/SidePanel";
 
 /**
@@ -63,8 +64,11 @@ export default function DayPanel({
                 <li key={task.id} className="rounded-xl border border-border bg-card p-3">
                   <div className="flex items-start gap-2">
                     <button
-                      onClick={() => openTask(task.id)}
-                      className={`min-w-0 flex-1 text-left text-sm font-medium hover:text-accent ${
+                      onClick={() => {
+                        if (hasTextSelection()) return;
+                        openTask(task.id);
+                      }}
+                      className={`select-text min-w-0 flex-1 text-left text-sm font-medium hover:text-accent ${
                         task.status === "done" ? "line-through opacity-60" : ""
                       }`}
                     >

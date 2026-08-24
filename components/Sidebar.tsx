@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useTasks } from "@/lib/store-context";
 import { PROJECT_COLORS } from "@/lib/types";
 import ThemeToggle from "./ThemeToggle";
-import LogoutButton from "./LogoutButton";
 
 export const NAV = [
   { key: "today", label: "Today", href: "/" },
@@ -22,7 +21,7 @@ export const NAV = [
 /** The one nav entry that can never be hidden — without it there is no way to undo hiding. */
 export const UNHIDEABLE_NAV_KEY = "settings";
 
-function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+function NavLinks() {
   const pathname = usePathname();
   const router = useRouter();
   const { tasks, projects, addProject, deleteProject, settings } = useTasks();
@@ -47,7 +46,6 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     setName("");
     setAdding(false);
     router.push(`/projects/${project.id}`);
-    onNavigate?.();
   }
 
   return (
@@ -58,19 +56,32 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
           const trimmed = q.trim();
           if (!trimmed) return;
           router.push(`/search?q=${encodeURIComponent(trimmed)}`);
-          onNavigate?.();
         }}
-        className="mb-6"
+        className="relative mb-6"
       >
+        <svg
+          aria-hidden
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
         <input
+          id="tempo-sidebar-search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search"
-          className="h-9 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-accent/40 focus:ring-2 focus:ring-accent/20"
+          className="h-7 w-full rounded-full border-none bg-muted/60 pl-7 pr-3 text-sm outline-none placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-accent/20"
         />
       </form>
 
-      <nav className="flex flex-col gap-1">
+      <nav className="flex flex-col gap-0.5">
         {/* settings is null before the first fetch — show the full nav rather than flashing an empty sidebar. */}
         {(settings ? NAV.filter((item) => !settings.hiddenNavItems.includes(item.key)) : NAV).map((item) => {
           const active = pathname === item.href;
@@ -78,11 +89,10 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             <Link
               key={item.href}
               href={item.href}
-              onClick={onNavigate}
               aria-current={active ? "page" : undefined}
-              className={`rounded-lg px-3 py-2 text-sm transition-colors ${
+              className={`rounded-lg px-2.5 py-1 text-[13px] transition-colors ${
                 active
-                  ? "bg-muted font-semibold text-foreground"
+                  ? "bg-accent text-accent-foreground"
                   : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
               }`}
             >
@@ -94,7 +104,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 
       <div className="mt-8">
         <div className="flex items-center justify-between px-3">
-          <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+          <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
             Projects
           </span>
           <button
@@ -115,10 +125,9 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                 <div key={p.id} className="group relative flex items-center">
                   <Link
                     href={`/projects/${p.id}`}
-                    onClick={onNavigate}
-                    className={`flex flex-1 items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
+                    className={`flex flex-1 items-center gap-2.5 rounded-lg px-2.5 py-1 text-[13px] transition-colors ${
                       active
-                        ? "bg-muted font-semibold text-foreground"
+                        ? "bg-accent text-accent-foreground"
                         : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                     }`}
                   >
@@ -126,9 +135,11 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                       className="size-2 shrink-0 rounded-full"
                       style={{ background: p.color }}
                     />
-                    <span className="truncate">{p.name}</span>
+                    <span className="select-text truncate">{p.name}</span>
                     {(openCounts.get(p.id) ?? 0) > 0 && (
-                      <span className="ml-auto shrink-0 font-mono text-[10px] text-muted-foreground">
+                      <span
+                        className={`ml-auto shrink-0 font-mono text-[10px] ${active ? "text-accent-foreground/70" : "text-muted-foreground"}`}
+                      >
                         {openCounts.get(p.id)}
                       </span>
                     )}
@@ -172,72 +183,26 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 /**
- * Deliberately quiet on desktop: search, five smart views, projects, done.
- * Below `sm` it collapses to a top bar with a slide-over so phones keep full
- * navigation without losing the task list to chrome.
+ * A macOS source list: search, five smart views, projects, done. The window
+ * has a 900px minWidth floor, well above the old `sm` breakpoint this used
+ * to collapse at, so there is no narrower state left to design for.
  */
 export default function Sidebar() {
-  const [open, setOpen] = useState(false);
-
   return (
-    <>
-      <aside className="hidden w-60 shrink-0 border-r border-border px-5 py-10 sm:flex sm:flex-col">
-        <div className="flex items-center justify-between px-1">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="size-6 rounded-lg bg-gradient-to-br from-accent to-accent-secondary shadow-accent" />
-            <span className="font-display text-lg">Today</span>
-          </Link>
+    <aside className="flex w-56 shrink-0 flex-col border-r border-border px-5 pt-9 pb-10">
+      <div className="drag-region flex items-center justify-between px-1">
+        <Link href="/" className="no-drag flex items-center gap-2.5">
+          <span className="size-6 rounded-lg bg-gradient-to-br from-accent to-accent-secondary shadow-accent" />
+          <span className="font-display text-lg">Today</span>
+        </Link>
+        <div className="no-drag">
           <ThemeToggle />
         </div>
+      </div>
 
-        <div className="mt-10 flex-1">
-          <NavLinks />
-        </div>
-        <div className="border-t border-border pt-3">
-          <LogoutButton />
-        </div>
-      </aside>
-
-      <header className="flex items-center justify-between border-b border-border px-4 py-3 sm:hidden">
-        <button
-          onClick={() => setOpen(true)}
-          aria-label="Open menu"
-          className="flex size-9 items-center justify-center rounded-lg text-foreground hover:bg-muted"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M3 6h18M3 12h18M3 18h18" />
-          </svg>
-        </button>
-        <Link href="/" className="flex items-center gap-2">
-          <span className="size-5 rounded-md bg-gradient-to-br from-accent to-accent-secondary" />
-          <span className="font-display text-base">Today</span>
-        </Link>
-        <ThemeToggle />
-      </header>
-
-      {open && (
-        <div className="fixed inset-0 z-50 sm:hidden">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-72 overflow-y-auto bg-background px-5 py-6 shadow-xl">
-            <div className="flex items-center justify-between px-1">
-              <span className="font-display text-lg">Today</span>
-              <button
-                onClick={() => setOpen(false)}
-                aria-label="Close menu"
-                className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted"
-              >
-                ×
-              </button>
-            </div>
-            <div className="mt-8">
-              <NavLinks onNavigate={() => setOpen(false)} />
-            </div>
-            <div className="mt-8 border-t border-border pt-3">
-              <LogoutButton onLogout={() => setOpen(false)} />
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+      <div className="mt-10 flex-1">
+        <NavLinks />
+      </div>
+    </aside>
   );
 }

@@ -3,7 +3,6 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import type { Driver, Tx } from "./db";
 import {
-  AUTH_SETTINGS_ID,
   DEFAULT_ACTIVITIES,
   DEFAULT_CATEGORIES,
   DEFAULT_STAGES,
@@ -45,7 +44,6 @@ export async function backfill(tx: Tx): Promise<void> {
   await backfillTaskStages(tx);
   await seedGeneralNote(tx);
   await seedTrackingSettings(tx);
-  await seedAuthSettings(tx);
   await seedDefaultCategories(tx);
   await seedDefaultActivities(tx);
   await migrateTimeEntriesToSegments(tx);
@@ -113,14 +111,6 @@ async function seedTrackingSettings(tx: Tx): Promise<void> {
     `insert into tracking_settings (id) values ($1)
      on conflict (id) do nothing`,
     [TRACKING_SETTINGS_ID],
-  );
-}
-
-async function seedAuthSettings(tx: Tx): Promise<void> {
-  await tx.query(
-    `insert into auth_settings (id) values ($1)
-     on conflict (id) do nothing`,
-    [AUTH_SETTINGS_ID],
   );
 }
 

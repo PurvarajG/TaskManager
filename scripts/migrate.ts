@@ -1,5 +1,5 @@
 /**
- * Runs the startup migration against the configured database, deliberately.
+ * Runs the startup migration against the local PGlite database, deliberately.
  *
  *   npx tsx --env-file=.env.local scripts/migrate.ts
  *
@@ -10,8 +10,7 @@
 import { query } from "../lib/db";
 
 async function main() {
-  const url = process.env.POSTGRES_URL || process.env.DATABASE_URL;
-  console.log(url ? `Migrating ${new URL(url).host}` : "Migrating the local PGlite database");
+  console.log("Migrating the local PGlite database");
 
   const started = Date.now();
   await query("select 1");

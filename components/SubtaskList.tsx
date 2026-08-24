@@ -27,7 +27,7 @@ export default function SubtaskList({ task }: { task: Task }) {
               }`}
             />
             <span
-              className={`flex-1 text-sm ${s.done ? "text-muted-foreground line-through" : ""}`}
+              className={`select-text flex-1 text-sm ${s.done ? "text-muted-foreground line-through" : ""}`}
             >
               {s.title}
             </span>

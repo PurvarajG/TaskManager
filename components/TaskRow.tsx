@@ -5,6 +5,7 @@ import { useTasks } from "@/lib/store-context";
 import { daysBetween } from "@/lib/parse";
 import { fmt, fmtDate, fmtTime, PRIORITY_LABEL } from "@/lib/format";
 import { STALE_AFTER_DAYS, type Task } from "@/lib/types";
+import { hasTextSelection } from "@/lib/selection";
 import TimerButton from "./TimerButton";
 
 export default function TaskRow({
@@ -83,8 +84,11 @@ export default function TaskRow({
       <div className="min-w-0 flex-1">
         {/* The title is the way into the full editor, from every list. */}
         <button
-          onClick={() => openTask(task.id)}
-          className={`block w-full truncate text-left font-semibold tracking-[-0.01em] transition-colors hover:text-accent ${compact ? "text-sm" : "text-[15px]"} ${
+          onClick={() => {
+            if (hasTextSelection()) return;
+            openTask(task.id);
+          }}
+          className={`select-text block w-full truncate text-left font-semibold tracking-[-0.01em] transition-colors hover:text-accent ${compact ? "text-sm" : "text-[15px]"} ${
             done ? "line-through" : ""
           }`}
         >
@@ -154,7 +158,7 @@ export default function TaskRow({
                       s.done ? "border-accent bg-accent" : "border-border hover:border-accent"
                     }`}
                   />
-                  <span className={`flex-1 truncate text-sm ${s.done ? "text-muted-foreground line-through" : ""}`}>
+                  <span className={`select-text flex-1 truncate text-sm ${s.done ? "text-muted-foreground line-through" : ""}`}>
                     {s.title}
                   </span>
                   <button

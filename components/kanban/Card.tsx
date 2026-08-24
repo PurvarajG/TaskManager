@@ -5,6 +5,7 @@ import { useTasks } from "@/lib/store-context";
 import { fmt, fmtTime, PRIORITY_LABEL } from "@/lib/format";
 import { fmtDate } from "@/lib/format";
 import type { ProjectStage, Task } from "@/lib/types";
+import { hasTextSelection } from "@/lib/selection";
 import TimerButton from "../TimerButton";
 
 /**
@@ -48,8 +49,11 @@ export default function Card({
     >
       <div className="flex items-start gap-2">
         <button
-          onClick={() => openTask(task.id)}
-          className={`min-w-0 flex-1 text-left text-sm font-semibold leading-snug tracking-[-0.01em] transition-colors hover:text-accent ${
+          onClick={() => {
+            if (hasTextSelection()) return;
+            openTask(task.id);
+          }}
+          className={`select-text min-w-0 flex-1 text-left text-sm font-semibold leading-snug tracking-[-0.01em] transition-colors hover:text-accent ${
             task.status === "done" ? "line-through" : ""
           }`}
         >

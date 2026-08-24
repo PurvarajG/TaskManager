@@ -129,8 +129,7 @@ export type TrackingSettingsRow = {
   updated_at: string;
 };
 
-/** Postgres returns DATE columns as JS Date objects (via postgres.js); PGlite
- * returns them as strings. Normalize both to a plain YYYY-MM-DD. */
+/** Normalize a database DATE value to a plain YYYY-MM-DD. */
 export function isoDate(v: unknown): string {
   if (v instanceof Date) return v.toISOString().slice(0, 10);
   return String(v).slice(0, 10);

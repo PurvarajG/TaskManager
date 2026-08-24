@@ -1,4 +1,4 @@
-import { fireEvent, screen } from "@testing-library/react";
+import { screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import Sidebar from "@/components/Sidebar";
 import { emptyWorkspace, renderWorkspace } from "./harness";
@@ -39,28 +39,15 @@ describe("sidebar nav visibility", () => {
     renderWorkspace(<Sidebar />);
     // Right after render, the tracking-settings fetch hasn't resolved yet —
     // the sidebar must still show every entry, Trash included.
-    expect(screen.getAllByRole("link", { name: "Trash" }).length).toBeGreaterThan(0);
-    expect(screen.getAllByRole("link", { name: "Settings" }).length).toBeGreaterThan(0);
+    expect(screen.getByRole("link", { name: "Trash" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
   });
 
-  it("hides an entry on the desktop nav once it's in hiddenNavItems", async () => {
+  it("hides an entry on the nav once it's in hiddenNavItems", async () => {
     renderWorkspace(<Sidebar />, withHiddenNavItems(["trash"]));
 
     await screen.findByRole("link", { name: "Next 7 Days" });
     expect(screen.queryByRole("link", { name: "Trash" })).toBeNull();
     expect(screen.getByRole("link", { name: "Settings" })).toBeInTheDocument();
-  });
-
-  it("hides the same entry in the mobile slide-over, and it survives opening it", async () => {
-    renderWorkspace(<Sidebar />, withHiddenNavItems(["trash"]));
-
-    await screen.findByRole("link", { name: "Next 7 Days" });
-    fireEvent.click(screen.getByLabelText("Open menu"));
-    await screen.findByLabelText("Close menu");
-
-    // The slide-over renders its own NavLinks, so once open there are two
-    // "Next 7 Days" links (desktop + mobile) but Trash stays hidden in both.
-    expect(screen.getAllByRole("link", { name: "Next 7 Days" }).length).toBe(2);
-    expect(screen.queryByRole("link", { name: "Trash" })).toBeNull();
   });
 });
