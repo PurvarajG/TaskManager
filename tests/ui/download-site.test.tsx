@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import worker from "../../site/worker/index.js";
 
 const downloadUrl =
   "https://github.com/PurvarajG/TaskManager/releases/latest/download/Tempo-latest-arm64.dmg";
@@ -30,6 +31,21 @@ describe("Tempo download site", () => {
     ]);
 
     expect(packageJson).toContain('"build": "node build.mjs"');
-    expect(worker).toContain("env.ASSETS.fetch(request)");
+    expect(worker).toContain("env.ASSETS.fetch");
+  });
+
+  it("serves the static document for the public root URL", async () => {
+    const fetchAsset = vi.fn().mockResolvedValue(new Response("Tempo"));
+    const response = await worker.fetch(
+      new Request("https://tempo-download.purvarajg1.chatgpt.site/"),
+      { ASSETS: { fetch: fetchAsset } },
+    );
+
+    expect(fetchAsset).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "https://tempo-download.purvarajg1.chatgpt.site/index.html",
+      }),
+    );
+    expect(await response.text()).toBe("Tempo");
   });
 });
