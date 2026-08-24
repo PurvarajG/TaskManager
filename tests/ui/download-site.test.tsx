@@ -18,6 +18,14 @@ describe("Tempo download site", () => {
     expect(page).toContain("No account");
   });
 
+  it("opens the DMG in a separate browser context", async () => {
+    const page = await readFile("site/index.html", "utf8");
+
+    expect(page).toMatch(
+      /class="download-button"[\s\S]*?Tempo-latest-arm64\.dmg"[\s\S]*?target="_blank"[\s\S]*?rel="noopener noreferrer"/,
+    );
+  });
+
   it("publishes the DMG using the stable latest-download filename", async () => {
     const workflow = await readFile(".github/workflows/release.yml", "utf8");
 
