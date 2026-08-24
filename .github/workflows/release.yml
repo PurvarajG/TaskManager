@@ -26,7 +26,7 @@ jobs:
         run: npm ci
 
       - name: Build the Apple Silicon application
-        run: npm run electron:build
+        run: npm run electron:build -- --publish never
 
       - name: Prepare the stable release asset
         shell: bash

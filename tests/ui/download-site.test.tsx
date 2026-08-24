@@ -30,7 +30,7 @@ describe("Tempo download site", () => {
     const workflow = await readFile(".github/workflows/release.yml", "utf8");
 
     expect(workflow).toContain('tags: ["v*"]');
-    expect(workflow).toContain("npm run electron:build");
+    expect(workflow).toContain("npm run electron:build -- --publish never");
     expect(workflow).toContain("Tempo-latest-arm64.dmg");
     expect(workflow).toContain("softprops/action-gh-release");
   });
