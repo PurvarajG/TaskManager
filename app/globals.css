@@ -20,8 +20,35 @@
   --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 
-  --shadow-accent: 0 4px 14px rgba(0, 82, 255, 0.25);
-  --shadow-accent-lg: 0 8px 24px rgba(0, 82, 255, 0.35);
+  /* Derived from the current --color-accent (a custom property reference
+     resolves at use-time, not definition-time) so these automatically
+     follow the accent token in every theme instead of hardcoding the
+     light-mode blue.
+
+     Lightning CSS compiles a pre-color-mix fallback for these behind
+     `@supports (color: color-mix(in lab, red, red))`, and that fallback IS
+     the light-mode blue this phase set out to eliminate. Left as-is
+     deliberately: it is unreachable dead weight, not a live regression.
+     Every engine this app ships to — Chromium in the Electron target, and
+     Chrome/Safari/Firefox for the web build — has supported color-mix()
+     since 2023 (well before this app existed), so the @supports check
+     always passes and the branch above it never executes. Hand-writing a
+     theme-aware fallback would mean re-duplicating a --dark-accent lookup
+     here, the exact drift risk this phase's palette de-dup exists to
+     prevent, for a branch no shipped browser can reach. */
+  --shadow-accent: 0 4px 14px color-mix(in srgb, var(--color-accent) 25%, transparent);
+  --shadow-accent-lg: 0 8px 24px color-mix(in srgb, var(--color-accent) 35%, transparent);
+
+  /* For elevated surfaces whose own background is INVERTED relative to the
+     page (the Up Next card: bg-foreground on a bg-background page). A plain
+     black shadow (Tailwind's shadow-xl) reads fine in light mode, where the
+     page is light and --color-foreground is dark, but is invisible in dark
+     mode, where the page is already near-black. Deriving from
+     --color-foreground instead of a fixed black self-adjusts: dark
+     (low-lightness) foreground in light mode still casts a dark shadow, and
+     light (high-lightness) foreground in dark mode casts a visible pale
+     glow against the dark page instead of vanishing into it. */
+  --shadow-elevated: 0 20px 50px -12px color-mix(in srgb, var(--color-foreground) 35%, transparent);
 
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
 
@@ -37,50 +64,78 @@
   --color-cat-neutral: #737373;
 }
 
+/* Single source of truth for the dark palette's VALUES. Neither selector
+   below can apply unconditionally — one is gated by the OS media query, the
+   other by the explicit data-theme toggle — so the two rule bodies below
+   still have to list the same 17 properties each. But every value here is a
+   var() reference into this block, so the two can never drift out of sync
+   with each other; change a color once, both paths pick it up. */
+:root {
+  --dark-background: #0b0d10;
+  --dark-foreground: #f1f5f9;
+  --dark-muted: #171a1f;
+  --dark-muted-foreground: #8b95a3;
+  --dark-accent: #4d7cff;
+  --dark-accent-secondary: #7c9bff;
+  --dark-accent-foreground: #ffffff;
+  --dark-border: #23272e;
+  --dark-card: #14171c;
+
+  /* Lighter, less saturated than the light palette so tints stay legible on #0b0d10. */
+  --dark-cat-indigo: #818cf8;
+  --dark-cat-slate: #94a3b8;
+  --dark-cat-violet: #a78bfa;
+  --dark-cat-emerald: #34d399;
+  --dark-cat-amber: #fbbf24;
+  --dark-cat-rose: #fb7185;
+  --dark-cat-cyan: #22d3ee;
+  --dark-cat-neutral: #a3a3a3;
+}
+
 /* Dark palette follows the OS by default; an explicit toggle (data-theme on
-   <html>) always wins over that default in either direction. */
+   <html>) always wins over that default in either direction. Both blocks
+   below assign from the --dark-* set above — see the comment on that block. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --color-background: #0b0d10;
-    --color-foreground: #f1f5f9;
-    --color-muted: #171a1f;
-    --color-muted-foreground: #8b95a3;
-    --color-accent: #4d7cff;
-    --color-accent-secondary: #7c9bff;
-    --color-accent-foreground: #ffffff;
-    --color-border: #23272e;
-    --color-card: #14171c;
+    --color-background: var(--dark-background);
+    --color-foreground: var(--dark-foreground);
+    --color-muted: var(--dark-muted);
+    --color-muted-foreground: var(--dark-muted-foreground);
+    --color-accent: var(--dark-accent);
+    --color-accent-secondary: var(--dark-accent-secondary);
+    --color-accent-foreground: var(--dark-accent-foreground);
+    --color-border: var(--dark-border);
+    --color-card: var(--dark-card);
 
-    /* Lighter, less saturated than the light palette so tints stay legible on #0b0d10. */
-    --color-cat-indigo: #818cf8;
-    --color-cat-slate: #94a3b8;
-    --color-cat-violet: #a78bfa;
-    --color-cat-emerald: #34d399;
-    --color-cat-amber: #fbbf24;
-    --color-cat-rose: #fb7185;
-    --color-cat-cyan: #22d3ee;
-    --color-cat-neutral: #a3a3a3;
+    --color-cat-indigo: var(--dark-cat-indigo);
+    --color-cat-slate: var(--dark-cat-slate);
+    --color-cat-violet: var(--dark-cat-violet);
+    --color-cat-emerald: var(--dark-cat-emerald);
+    --color-cat-amber: var(--dark-cat-amber);
+    --color-cat-rose: var(--dark-cat-rose);
+    --color-cat-cyan: var(--dark-cat-cyan);
+    --color-cat-neutral: var(--dark-cat-neutral);
   }
 }
 :root[data-theme="dark"] {
-  --color-background: #0b0d10;
-  --color-foreground: #f1f5f9;
-  --color-muted: #171a1f;
-  --color-muted-foreground: #8b95a3;
-  --color-accent: #4d7cff;
-  --color-accent-secondary: #7c9bff;
-  --color-accent-foreground: #ffffff;
-  --color-border: #23272e;
-  --color-card: #14171c;
+  --color-background: var(--dark-background);
+  --color-foreground: var(--dark-foreground);
+  --color-muted: var(--dark-muted);
+  --color-muted-foreground: var(--dark-muted-foreground);
+  --color-accent: var(--dark-accent);
+  --color-accent-secondary: var(--dark-accent-secondary);
+  --color-accent-foreground: var(--dark-accent-foreground);
+  --color-border: var(--dark-border);
+  --color-card: var(--dark-card);
 
-  --color-cat-indigo: #818cf8;
-  --color-cat-slate: #94a3b8;
-  --color-cat-violet: #a78bfa;
-  --color-cat-emerald: #34d399;
-  --color-cat-amber: #fbbf24;
-  --color-cat-rose: #fb7185;
-  --color-cat-cyan: #22d3ee;
-  --color-cat-neutral: #a3a3a3;
+  --color-cat-indigo: var(--dark-cat-indigo);
+  --color-cat-slate: var(--dark-cat-slate);
+  --color-cat-violet: var(--dark-cat-violet);
+  --color-cat-emerald: var(--dark-cat-emerald);
+  --color-cat-amber: var(--dark-cat-amber);
+  --color-cat-rose: var(--dark-cat-rose);
+  --color-cat-cyan: var(--dark-cat-cyan);
+  --color-cat-neutral: var(--dark-cat-neutral);
 }
 
 body {
@@ -220,9 +275,12 @@ textarea,
   background: color-mix(in srgb, var(--color-foreground) 35%, transparent);
 }
 
-/* Texture on the inverted card — felt more than seen. */
+/* Texture on the inverted card (bg-foreground/text-background) — felt more
+   than seen. Dot colour is --color-background, the inverted card's own text
+   colour, so it stays a light dot on the light-mode dark card and a dark dot
+   on the dark-mode light card instead of hardcoding white. */
 .dot-texture {
-  background-image: radial-gradient(circle, #fff 1px, transparent 1px);
+  background-image: radial-gradient(circle, var(--color-background) 1px, transparent 1px);
   background-size: 32px 32px;
   opacity: 0.04;
 }

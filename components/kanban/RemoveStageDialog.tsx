@@ -36,6 +36,9 @@ export default function RemoveStageDialog({
       aria-label={`Remove the ${stage.name} column`}
       className="fixed inset-0 z-[60] flex items-center justify-center p-4"
     >
+      {/* Scrim stays a literal black overlay, not a token: it dims whatever is behind it
+         (page content in light OR dark theme), so it must be theme-invariant rather than
+         following --color-foreground/--color-background, which would invert its effect. */}
       <div className="absolute inset-0 bg-black/30" onClick={onClose} aria-hidden>
         {/* See components/ui/SidePanel.tsx for why this spacer exists. */}
         <div className="no-drag h-9" />

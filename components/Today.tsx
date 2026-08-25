@@ -124,7 +124,7 @@ export default function Today() {
           {/* The one thing. Inverted so it can't be confused with the list. */}
           {upNext && (
             <section className="mt-10 lg:mt-4">
-              <div className="relative overflow-hidden rounded-2xl bg-foreground p-7 text-background shadow-xl lg:rounded-xl lg:p-4">
+              <div className="relative overflow-hidden rounded-2xl bg-foreground p-7 text-background shadow-elevated lg:rounded-xl lg:p-4">
                 <div className="dot-texture pointer-events-none absolute inset-0" />
                 <div className="relative">
                   <span className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-accent to-accent-secondary px-3.5 py-1.5">

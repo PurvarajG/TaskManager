@@ -67,10 +67,18 @@ let toggleTimerMenuItem = null;
 // Shown immediately on window creation, before the local server is even
 // spawned, so the app doesn't sit on a blank white window for however long
 // waitForServer() takes to resolve.
+// Respects the OS colour scheme via a media query in the inline CSS (rather
+// than nativeTheme.shouldUseDarkColors) so the splash never has to be
+// re-rendered if the OS theme changes between launches — the same query the
+// app's own dark palette uses in app/globals.css.
 const SPLASH_HTML = `<!doctype html><html><head><meta charset="utf-8"><style>
 html, body { margin: 0; height: 100%; }
 body { display: flex; align-items: center; justify-content: center; background: #fafafa; }
 .mark { width: 56px; height: 56px; border-radius: 16px; background: linear-gradient(135deg, #0052ff, #4d7cff); }
+@media (prefers-color-scheme: dark) {
+  body { background: #0b0d10; }
+  .mark { background: linear-gradient(135deg, #4d7cff, #7c9bff); }
+}
 </style></head><body><div class="mark"></div></body></html>`;
 const SPLASH_URL = `data:text/html;charset=utf-8,${encodeURIComponent(SPLASH_HTML)}`;
 

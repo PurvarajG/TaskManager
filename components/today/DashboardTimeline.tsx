@@ -190,7 +190,7 @@ function TimeBar({ task, color, column, onOpenTask }: { task: Task; color: strin
   const left = Math.max(0, ((start - DAY_START_HOUR * 60) / DAY_MINUTES) * 100);
   const right = Math.min(100, ((start + task.minutes - DAY_START_HOUR * 60) / DAY_MINUTES) * 100);
   if (right <= 0 || left >= 100) return null;
-  return <button type="button" data-testid="timeline-bar" onClick={() => onOpenTask(task.id)} title={task.title} className={`absolute rounded px-2 text-left text-[10px] font-medium text-white shadow-sm transition-opacity hover:opacity-85 ${task.status === "done" ? "opacity-55 line-through" : ""}`} style={{ left: `${left}%`, width: `${Math.max(right - left, 2)}%`, top: 4 + column * 26, height: 22, backgroundColor: color }}><span className="block truncate">{task.title}</span></button>;
+  return <button type="button" data-testid="timeline-bar" onClick={() => onOpenTask(task.id)} title={task.title} className={`absolute rounded px-2 text-left text-[10px] font-medium text-[color:var(--color-accent-foreground)] shadow-sm transition-opacity hover:opacity-85 ${task.status === "done" ? "opacity-55 line-through" : ""}`} style={{ left: `${left}%`, width: `${Math.max(right - left, 2)}%`, top: 4 + column * 26, height: 22, backgroundColor: color }}><span className="block truncate">{task.title}</span></button>;
 }
 
 /**
@@ -337,7 +337,7 @@ function DayTimeline({
 }
 
 const barChrome = (done: boolean) =>
-  `truncate rounded px-2 text-left text-[10px] font-medium text-white shadow-sm transition-opacity hover:opacity-85 ${done ? "opacity-55 line-through" : ""}`;
+  `truncate rounded px-2 text-left text-[10px] font-medium text-[color:var(--color-accent-foreground)] shadow-sm transition-opacity hover:opacity-85 ${done ? "opacity-55 line-through" : ""}`;
 
 /** The two grab handles shared by `SpanBar` and day-scale `TaskButton`, inset at the bar's edges. */
 function TimelineHandles({ taskId, bind }: { taskId: string; bind: (taskId: string, mode: TimelineDragMode) => TimelineDragHandlers }) {

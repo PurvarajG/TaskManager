@@ -69,6 +69,9 @@ export default function SidePanel({
 
   return (
     <div className="fixed inset-0 z-50">
+      {/* Scrim stays a literal black overlay, not a token: it dims whatever is behind it
+         (page content in light OR dark theme), so it must be theme-invariant rather than
+         following --color-foreground/--color-background, which would invert its effect. */}
       <div
         className="absolute inset-0 bg-black/30 motion-safe:transition-opacity"
         onClick={onClose}

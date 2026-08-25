@@ -43,7 +43,7 @@ export default function TimeBlock({
       style={{
         ...style,
         backgroundColor: sparse ? categoryColorVar(color) : categoryTint(color, 12),
-        color: sparse ? "#fff" : "var(--color-foreground)",
+        color: sparse ? "var(--color-accent-foreground)" : "var(--color-foreground)",
         borderLeftColor: sparse ? undefined : categoryColorVar(color),
       }}
     >
