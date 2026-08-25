@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { useTasks } from "@/lib/store-context";
 import { WEEKDAY_LABELS, type CalendarDay } from "@/lib/calendar";
 import { externalEventLabel } from "@/lib/external-events-view";
 import type { ExternalEvent } from "@/lib/icloud";
-import { daysBetween } from "@/lib/parse";
-import { shiftDays } from "@/lib/summary";
 import type { Task } from "@/lib/types";
+import { useDragReschedule } from "./useDragReschedule";
 
 /**
  * The month itself. Dragging a marker to another date reschedules it; on touch
@@ -30,27 +28,14 @@ export default function MonthGrid({
   onSelectDay: (iso: string) => void;
   onAnnounce: (message: string) => void;
 }) {
-  const { projects, patchTask, openTask } = useTasks();
-  const [dragTaskId, setDragTaskId] = useState<string | null>(null);
-  const [overDate, setOverDate] = useState<string | null>(null);
+  const { projects, openTask } = useTasks();
+  const { dragTaskId, overDate, startDrag, endDrag, dragOver, dragLeave, drop } = useDragReschedule(
+    tasksByDate,
+    onAnnounce,
+  );
 
   const colorOf = (task: Task) =>
     projects.find((p) => p.id === task.projectId)?.color ?? "var(--color-muted-foreground)";
-
-  function drop(iso: string) {
-    if (!dragTaskId) return;
-    const task = [...tasksByDate.values()].flat().find((t) => t.id === dragTaskId);
-    setDragTaskId(null);
-    setOverDate(null);
-    if (!task || task.scheduled === iso) return;
-    if (task.isComplex && task.finishDate) {
-      const delta = daysBetween(task.scheduled, iso);
-      patchTask(task.id, { scheduled: iso, finishDate: shiftDays(task.finishDate, delta) });
-    } else {
-      patchTask(task.id, { scheduled: iso });
-    }
-    onAnnounce(`${task.title} moved to ${iso}.`);
-  }
 
   return (
     <div>
@@ -74,16 +59,9 @@ export default function MonthGrid({
           return (
             <div
               key={day.iso}
-              onDragOver={(e) => {
-                if (!dragTaskId) return;
-                e.preventDefault();
-                setOverDate(day.iso);
-              }}
-              onDragLeave={() => setOverDate((prev) => (prev === day.iso ? null : prev))}
-              onDrop={(e) => {
-                e.preventDefault();
-                drop(day.iso);
-              }}
+              onDragOver={(e) => dragOver(e, day.iso)}
+              onDragLeave={() => dragLeave(day.iso)}
+              onDrop={(e) => drop(e, day.iso)}
               className={`flex min-h-24 flex-col rounded-lg border p-1.5 transition-colors sm:min-h-28 ${
                 overDate === day.iso ? "border-accent bg-accent/10" : "border-border/60"
               } ${day.isWeekend && !isToday ? "bg-muted/40" : ""} ${
@@ -116,15 +94,8 @@ export default function MonthGrid({
                   <div
                     key={task.id}
                     draggable
-                    onDragStart={(e) => {
-                      e.dataTransfer.effectAllowed = "move";
-                      e.dataTransfer.setData("text/plain", task.id);
-                      setDragTaskId(task.id);
-                    }}
-                    onDragEnd={() => {
-                      setDragTaskId(null);
-                      setOverDate(null);
-                    }}
+                    onDragStart={(e) => startDrag(e, task.id)}
+                    onDragEnd={endDrag}
                     className={dragTaskId === task.id ? "opacity-40" : ""}
                   >
                     <button

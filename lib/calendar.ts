@@ -36,14 +36,74 @@ export function monthLabel(year: number, month: number): string {
   });
 }
 
-/** Month arithmetic that can't land on the 31st of a 30-day month. */
-export function shiftMonth(
-  year: number,
-  month: number,
-  by: number,
-): { year: number; month: number } {
-  const date = new Date(year, month + by, 1);
-  return { year: date.getFullYear(), month: date.getMonth() };
+export const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+export type CalendarView = "day" | "week" | "month";
+export const CALENDAR_VIEWS: CalendarView[] = ["day", "week", "month"];
+
+/** The Sunday-first week containing `iso`, as seven whole days. */
+export function weekGrid(iso: string): CalendarDay[] {
+  const anchor = new Date(`${iso}T00:00:00`);
+  const start = new Date(anchor.getFullYear(), anchor.getMonth(), anchor.getDate() - anchor.getDay());
+
+  return Array.from({ length: 7 }, (_, i) => {
+    const date = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+    const day = date.getDay();
+    return {
+      iso: toISODate(date),
+      dayOfMonth: date.getDate(),
+      inMonth: true,
+      isWeekend: day === 0 || day === 6,
+    };
+  });
 }
 
-export const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+/** A single day, shaped like the other grids so day/week/month share one row type. */
+export function dayRange(iso: string): CalendarDay[] {
+  const date = new Date(`${iso}T00:00:00`);
+  const day = date.getDay();
+  return [{ iso, dayOfMonth: date.getDate(), inMonth: true, isWeekend: day === 0 || day === 6 }];
+}
+
+/**
+ * Steps the calendar's anchor date by one day/week/month, according to the
+ * active view. Month arithmetic preserves the day-of-month (so paging months
+ * then switching to day/week lands where you'd expect), clamped to the
+ * target month's last day when it's shorter — Jan 31 + 1 month lands on Feb
+ * 28/29, never spills into March.
+ */
+export function shift(view: CalendarView, iso: string, by: number): string {
+  const date = new Date(`${iso}T00:00:00`);
+  if (view === "day") {
+    return toISODate(new Date(date.getFullYear(), date.getMonth(), date.getDate() + by));
+  }
+  if (view === "week") {
+    return toISODate(new Date(date.getFullYear(), date.getMonth(), date.getDate() + by * 7));
+  }
+  const targetMonthIndex = date.getMonth() + by;
+  const daysInTargetMonth = new Date(date.getFullYear(), targetMonthIndex + 1, 0).getDate();
+  const clampedDay = Math.min(date.getDate(), daysInTargetMonth);
+  return toISODate(new Date(date.getFullYear(), targetMonthIndex, clampedDay));
+}
+
+/** The header label for the active view, anchored at `iso`. */
+export function viewLabel(view: CalendarView, iso: string): string {
+  const date = new Date(`${iso}T00:00:00`);
+  if (view === "day") {
+    return date.toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+  if (view === "week") {
+    const days = weekGrid(iso);
+    const startDate = new Date(`${days[0].iso}T00:00:00`);
+    const endDate = new Date(`${days[6].iso}T00:00:00`);
+    const from = startDate.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const to = endDate.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    return `${from} – ${to}`;
+  }
+  return monthLabel(date.getFullYear(), date.getMonth());
+}

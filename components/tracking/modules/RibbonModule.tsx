@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTasks } from "@/lib/store-context";
 import { dayWindow } from "@/lib/tracking-day";
 import type { Gap, Segment, TrackingSettings } from "@/lib/types";
+import HourGrid from "../../time/HourGrid";
 import CategoryPicker from "../CategoryPicker";
 import GapBlock from "../GapBlock";
 import GapFillForm from "../GapFillForm";
@@ -76,8 +77,6 @@ export default function RibbonModule({ dayISO, isToday }: { dayISO: string; isTo
     : cropped;
   const y = (iso: string) => (minutesFromStart(iso, windowStart) / (windowHours * 60)) * height;
 
-  const hours = Array.from({ length: windowHours }, (_, i) => (windowStartHour + i) % 24);
-  const gridlineStop = 100 / windowHours;
   const nowOffset = isToday ? y(now.toISOString()) : null;
 
   // Minutes hidden by the crop — always measured against the cropped window,
@@ -101,65 +100,41 @@ export default function RibbonModule({ dayISO, isToday }: { dayISO: string; isTo
   return (
     <div className="space-y-3">
       <div className="overflow-y-auto" style={{ maxHeight: MAX_RIBBON_PX }}>
-        <div className="flex">
-          <div className="relative w-10 shrink-0 sm:w-12">
-            {hours.map((hour, i) => (
-              <div key={i} className="absolute -translate-y-1/2" style={{ top: (i / windowHours) * height }}>
-                <MetaLabel>{pad(hour)}:00</MetaLabel>
-              </div>
-            ))}
-          </div>
-
-          <div
-            className="relative min-w-0 flex-1 rounded-lg border border-border/70"
-            style={{
-              height,
-              backgroundImage: `repeating-linear-gradient(to bottom, transparent 0, transparent calc(${gridlineStop}% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) calc(${gridlineStop}% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) ${gridlineStop}%)`,
-            }}
-          >
-            {segments.map((segment) => {
-              const top = Math.max(0, y(segment.startedAt));
-              const endISO = segment.endedAt ?? (isToday ? now.toISOString() : dayEnd.toISOString());
-              const bottom = Math.min(height, y(endISO));
-              if (bottom <= 0 || top >= height || bottom <= top) return null;
-              const category = categories.find((c) => c.id === segment.categoryId);
-              const subject = segmentSubject(segment, categories, activities, tasks, projects);
-              return (
-                <TimeBlock
-                  key={segment.id}
-                  color={category?.color ?? "cat-neutral"}
-                  label={subject.label}
-                  projectColor={subject.project?.color}
-                  density="continuous"
-                  onClick={() => setSelected({ kind: "segment", segment })}
-                  style={{ position: "absolute", top, height: Math.max(bottom - top, 4), left: 0, right: 0 }}
-                />
-              );
-            })}
-
-            {gaps.map((gap) => {
-              const top = Math.max(0, y(gap.startedAt));
-              const bottom = Math.min(height, y(gap.endedAt));
-              if (bottom <= 0 || top >= height || bottom <= top) return null;
-              return (
-                <GapBlock
-                  key={`${gap.startedAt}-${gap.endedAt}`}
-                  label={`${gap.minutes}m untracked`}
-                  onClick={() => setSelected({ kind: "gap", gap })}
-                  style={{ position: "absolute", top, height: Math.max(bottom - top, 4), left: 0, right: 0 }}
-                />
-              );
-            })}
-
-            {nowOffset !== null && nowOffset >= 0 && nowOffset <= height && (
-              <div
-                aria-label="Now"
-                className="pointer-events-none absolute inset-x-0 z-10 h-px bg-accent"
-                style={{ top: nowOffset }}
+        <HourGrid windowStartHour={windowStartHour} windowHours={windowHours} height={height} nowOffset={nowOffset}>
+          {segments.map((segment) => {
+            const top = Math.max(0, y(segment.startedAt));
+            const endISO = segment.endedAt ?? (isToday ? now.toISOString() : dayEnd.toISOString());
+            const bottom = Math.min(height, y(endISO));
+            if (bottom <= 0 || top >= height || bottom <= top) return null;
+            const category = categories.find((c) => c.id === segment.categoryId);
+            const subject = segmentSubject(segment, categories, activities, tasks, projects);
+            return (
+              <TimeBlock
+                key={segment.id}
+                color={category?.color ?? "cat-neutral"}
+                label={subject.label}
+                projectColor={subject.project?.color}
+                density="continuous"
+                onClick={() => setSelected({ kind: "segment", segment })}
+                style={{ position: "absolute", top, height: Math.max(bottom - top, 4), left: 0, right: 0 }}
               />
-            )}
-          </div>
-        </div>
+            );
+          })}
+
+          {gaps.map((gap) => {
+            const top = Math.max(0, y(gap.startedAt));
+            const bottom = Math.min(height, y(gap.endedAt));
+            if (bottom <= 0 || top >= height || bottom <= top) return null;
+            return (
+              <GapBlock
+                key={`${gap.startedAt}-${gap.endedAt}`}
+                label={`${gap.minutes}m untracked`}
+                onClick={() => setSelected({ kind: "gap", gap })}
+                style={{ position: "absolute", top, height: Math.max(bottom - top, 4), left: 0, right: 0 }}
+              />
+            );
+          })}
+        </HourGrid>
       </div>
 
       {(full || outsideMinutes > 0) && (

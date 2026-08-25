@@ -1,10 +1,12 @@
 import { screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import MonthGrid from "@/components/calendar/MonthGrid";
+import WeekGrid from "@/components/calendar/WeekGrid";
+import DayGrid from "@/components/calendar/DayGrid";
 import DayPanel from "@/components/calendar/DayPanel";
 import TaskPanel from "@/components/TaskPanel";
-import { monthGrid } from "@/lib/calendar";
+import { dayRange, monthGrid, weekGrid } from "@/lib/calendar";
 import type { ExternalEvent } from "@/lib/icloud";
 import { emptyWorkspace, makeProject, makeTask, renderWorkspace } from "./harness";
 
@@ -335,5 +337,139 @@ describe("imported Apple Calendar events", () => {
 
     expect(await screen.findByText("Ship the board")).toBeInTheDocument();
     expect(screen.queryByText("From Apple Calendar")).toBeNull();
+  });
+});
+
+// The three grids share `useDragReschedule` for cross-day drop targets.
+// WeekGrid's whole day column (header + chip strip + hour box) is one drop
+// zone, exactly like MonthGrid's whole cell — this proves a drop anywhere in
+// the column reschedules, not only a drop inside the hour-gridded box.
+describe("week calendar — drag to reschedule", () => {
+  test("dropping a timed task marker anywhere in another day's column reschedules it", async () => {
+    const timedTask = makeTask({ id: task.id, scheduled: TODAY, dueTime: "09:00", title: "Ship the board" });
+    const announcements: string[] = [];
+    const { mock } = renderWorkspace(
+      <WeekGrid
+        days={weekGrid(TODAY)}
+        todayISO={TODAY}
+        tasksByDate={new Map([[TODAY, [timedTask]]])}
+        onSelectDay={() => {}}
+        onAnnounce={(m) => announcements.push(m)}
+      />,
+      emptyWorkspace({ tasks: [timedTask], projects: [project] }),
+    );
+
+    const marker = (await screen.findByRole("button", { name: "Ship the board" }))
+      .parentElement as HTMLElement;
+    // TODAY (2026-03-10) is a Tuesday in this week; drop on the Thursday two
+    // days later, still inside the same Sun–Sat week grid. Drop on the day
+    // HEADER, not the hour box, since that's the part FIX A restored as a
+    // drop target.
+    const targetHeader = screen.getByRole("button", { name: "2026-03-12, 0 tasks" });
+
+    const dataTransfer = { effectAllowed: "", setData: () => {}, getData: () => timedTask.id };
+    const fire = async (node: HTMLElement, type: string) => {
+      node.dispatchEvent(
+        Object.assign(new Event(type, { bubbles: true, cancelable: true }), { dataTransfer }),
+      );
+      await waitFor(() => {});
+    };
+
+    await fire(marker, "dragstart");
+    await fire(targetHeader, "dragover");
+    await fire(targetHeader, "drop");
+
+    await waitFor(() =>
+      expect(mock.calls).toContainEqual({
+        url: `/api/tasks/${timedTask.id}`,
+        method: "PATCH",
+        body: { scheduled: "2026-03-12" },
+      }),
+    );
+    expect(announcements).toContain("Ship the board moved to 2026-03-12.");
+  });
+
+  test("dropping an untimed task marker on another day's untimed chip strip reschedules it", async () => {
+    const untimedTask = makeTask({ id: task.id, scheduled: TODAY, title: "Ship the board" });
+    const announcements: string[] = [];
+    const { mock } = renderWorkspace(
+      <WeekGrid
+        days={weekGrid(TODAY)}
+        todayISO={TODAY}
+        tasksByDate={new Map([[TODAY, [untimedTask]]])}
+        onSelectDay={() => {}}
+        onAnnounce={(m) => announcements.push(m)}
+      />,
+      emptyWorkspace({ tasks: [untimedTask], projects: [project] }),
+    );
+
+    const marker = (await screen.findByRole("button", { name: "Ship the board" }))
+      .parentElement as HTMLElement;
+    // The visually matching drop target for an untimed chip is another
+    // day's (empty) untimed chip strip, not the hour-gridded box below it.
+    const targetHeader = screen.getByRole("button", { name: "2026-03-12, 0 tasks" });
+    const targetColumn = targetHeader.parentElement as HTMLElement;
+    const targetChipStrip = targetColumn.querySelector(".min-h-6") as HTMLElement;
+    expect(targetChipStrip).toBeTruthy();
+
+    const dataTransfer = { effectAllowed: "", setData: () => {}, getData: () => untimedTask.id };
+    const fire = async (node: HTMLElement, type: string) => {
+      node.dispatchEvent(
+        Object.assign(new Event(type, { bubbles: true, cancelable: true }), { dataTransfer }),
+      );
+      await waitFor(() => {});
+    };
+
+    await fire(marker, "dragstart");
+    await fire(targetChipStrip, "dragover");
+    await fire(targetChipStrip, "drop");
+
+    await waitFor(() =>
+      expect(mock.calls).toContainEqual({
+        url: `/api/tasks/${untimedTask.id}`,
+        method: "PATCH",
+        body: { scheduled: "2026-03-12" },
+      }),
+    );
+    expect(announcements).toContain("Ship the board moved to 2026-03-12.");
+  });
+});
+
+describe("day calendar", () => {
+  // Day view only ever shows one day, so there is no second date to drop a
+  // marker onto — it deliberately doesn't wire up `useDragReschedule`.
+  // Rescheduling stays reachable through `onSelectDay` → DayPanel's "Move
+  // date" control, the same accessible path touch/keyboard users already
+  // rely on for the other views' drag.
+  test("tasks render as plain buttons with no drag affordance", async () => {
+    const { container } = renderWorkspace(
+      <DayGrid
+        day={dayRange(TODAY)[0]}
+        todayISO={TODAY}
+        tasksByDate={tasksByDate()}
+        onSelectDay={() => {}}
+      />,
+      emptyWorkspace({ tasks: [task], projects: [project] }),
+    );
+
+    const marker = await screen.findByRole("button", { name: "Ship the board" });
+    expect(marker.getAttribute("draggable")).toBeNull();
+    expect(container.querySelector("[draggable]")).toBeNull();
+  });
+
+  test("the day panel is reachable via onSelectDay for moving a task's date", async () => {
+    const onSelectDay = vi.fn();
+    renderWorkspace(
+      <DayGrid
+        day={dayRange(TODAY)[0]}
+        todayISO={TODAY}
+        tasksByDate={tasksByDate()}
+        onSelectDay={onSelectDay}
+      />,
+      emptyWorkspace({ tasks: [task], projects: [project] }),
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "Add a task on this day" }));
+    expect(onSelectDay).toHaveBeenCalledWith(TODAY);
   });
 });

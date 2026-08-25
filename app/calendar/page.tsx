@@ -1,18 +1,30 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useTasks } from "@/lib/store-context";
 import { useNow } from "@/lib/useNow";
 import { daysBetween, toISODate } from "@/lib/parse";
 import { shiftDays } from "@/lib/summary";
-import { monthGrid, monthLabel, shiftMonth } from "@/lib/calendar";
+import {
+  CALENDAR_VIEWS,
+  dayRange,
+  monthGrid,
+  shift,
+  viewLabel,
+  weekGrid,
+  type CalendarView,
+} from "@/lib/calendar";
 import { groupExternalEventsByDate } from "@/lib/external-events-view";
 import { useExternalEvents } from "@/lib/useExternalEvents";
 import type { Task } from "@/lib/types";
 import SectionLabel from "@/components/SectionLabel";
 import MonthGrid from "@/components/calendar/MonthGrid";
+import WeekGrid from "@/components/calendar/WeekGrid";
+import DayGrid from "@/components/calendar/DayGrid";
 import DayPanel from "@/components/calendar/DayPanel";
+
+const VIEW_LABELS: Record<CalendarView, string> = { day: "Day", week: "Week", month: "Month" };
 
 export default function CalendarPage() {
   return (
@@ -24,24 +36,45 @@ export default function CalendarPage() {
 
 function Calendar() {
   const { tasks } = useTasks();
+  const router = useRouter();
   const params = useSearchParams();
   const now = useNow();
 
-  // ?date= lets Today's timeline link straight to a specific day.
-  const requested = params.get("date");
-  const [cursor, setCursor] = useState<{ year: number; month: number } | null>(null);
-  const [selected, setSelected] = useState<string | null>(requested);
+  // ?date= means exactly one thing, unchanged from before this phase: open
+  // that day's panel on load (Today's timeline links here). It is read once,
+  // at mount, and never rewritten by paging — otherwise reloading after
+  // clicking ‹ / › would pop the day panel back open over wherever you'd
+  // paged to. ?view= is the one param this phase adds to the URL, kept
+  // separate from ?date= for exactly that reason.
+  const requestedDate = params.get("date");
+  const requestedView = params.get("view");
+  const view: CalendarView = CALENDAR_VIEWS.includes(requestedView as CalendarView)
+    ? (requestedView as CalendarView)
+    : "month";
+
+  // The paging cursor. Local state, same as it was before this phase — only
+  // now it's an anchor ISO date instead of a {year, month} pair, so day/week
+  // views can share it with month view.
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [selected, setSelected] = useState<string | null>(requestedDate);
   const [announcement, setAnnouncement] = useState("");
 
   const todayISO = now ? toISODate(now) : "";
+  const anchorISO = cursor ?? requestedDate ?? todayISO;
 
-  const view = useMemo(() => {
-    if (cursor) return cursor;
-    const anchor = requested ?? todayISO;
-    if (!anchor) return null;
-    const [y, m] = anchor.split("-").map(Number);
-    return { year: y, month: m - 1 };
-  }, [cursor, requested, todayISO]);
+  // Switching the segmented control is the one navigation that touches the
+  // URL, so a day/week/month choice survives a reload — the plan's ask.
+  // Paging (arrows/Today) stays local state, exactly as `cursor` was before.
+  const setView = useCallback(
+    (nextView: CalendarView) => {
+      const query = new URLSearchParams(params.toString());
+      if (nextView === "month") query.delete("view");
+      else query.set("view", nextView);
+      const qs = query.toString();
+      router.replace(qs ? `/calendar?${qs}` : "/calendar", { scroll: false });
+    },
+    [params, router],
+  );
 
   const tasksByDate = useMemo(() => {
     const map = new Map<string, Task[]>();
@@ -66,16 +99,22 @@ function Calendar() {
   }, [tasks]);
 
   // Computed before the loading bail-out below, so the hook order never varies.
-  const days = useMemo(() => (view ? monthGrid(view.year, view.month) : []), [view]);
+  const days = useMemo(() => {
+    if (!anchorISO) return [];
+    if (view === "day") return dayRange(anchorISO);
+    if (view === "week") return weekGrid(anchorISO);
+    const [y, m] = anchorISO.split("-").map(Number);
+    return monthGrid(y, m - 1);
+  }, [view, anchorISO]);
 
-  // The visible 42-day window, which is exactly what the grid can display.
+  // The active view's own visible range, rather than a fixed 42-day window.
   const { events, ok } = useExternalEvents(days[0]?.iso ?? "", days[days.length - 1]?.iso ?? "");
   const externalByDate = useMemo(
     () => (ok ? groupExternalEventsByDate(events) : new Map()),
     [events, ok],
   );
 
-  if (!view) {
+  if (!anchorISO) {
     return (
       <div className="mx-auto max-w-5xl px-6 py-12 sm:px-10 sm:py-16">
         <div className="h-10 w-64 rounded-lg bg-muted" />
@@ -89,45 +128,82 @@ function Calendar() {
 
       <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
         <h1 className="font-display text-3xl leading-[1.1] tracking-[-0.02em] sm:text-4xl">
-          {monthLabel(view.year, view.month)}
+          {viewLabel(view, anchorISO)}
         </h1>
 
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setCursor(shiftMonth(view.year, view.month, -1))}
-            aria-label="Previous month"
-            className="no-drag flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
-          >
-            ‹
-          </button>
-          <button
-            onClick={() => {
-              const [y, m] = todayISO.split("-").map(Number);
-              setCursor({ year: y, month: m - 1 });
-            }}
-            className="no-drag rounded-lg px-3 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:bg-muted hover:text-foreground"
-          >
-            Today
-          </button>
-          <button
-            onClick={() => setCursor(shiftMonth(view.year, view.month, 1))}
-            aria-label="Next month"
-            className="no-drag flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
-          >
-            ›
-          </button>
+        <div className="no-drag flex flex-wrap items-center gap-2">
+          <div role="group" aria-label="Calendar view" className="flex items-center gap-0.5 rounded-lg border border-border p-0.5">
+            {CALENDAR_VIEWS.map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                aria-pressed={view === v}
+                className={`rounded-md px-2.5 py-1.5 font-mono text-[11px] uppercase tracking-[0.08em] transition-colors ${
+                  view === v
+                    ? "bg-accent text-accent-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {VIEW_LABELS[v]}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCursor(shift(view, anchorISO, -1))}
+              aria-label={`Previous ${view}`}
+              className="flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
+            >
+              ‹
+            </button>
+            <button
+              onClick={() => setCursor(todayISO)}
+              className="rounded-lg px-3 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:bg-muted hover:text-foreground"
+            >
+              Today
+            </button>
+            <button
+              onClick={() => setCursor(shift(view, anchorISO, 1))}
+              aria-label={`Next ${view}`}
+              className="flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
+            >
+              ›
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="mt-6">
-        <MonthGrid
-          days={days}
-          todayISO={todayISO}
-          tasksByDate={tasksByDate}
-          externalByDate={externalByDate}
-          onSelectDay={setSelected}
-          onAnnounce={setAnnouncement}
-        />
+        {view === "month" && (
+          <MonthGrid
+            days={days}
+            todayISO={todayISO}
+            tasksByDate={tasksByDate}
+            externalByDate={externalByDate}
+            onSelectDay={setSelected}
+            onAnnounce={setAnnouncement}
+          />
+        )}
+        {view === "week" && (
+          <WeekGrid
+            days={days}
+            todayISO={todayISO}
+            tasksByDate={tasksByDate}
+            externalByDate={externalByDate}
+            onSelectDay={setSelected}
+            onAnnounce={setAnnouncement}
+          />
+        )}
+        {view === "day" && (
+          <DayGrid
+            day={days[0]}
+            todayISO={todayISO}
+            tasksByDate={tasksByDate}
+            externalByDate={externalByDate}
+            onSelectDay={setSelected}
+          />
+        )}
       </div>
 
       <p aria-live="polite" className="sr-only">
