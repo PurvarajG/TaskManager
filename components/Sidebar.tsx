@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useTasks } from "@/lib/store-context";
 import { PROJECT_COLORS } from "@/lib/types";
 import ThemeToggle from "./ThemeToggle";
+import TempoMark from "./TempoMark";
 
 export const NAV = [
   { key: "today", label: "Today", href: "/" },
@@ -204,8 +205,8 @@ export default function Sidebar() {
       <div className="drag-region flex flex-col px-5 pt-9">
         <div className="no-drag flex items-center justify-between px-1">
           <Link href="/" className="flex items-center gap-2.5">
-            <span className="size-6 rounded-lg bg-gradient-to-br from-accent to-accent-secondary shadow-accent" />
-            <span className="font-display text-lg">Today</span>
+            <TempoMark />
+            <span className="font-display text-lg">Tempo</span>
           </Link>
           <div>
             <ThemeToggle />
