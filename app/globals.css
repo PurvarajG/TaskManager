@@ -1,5 +1,32 @@
 @import "tailwindcss";
 
+/* The Electron window's real minimum width (electron/main.js minWidth: 900)
+   is narrower than Tailwind's default `lg` (1024px). PageShell's full-height,
+   independently-scrolling frame must engage at THAT minimum, not at 1024 — a
+   900-1024px window is a size the user can actually reach, and below 1024 the
+   shell was falling back to ordinary document flow (window scroll, stacked
+   rail, uncompacted header) inside a window too short to fit any of it. This
+   custom variant is for PageShell's own frame rules; content-level compact
+   styling elsewhere keeps using the ordinary `lg:` breakpoint.
+
+   Tailwind v4's `@custom-variant name (…)` shorthand takes a SELECTOR or an
+   AT-RULE inside the parens, not a bare media condition — `(min-width:
+   900px)` alone is neither, and compiles to nothing (silently: no build
+   error, the variant's utilities just never appear in the emitted
+   stylesheet). The at-rule form below is what actually works. */
+@custom-variant shell (@media (min-width: 900px));
+
+/* A second, wider engagement point for PageShell's two-column rail grid
+   specifically. The math: sidebar (w-56 + border-r = 225px) + the shell's
+   own `shell:px-8` (64px) + the primary column's floor (minmax(28rem,1fr)
+   = 448px) + `gap-x-6` (24px) + the rail token (--width-rail = 23.75rem =
+   380px) = 1141px of window width needed before the two-column grid can
+   fit without a hard horizontal overflow. Below this, PageShell stacks the
+   rail under the main column instead — see PageShell.tsx. 1200px keeps a
+   real margin over that 1141px arithmetic floor rather than sitting right
+   on top of it. */
+@custom-variant rail (@media (min-width: 1200px));
+
 /* ─────────────────────────────────────────────
    Design tokens. Tailwind v4 reads @theme and
    generates the utilities, so there's one source
@@ -51,6 +78,15 @@
   --shadow-elevated: 0 20px 50px -12px color-mix(in srgb, var(--color-foreground) 35%, transparent);
 
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* The one side-rail width shared by every two-column page shell (Today,
+     Tracking). Previously drifted between Today's 18rem and Tracking's
+     380px. Reconciled to Tracking's value (380px = 23.75rem) rather than
+     Today's narrower one: Tracking's side modules (the day ribbon, roll-ups,
+     signals) are the ones that actually needed the extra width, and Today's
+     rail panels (Due today/Blocked/Notepad/Quick list) have no problem
+     inheriting it. */
+  --width-rail: 23.75rem;
 
   /* Category palette. Categories store the token name ("cat-indigo"), never a
      hex value, so recolouring the theme recolours every category with it. */

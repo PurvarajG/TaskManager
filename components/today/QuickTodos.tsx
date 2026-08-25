@@ -9,7 +9,7 @@ import SectionLabel from "../SectionLabel";
  * project. Anything that turns out to be real work can graduate into a proper
  * task, which opens in the shared panel ready to edit.
  */
-export default function QuickTodos() {
+export default function QuickTodos({ hideLabel = false }: { hideLabel?: boolean }) {
   const { quickTodos, addQuickTodo, patchQuickTodo, deleteQuickTodo, convertQuickTodo } =
     useTasks();
   const [draft, setDraft] = useState("");
@@ -19,7 +19,7 @@ export default function QuickTodos() {
 
   return (
     <section>
-      <SectionLabel>Quick list</SectionLabel>
+      {!hideLabel && <SectionLabel>Quick list</SectionLabel>}
 
       <ul className="mt-3 space-y-1">
         {ordered.map((todo) => (

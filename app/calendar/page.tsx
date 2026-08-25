@@ -18,7 +18,7 @@ import {
 import { groupExternalEventsByDate } from "@/lib/external-events-view";
 import { useExternalEvents } from "@/lib/useExternalEvents";
 import type { Task } from "@/lib/types";
-import SectionLabel from "@/components/SectionLabel";
+import PageShell from "@/components/ui/PageShell";
 import MonthGrid from "@/components/calendar/MonthGrid";
 import WeekGrid from "@/components/calendar/WeekGrid";
 import DayGrid from "@/components/calendar/DayGrid";
@@ -123,15 +123,12 @@ function Calendar() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl px-6 py-12 sm:px-10 sm:py-16">
-      <SectionLabel>Calendar</SectionLabel>
-
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-3xl leading-[1.1] tracking-[-0.02em] sm:text-4xl">
-          {viewLabel(view, anchorISO)}
-        </h1>
-
-        <div className="no-drag flex flex-wrap items-center gap-2">
+    <PageShell
+      label="Calendar"
+      maxWidth="max-w-none"
+      title={viewLabel(view, anchorISO)}
+      actions={
+        <>
           <div role="group" aria-label="Calendar view" className="flex items-center gap-0.5 rounded-lg border border-border p-0.5">
             {CALENDAR_VIEWS.map((v) => (
               <button
@@ -171,10 +168,10 @@ function Calendar() {
               ›
             </button>
           </div>
-        </div>
-      </div>
-
-      <div className="mt-6">
+        </>
+      }
+    >
+      <div>
         {view === "month" && (
           <MonthGrid
             days={days}
@@ -218,6 +215,6 @@ function Calendar() {
           onClose={() => setSelected(null)}
         />
       )}
-    </div>
+    </PageShell>
   );
 }

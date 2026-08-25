@@ -4,8 +4,8 @@ import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import type { Task } from "@/lib/types";
 import { toISODate } from "@/lib/parse";
-import SectionLabel from "@/components/SectionLabel";
 import TaskRow from "@/components/TaskRow";
+import PageShell from "@/components/ui/PageShell";
 
 function SearchResults() {
   const params = useSearchParams();
@@ -35,24 +35,19 @@ function SearchResults() {
   }, [q]);
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 sm:px-10 sm:py-16">
-      <SectionLabel>Search</SectionLabel>
-      <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl">
-        &ldquo;{q}&rdquo;
-      </h1>
-
+    <PageShell label="Search" title={<>&ldquo;{q}&rdquo;</>}>
       {ready && results.length === 0 && (
-        <p className="mt-10 rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground">
+        <p className="rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground">
           Nothing matched.
         </p>
       )}
 
-      <ul className="mt-10 space-y-2.5">
+      <ul className="space-y-2.5">
         {results.map((t) => (
           <TaskRow key={t.id} task={t} todayISO={todayISO} showDate />
         ))}
       </ul>
-    </div>
+    </PageShell>
   );
 }
 

@@ -181,7 +181,10 @@ function HourLane({ iso, tasks, projects, todayISO, now, onOpenTask }: { iso: st
   const currentLeft = currentMinutes === null ? null : ((currentMinutes - DAY_START_HOUR * 60) / DAY_MINUTES) * 100;
   const columned = assignColumns(timed);
   const maxColumns = columned.reduce((max, entry) => Math.max(max, entry.columns), 1);
-  const trackHeight = Math.max(48, maxColumns * 26 + 8);
+  // Real vertical presence rather than a squeezed strip: the timeline is a
+  // confirmed priority surface, so even a sparse day keeps a tall track
+  // (112px) and each stacked task lane gets more breathing room (34px).
+  const trackHeight = Math.max(112, maxColumns * 34 + 16);
   return <div className={`grid grid-cols-[6rem_minmax(0,1fr)] border-b border-border/70 last:border-b-0 ${iso === todayISO ? "bg-accent/[0.035]" : ""}`}><Link href={`/calendar?date=${iso}`} aria-label={`Open calendar for ${iso}`} className="border-r border-border/70 px-3 py-3 hover:bg-muted"><span className={`block font-mono text-[11px] ${iso === todayISO ? "font-semibold text-accent" : "text-muted-foreground"}`}>{date.toLocaleDateString(undefined, { weekday: "short" })} {date.getDate()}</span>{iso === todayISO && <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-accent">Today</span>}</Link><div><div className="relative" style={{ height: trackHeight, backgroundImage: "repeating-linear-gradient(to right, transparent 0, transparent calc(7.142857% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) calc(7.142857% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) 7.142857%)" }}>{columned.map(({ task, column }) => <TimeBar key={task.id} task={task} column={column} color={projectFor(task, projects)?.color ?? "var(--color-muted-foreground)"} onOpenTask={onOpenTask} />)}{currentLeft !== null && currentLeft >= 0 && currentLeft <= 100 && <div aria-label="Current time" className="pointer-events-none absolute inset-y-0 z-10 w-px bg-accent" style={{ left: `${currentLeft}%` }} />}</div>{unscheduled.length > 0 && <div aria-label={`Unscheduled tasks for ${iso}`} className="flex flex-wrap gap-1 border-t border-border/60 px-2 py-2">{unscheduled.map((task) => <TaskButton key={task.id} task={task} color={projectFor(task, projects)?.color ?? "var(--color-muted-foreground)"} onOpenTask={onOpenTask} />)}</div>}</div></div>;
 }
 
@@ -190,7 +193,7 @@ function TimeBar({ task, color, column, onOpenTask }: { task: Task; color: strin
   const left = Math.max(0, ((start - DAY_START_HOUR * 60) / DAY_MINUTES) * 100);
   const right = Math.min(100, ((start + task.minutes - DAY_START_HOUR * 60) / DAY_MINUTES) * 100);
   if (right <= 0 || left >= 100) return null;
-  return <button type="button" data-testid="timeline-bar" onClick={() => onOpenTask(task.id)} title={task.title} className={`absolute rounded px-2 text-left text-[10px] font-medium text-[color:var(--color-accent-foreground)] shadow-sm transition-opacity hover:opacity-85 ${task.status === "done" ? "opacity-55 line-through" : ""}`} style={{ left: `${left}%`, width: `${Math.max(right - left, 2)}%`, top: 4 + column * 26, height: 22, backgroundColor: color }}><span className="block truncate">{task.title}</span></button>;
+  return <button type="button" data-testid="timeline-bar" onClick={() => onOpenTask(task.id)} title={task.title} className={`absolute rounded px-2 text-left text-[10px] font-medium text-[color:var(--color-accent-foreground)] shadow-sm transition-opacity hover:opacity-85 ${task.status === "done" ? "opacity-55 line-through" : ""}`} style={{ left: `${left}%`, width: `${Math.max(right - left, 2)}%`, top: 8 + column * 34, height: 28, backgroundColor: color }}><span className="block truncate">{task.title}</span></button>;
 }
 
 /**
@@ -284,7 +287,7 @@ function DayTimeline({
           const spanning = laneTasks.filter((task) => task.isComplex && task.finishDate);
           const barsHeight = spanning.length > 0 ? 4 + spanning.length * 24 : 0;
           return (
-            <div key={lane.id} className="grid min-h-12 grid-cols-[8rem_minmax(0,1fr)] border-b border-border/70 last:border-b-0">
+            <div key={lane.id} className="grid min-h-20 grid-cols-[8rem_minmax(0,1fr)] border-b border-border/70 last:border-b-0">
               <div className="flex items-center gap-2 border-r border-border/70 px-3 text-xs">
                 <span className="size-2 rounded-full" style={{ backgroundColor: lane.color }} />
                 <span className="truncate">{lane.name}</span>

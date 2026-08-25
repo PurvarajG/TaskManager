@@ -7,6 +7,7 @@ import { fmt, rank } from "@/lib/format";
 import { useNow } from "@/lib/useNow";
 import { todaySummary } from "@/lib/summary";
 import { useTasks } from "@/lib/store-context";
+import PageShell from "./ui/PageShell";
 import SectionLabel from "./SectionLabel";
 import TaskRow from "./TaskRow";
 import QuickAdd from "./QuickAdd";
@@ -14,9 +15,10 @@ import GeneralNote from "./today/GeneralNote";
 import QuickTodos from "./today/QuickTodos";
 import TaskGroup from "./today/TaskGroup";
 import DashboardTimeline from "./today/DashboardTimeline";
+import RailPanel from "./ui/RailPanel";
 
 export default function Today() {
-  const { tasks, stages, timeEntries, running, ready, completeTask, patchTask, reopenTask } =
+  const { tasks, stages, timeEntries, running, ready, completeTask, patchTask, reopenTask, settings, patchSettings } =
     useTasks();
 
   // Null until the browser takes over, so the server never renders a date the
@@ -60,19 +62,38 @@ export default function Today() {
 
   const [upNext, ...rest] = today;
 
-  return (
-    <div className="mx-auto max-w-6xl px-6 py-12 sm:px-10 sm:py-16 lg:flex lg:h-dvh lg:max-w-none lg:flex-col lg:overflow-hidden lg:px-8 lg:py-4 xl:px-10">
-      <header className="shrink-0">
-        <SectionLabel pulse>Today</SectionLabel>
+  const collapsedModules = settings?.collapsedModules ?? [];
+  // Guarded the same way Tracking's own collapse toggle is (app/tracking/
+  // page.tsx): settings loads async, and patchSettings replaces the WHOLE
+  // collapsedModules array rather than merging one key into it. Firing this
+  // before settings has arrived would persist a single-entry array and wipe
+  // out everything already collapsed elsewhere (including Tracking's
+  // backfilled records/rollups/signals default).
+  const toggleRailPanel = (key: string) => {
+    if (!settings) return;
+    patchSettings({
+      collapsedModules: collapsedModules.includes(key)
+        ? collapsedModules.filter((k) => k !== key)
+        : [...collapsedModules, key],
+    });
+  };
 
-        <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl lg:mt-3 lg:text-3xl">
+  return (
+    <PageShell
+      label="Today"
+      pulse
+      maxWidth="max-w-6xl shell:max-w-none"
+      workspaceTestId="today-workspace"
+      title={
+        <>
           <span className="gradient-text">
             {now.toLocaleDateString(undefined, { weekday: "long" })}
           </span>{" "}
           {now.toLocaleDateString(undefined, { day: "numeric", month: "long" })}
-        </h1>
-
-        {ready && (
+        </>
+      }
+      headerExtra={
+        ready && (
           <>
             <dl className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground lg:mt-3 lg:gap-x-5 lg:text-[10px]">
               <Stat label="Active" value={String(today.length)} />
@@ -99,126 +120,154 @@ export default function Today() {
               )}
             </div>
           </>
-        )}
-      </header>
+        )
+      }
+      rail={
+        <>
+          <RailPanel
+            title={summary.dueToday.length > 0 ? `Due today · ${summary.dueToday.length}` : "Due today"}
+            collapsed={collapsedModules.includes("today-due")}
+            onToggleCollapse={() => toggleRailPanel("today-due")}
+            empty={summary.dueToday.length === 0}
+            emptyText="Nothing is scheduled for today."
+          >
+            <TaskGroup
+              label="Due today"
+              tasks={summary.dueToday}
+              emptyText="Nothing is scheduled for today."
+              hideLabel
+            />
+          </RailPanel>
+          <RailPanel
+            title={summary.blocked.length > 0 ? `Blocked · ${summary.blocked.length}` : "Blocked"}
+            collapsed={collapsedModules.includes("today-blocked")}
+            onToggleCollapse={() => toggleRailPanel("today-blocked")}
+            empty={summary.blocked.length === 0}
+            emptyText="Nothing is waiting on anything."
+          >
+            <TaskGroup
+              label="Blocked"
+              tasks={summary.blocked}
+              emptyText="Nothing is waiting on anything."
+              hideLabel
+            />
+          </RailPanel>
+          <RailPanel
+            title="Notepad"
+            collapsed={collapsedModules.includes("today-notepad")}
+            onToggleCollapse={() => toggleRailPanel("today-notepad")}
+          >
+            <GeneralNote compact hideLabel />
+          </RailPanel>
+          <RailPanel
+            title="Quick list"
+            collapsed={collapsedModules.includes("today-quicklist")}
+            onToggleCollapse={() => toggleRailPanel("today-quicklist")}
+          >
+            <QuickTodos hideLabel />
+          </RailPanel>
+        </>
+      }
+    >
+      {/* Below the `shell:` breakpoint (900px) this remains ordinary
+          document flow. From `rail:` (1200px) up, the primary column
+          scrolls independently within the shell's two-column grid; between
+          900 and 1200 it shares one scrolling region with the stacked
+          rail — see PageShell.tsx. */}
+      <div data-testid="today-primary-pane" data-density="compact" className="min-w-0">
+        <QuickAdd id="tempo-quick-add" />
 
-      {/* Below `lg` this remains ordinary document flow. On desktop, the two
-          content columns share the available space and scroll independently. */}
-      <div
-        data-testid="today-workspace"
-        className="mt-10 grid gap-10 lg:mt-5 lg:min-h-0 lg:flex-1 lg:grid-cols-[minmax(0,1fr)_18rem] lg:grid-rows-[minmax(0,1fr)] lg:gap-x-6"
-      >
-        <div data-testid="today-primary-pane" data-density="compact" className="min-w-0 lg:min-h-0 lg:overflow-y-auto lg:pr-1">
-          <QuickAdd id="tempo-quick-add" compact />
-
-          <div className="mt-8 lg:mt-4">
-            <DashboardTimeline todayISO={todayISO} />
-          </div>
-
-          {ready && today.length === 0 && (
-            <p className="mt-10 rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground">
-              Nothing on today. Either you&apos;re done, or nothing&apos;s captured yet.
-            </p>
-          )}
-
-          {/* The one thing. Inverted so it can't be confused with the list. */}
-          {upNext && (
-            <section className="mt-10 lg:mt-4">
-              <div className="relative overflow-hidden rounded-2xl bg-foreground p-7 text-background shadow-elevated lg:rounded-xl lg:p-4">
-                <div className="dot-texture pointer-events-none absolute inset-0" />
-                <div className="relative">
-                  <span className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-accent to-accent-secondary px-3.5 py-1.5">
-                    <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-accent-foreground">
-                      Up next
-                    </span>
-                  </span>
-
-                  <h2 className="select-text mt-5 font-display text-3xl leading-[1.15] tracking-[-0.01em] lg:mt-2 lg:text-xl">
-                    {upNext.title}
-                  </h2>
-
-                  <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.1em] text-background/60 lg:mt-2 lg:text-[10px]">
-                    <span>{fmt(upNext.minutes)}</span>
-                    {upNext.priority > 0 && <span>P{upNext.priority}</span>}
-                  </div>
-
-                  <div className="mt-7 flex flex-wrap items-center gap-3 lg:mt-3 lg:gap-2">
-                    <button
-                      onClick={() => completeTask(upNext.id)}
-                      className="h-11 rounded-xl bg-gradient-to-r from-accent to-accent-secondary px-5 text-sm font-medium text-accent-foreground transition-all duration-200 hover:shadow-accent-lg hover:brightness-110 active:scale-[0.98] lg:h-8 lg:rounded-lg lg:px-3 lg:text-xs"
-                    >
-                      Mark done
-                    </button>
-                    <button
-                      onClick={() => patchTask(upNext.id, { scheduled: addDays(todayISO, 1) })}
-                      className="h-11 rounded-xl px-4 text-sm text-background/70 transition-colors hover:bg-background/10 hover:text-background lg:h-8 lg:px-3 lg:text-xs"
-                    >
-                      Not today
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
-
-          {rest.length > 0 && (
-            <section className="mt-12 lg:mt-5">
-              <SectionLabel>Then</SectionLabel>
-              <ul className="mt-5 space-y-2.5 lg:mt-3 lg:space-y-1.5">
-                {rest.map((t) => (
-                  <TaskRow
-                    key={t.id}
-                    task={t}
-                    todayISO={todayISO}
-                    compact
-                    onPushTomorrow={() => patchTask(t.id, { scheduled: addDays(todayISO, 1) })}
-                  />
-                ))}
-              </ul>
-            </section>
-          )}
-
-          {doneToday.length > 0 && (
-            <details className="mt-8">
-              <summary className="cursor-pointer list-none">
-                <SectionLabel>Done · {doneToday.length}</SectionLabel>
-              </summary>
-              <ul className="mt-5 space-y-1.5">
-                {doneToday.map((t) => (
-                  <li
-                    key={t.id}
-                    className="flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground"
-                  >
-                    <button
-                      onClick={() => reopenTask(t.id)}
-                      aria-label={`Reopen ${t.title}`}
-                      className="size-4 shrink-0 rounded-full bg-gradient-to-br from-accent to-accent-secondary opacity-40 transition-opacity hover:opacity-100"
-                    />
-                    <span className="truncate line-through">{t.title}</span>
-                  </li>
-                ))}
-              </ul>
-            </details>
-          )}
+        <div className="mt-8 lg:mt-6">
+          <DashboardTimeline todayISO={todayISO} />
         </div>
 
-        <aside className="min-w-0 space-y-10 lg:min-h-0 lg:space-y-5 lg:overflow-y-auto lg:pr-1">
-          <TaskGroup
-            label="Due today"
-            tasks={summary.dueToday}
-            emptyText="Nothing is scheduled for today."
-          />
-          <TaskGroup
-            label="Blocked"
-            tasks={summary.blocked}
-            emptyText="Nothing is waiting on anything."
-          />
-          <GeneralNote compact />
-          <QuickTodos />
-        </aside>
+        {ready && today.length === 0 && (
+          <p className="mt-10 rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground">
+            Nothing on today. Either you&apos;re done, or nothing&apos;s captured yet.
+          </p>
+        )}
 
+        {/* The one thing. Inverted so it can't be confused with the list. */}
+        {upNext && (
+          <section className="mt-10 lg:mt-6">
+            <div className="relative overflow-hidden rounded-2xl bg-foreground p-7 text-background shadow-elevated lg:rounded-xl lg:p-5">
+              <div className="dot-texture pointer-events-none absolute inset-0" />
+              <div className="relative">
+                <span className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-accent to-accent-secondary px-3.5 py-1.5">
+                  <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-accent-foreground">
+                    Up next
+                  </span>
+                </span>
+
+                <h2 className="select-text mt-5 font-display text-3xl leading-[1.15] tracking-[-0.01em] lg:mt-3 lg:text-2xl">
+                  {upNext.title}
+                </h2>
+
+                <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.1em] text-background/60 lg:mt-2 lg:text-[10px]">
+                  <span>{fmt(upNext.minutes)}</span>
+                  {upNext.priority > 0 && <span>P{upNext.priority}</span>}
+                </div>
+
+                <div className="mt-7 flex flex-wrap items-center gap-3 lg:mt-4 lg:gap-2">
+                  <button
+                    onClick={() => completeTask(upNext.id)}
+                    className="h-11 rounded-xl bg-gradient-to-r from-accent to-accent-secondary px-5 text-sm font-medium text-accent-foreground transition-all duration-200 hover:shadow-accent-lg hover:brightness-110 active:scale-[0.98] lg:h-9 lg:rounded-lg lg:px-4 lg:text-xs"
+                  >
+                    Mark done
+                  </button>
+                  <button
+                    onClick={() => patchTask(upNext.id, { scheduled: addDays(todayISO, 1) })}
+                    className="h-11 rounded-xl px-4 text-sm text-background/70 transition-colors hover:bg-background/10 hover:text-background lg:h-9 lg:px-4 lg:text-xs"
+                  >
+                    Not today
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {rest.length > 0 && (
+          <section className="mt-12 lg:mt-6">
+            <SectionLabel>Then</SectionLabel>
+            <ul className="mt-5 space-y-2.5 lg:mt-3 lg:space-y-1.5">
+              {rest.map((t) => (
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  todayISO={todayISO}
+                  compact
+                  onPushTomorrow={() => patchTask(t.id, { scheduled: addDays(todayISO, 1) })}
+                />
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {doneToday.length > 0 && (
+          <details className="mt-8">
+            <summary className="cursor-pointer list-none">
+              <SectionLabel>Done · {doneToday.length}</SectionLabel>
+            </summary>
+            <ul className="mt-5 space-y-1.5">
+              {doneToday.map((t) => (
+                <li
+                  key={t.id}
+                  className="flex items-center gap-3 px-4 py-2 text-sm text-muted-foreground"
+                >
+                  <button
+                    onClick={() => reopenTask(t.id)}
+                    aria-label={`Reopen ${t.title}`}
+                    className="size-4 shrink-0 rounded-full bg-gradient-to-br from-accent to-accent-secondary opacity-40 transition-opacity hover:opacity-100"
+                  />
+                  <span className="truncate line-through">{t.title}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </div>
-    </div>
+    </PageShell>
   );
 }
 

@@ -22,6 +22,8 @@ export default function TaskPicker({
   placeholder = "Pick a task",
   /** Adds a "No task" entry that calls onChange("") — for retro-linking, where unlinking is a real choice. */
   clearable = false,
+  /** "lg" is the emphasized trigger NOW uses for its input-surface prominence. */
+  size = "md",
 }: {
   tasks: Task[];
   projects: Project[];
@@ -30,6 +32,7 @@ export default function TaskPicker({
   label?: string;
   placeholder?: string;
   clearable?: boolean;
+  size?: "md" | "lg";
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -105,7 +108,11 @@ export default function TaskPicker({
         // both it and this button would announce two "Task" comboboxes
         // controlling the same listbox at once.
         onClick={() => setOpen((v) => !v)}
-        className="flex min-h-11 max-w-64 items-center gap-2 truncate rounded-lg border border-border bg-card px-3 py-2 text-sm transition-colors hover:border-accent/30 sm:min-h-9"
+        className={`flex items-center gap-2 truncate rounded-lg border border-border bg-card transition-colors hover:border-accent/30 ${
+          size === "lg"
+            ? "min-h-12 w-full max-w-none px-4 py-3 text-[15px]"
+            : "min-h-11 max-w-64 px-3 py-2 text-sm sm:min-h-9"
+        }`}
       >
         {selected ? (
           <span className="flex min-w-0 items-center gap-1.5 truncate">

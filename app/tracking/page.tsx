@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import SectionLabel from "@/components/SectionLabel";
+import PageShell from "@/components/ui/PageShell";
 import ModuleCard from "@/components/tracking/ModuleCard";
 import NowModule from "@/components/tracking/modules/NowModule";
 import RecordsModule from "@/components/tracking/modules/RecordsModule";
@@ -101,51 +102,53 @@ export default function TrackingPage() {
   );
 
   return (
-    <div className="mx-auto max-w-6xl px-6 py-8 sm:px-8 sm:py-10">
-      <SectionLabel pulse={isToday}>Tracking</SectionLabel>
-
-      <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="font-display text-3xl leading-[1.1] tracking-[-0.02em] sm:text-4xl">
-          {isToday ? "Today" : dayLabel}
-        </h1>
-        <div className="flex items-center gap-1">
+    <PageShell
+      label="Tracking"
+      pulse={isToday}
+      maxWidth="max-w-6xl"
+      title={isToday ? "Today" : dayLabel}
+      actions={
+        <>
           <button
             onClick={() => setDayISO(shiftTrackingDay(dayISO, -1))}
             aria-label="Previous day"
-            className="no-drag flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
+            className="flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
           >
             ‹
           </button>
           <button
             onClick={() => setDayISO(todayISO)}
             disabled={isToday}
-            className="no-drag rounded-lg px-3 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+            className="rounded-lg px-3 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
           >
             Today
           </button>
           <button
             onClick={() => setDayISO(shiftTrackingDay(dayISO, 1))}
             aria-label="Next day"
-            className="no-drag flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
+            className="flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
           >
             ›
           </button>
           <a
             href="/tracking/settings"
             aria-label="Tracking settings"
-            className="no-drag ml-1 flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
+            className="ml-1 flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
           >
             ⚙
           </a>
-        </div>
-      </div>
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
-        <div className="min-w-0 space-y-4">{main.map(renderModule)}</div>
-        {side.length > 0 && (
-          <div className="min-w-0 space-y-4 lg:sticky lg:top-6">{side.map(renderModule)}</div>
-        )}
-      </div>
-    </div>
+        </>
+      }
+      // No lg:sticky here (b9c57a8 had it) — PageShell's rail pane is now
+      // genuinely independently-scrolling at the rail: breakpoint (its own
+      // bounded height + overflow-y-auto), which supersedes sticky: a pane
+      // that already stays put while the main column scrolls doesn't also
+      // need to stick to the viewport. Below rail: the rail stacks under
+      // the main column in shared scroll, where sticky wouldn't do anything
+      // useful either.
+      rail={side.length > 0 ? <div className="space-y-4">{side.map(renderModule)}</div> : undefined}
+    >
+      <div className="space-y-4">{main.map(renderModule)}</div>
+    </PageShell>
   );
 }

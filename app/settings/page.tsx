@@ -1,6 +1,7 @@
 import SectionLabel from "@/components/SectionLabel";
 import CalendarFeed from "@/components/settings/CalendarFeed";
 import NavVisibility from "@/components/settings/NavVisibility";
+import PageShell from "@/components/ui/PageShell";
 
 /**
  * A server component so the feed token is read straight from the environment.
@@ -19,13 +20,15 @@ export default function SettingsPage() {
   const icloudConfigured = Boolean(process.env.ICLOUD_APPLE_ID && process.env.ICLOUD_APP_PASSWORD);
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 sm:px-10 sm:py-16">
-      <SectionLabel>Settings</SectionLabel>
-      <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl">
-        Apple <span className="gradient-text">Calendar</span>
-      </h1>
-
-      <section className="mt-10">
+    <PageShell
+      label="Settings"
+      title={
+        <>
+          Apple <span className="gradient-text">Calendar</span>
+        </>
+      }
+    >
+      <section>
         <SectionLabel>Subscribe to your tasks</SectionLabel>
         <div className="mt-5">
           <CalendarFeed token={token} />
@@ -68,6 +71,6 @@ export default function SettingsPage() {
           <NavVisibility />
         </div>
       </section>
-    </div>
+    </PageShell>
   );
 }

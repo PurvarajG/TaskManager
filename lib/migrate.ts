@@ -48,6 +48,7 @@ export async function backfill(tx: Tx): Promise<void> {
   await seedDefaultActivities(tx);
   await migrateTimeEntriesToSegments(tx);
   await backfillPinnedActivities(tx);
+  await backfillCollapsedModules(tx);
 }
 
 /** Every project needs its four default stages — but only if it has none. */
@@ -167,6 +168,48 @@ async function backfillPinnedActivities(tx: Tx): Promise<void> {
           order by category_id, sort_order asc, created_at asc
        ) first
       where a.id = first.id`,
+  );
+}
+
+/**
+ * Existing installs get `collapsed_modules = '{}'` from the column default
+ * that predates this phase — the schema.sql default only reaches a brand
+ * new row, not one that already exists — so RECORDS/ROLL-UPS/SIGNALS would
+ * otherwise stay expanded forever on every install that isn't a fresh
+ * database.
+ *
+ * Two separate guards, for two separate risks:
+ *
+ *   - `collapsed_modules_seeded` (a flag, not a re-derivable check) makes
+ *     this run at most once per row, ever. This migration reruns on every
+ *     app launch (see runMigrations), and "is collapsed_modules still
+ *     empty?" can't tell a never-touched row apart from a user who has
+ *     since expanded every module back out — gating on emptiness alone
+ *     would re-collapse their choice on their very next launch.
+ *   - The `case` below only WRITES the default when collapsed_modules is
+ *     still empty at the moment this fires. A user who upgraded having
+ *     already collapsed something of their own (say, just `{ribbon}`)
+ *     must not have that replaced by the three-module default — this is
+ *     "collapsed by default for a FIRST-RUN user" (plan §6), not "collapsed
+ *     by default for everyone who hasn't touched RECORDS/ROLL-UPS/SIGNALS
+ *     specifically". Either way the row is marked seeded so this never
+ *     reconsiders it again, honouring the invariant at the top of this file:
+ *     re-running a migration never overwrites anything the user customised.
+ *
+ * A brand-new row (schema.sql) is seeded true immediately, so only a
+ * genuinely pre-existing row ever reaches the UPDATE below.
+ */
+async function backfillCollapsedModules(tx: Tx): Promise<void> {
+  await tx.query(
+    `update tracking_settings
+        set collapsed_modules = case
+              when cardinality(collapsed_modules) = 0
+                then array['records','rollups','signals']
+              else collapsed_modules
+            end,
+            collapsed_modules_seeded = true
+      where id = $1 and not collapsed_modules_seeded`,
+    [TRACKING_SETTINGS_ID],
   );
 }
 

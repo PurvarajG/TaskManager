@@ -34,13 +34,13 @@ export default function UnaccountedModule({ dayISO }: { dayISO: string }) {
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="space-y-3">
       {gaps.map((gap) => {
         const key = `${gap.startedAt}-${gap.endedAt}`;
         const label = settings ? overnightLabel(gap, settings, dayISO) : null;
         return (
-          <li key={key} className="rounded-lg border border-dashed border-border">
-            <div className="flex flex-wrap items-center gap-3 px-3 py-2.5">
+          <li key={key} className="rounded-xl border border-dashed border-border">
+            <div className="flex flex-wrap items-center gap-3 px-4 py-3.5">
               <MetaLabel>
                 {clockLabel(gap.startedAt)} – {clockLabel(gap.endedAt)}
               </MetaLabel>
@@ -70,7 +70,7 @@ export default function UnaccountedModule({ dayISO }: { dayISO: string }) {
             </div>
 
             {expanded === key && (
-              <div className="flex flex-wrap items-center gap-2 border-t border-border/70 px-3 py-2.5">
+              <div className="flex flex-wrap items-center gap-3 border-t border-border/70 px-4 py-4">
                 <GapFillForm gap={gap} onFilled={() => setExpanded(null)} />
               </div>
             )}

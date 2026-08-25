@@ -14,18 +14,26 @@ const STATUS: Record<string, string> = {
  * it — nothing typed is discarded — and Retry sends what is currently on
  * screen rather than the attempt that failed.
  */
-export default function GeneralNote({ compact = false }: { compact?: boolean }) {
+export default function GeneralNote({
+  compact = false,
+  hideLabel = false,
+}: {
+  compact?: boolean;
+  /** Omits the internal SectionLabel — for use inside a rail panel whose
+   *  disclosure header already shows the title. */
+  hideLabel?: boolean;
+}) {
   const { note, noteState, setNote, retryNote } = useTasks();
 
   return (
     <section>
       <div className="flex items-center justify-between">
-        <SectionLabel>Notepad</SectionLabel>
+        {!hideLabel && <SectionLabel>Notepad</SectionLabel>}
         <span
           aria-live="polite"
           className={`font-mono text-[10px] uppercase tracking-[0.12em] ${
             noteState === "error" ? "text-accent" : "text-muted-foreground"
-          }`}
+          } ${hideLabel ? "ml-auto" : ""}`}
         >
           {STATUS[noteState] ?? ""}
         </span>

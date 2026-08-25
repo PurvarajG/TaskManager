@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type { Task } from "@/lib/types";
 import { fmt } from "@/lib/format";
-import SectionLabel from "@/components/SectionLabel";
+import PageShell from "@/components/ui/PageShell";
 
 export default function TrashPage() {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -28,19 +28,21 @@ export default function TrashPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 sm:px-10 sm:py-16">
-      <SectionLabel>Trash</SectionLabel>
-      <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl">
-        Let <span className="gradient-text">go</span>
-      </h1>
-
+    <PageShell
+      label="Trash"
+      title={
+        <>
+          Let <span className="gradient-text">go</span>
+        </>
+      }
+    >
       {ready && tasks.length === 0 && (
-        <p className="mt-10 rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground">
+        <p className="rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground">
           Nothing in the trash.
         </p>
       )}
 
-      <ul className="mt-10 space-y-2.5">
+      <ul className="space-y-2.5">
         {tasks.map((t) => (
           <li
             key={t.id}
@@ -69,6 +71,6 @@ export default function TrashPage() {
           </li>
         ))}
       </ul>
-    </div>
+    </PageShell>
   );
 }

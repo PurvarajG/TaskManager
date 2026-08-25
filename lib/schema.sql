@@ -177,8 +177,28 @@ create index if not exists activities_category_idx on activities (category_id, s
 alter table projects add column if not exists default_category_id uuid references categories(id) on delete set null;
 
 -- Which modules the user has collapsed on the tracking dashboard, so the
--- state survives a reload instead of every card re-expanding.
-alter table tracking_settings add column if not exists collapsed_modules text[] not null default array[]::text[];
+-- state survives a reload instead of every card re-expanding. Records,
+-- roll-ups and signals default to collapsed for a first-run install — they
+-- are the "more information" tier behind NOW and UNACCOUNTED, the actual
+-- input surface. A brand-new row picks this up straight from the column
+-- default below; an existing row needs the one-time backfillCollapsedModules
+-- in lib/migrate.ts instead, since ADD COLUMN only ever touches a row that
+-- doesn't exist yet — see collapsed_modules_seeded just below for why a
+-- plain "is it still empty?" check isn't enough to drive that backfill.
+alter table tracking_settings add column if not exists collapsed_modules text[] not null default array['records','rollups','signals'];
+
+-- Whether the one-time collapsed-modules backfill has already run for this
+-- row. A flag, not a re-derivable check, because "is collapsed_modules
+-- still empty?" can't tell a never-touched row apart from a user who
+-- deliberately expanded every module back out — re-collapsing the second
+-- case on the next launch would silently overwrite their choice. ADD COLUMN
+-- backdates existing rows to false (so the pending backfill can find them);
+-- the ALTER COLUMN right after only changes the default new rows get, so a
+-- brand-new install — whose collapsed_modules is already correct from its
+-- own column default — is seeded true immediately and never runs the
+-- backfill at all.
+alter table tracking_settings add column if not exists collapsed_modules_seeded boolean not null default false;
+alter table tracking_settings alter column collapsed_modules_seeded set default true;
 
 -- Which sidebar nav entries the user has hidden. Hiding a route only hides
 -- the link — the route itself still loads if navigated to directly.

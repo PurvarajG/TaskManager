@@ -30,7 +30,12 @@ export default function AppChrome({ children }: { children: React.ReactNode }) {
               later-painted element that itself declares `-webkit-app-
               region: no-drag` — see globals.css. Every page header whose
               content lands in this band must apply `.no-drag` to that
-              content (see app/tracking/page.tsx and app/calendar/page.tsx). */}
+              content. Most pages get this for free through
+              components/ui/PageShell.tsx, which wraps its `actions` slot in
+              `.no-drag` (see app/calendar/page.tsx and app/tracking/page.tsx
+              for callers); a page rendering its own header outside
+              PageShell must still add `.no-drag` by hand (see
+              components/SectionLabel.tsx for the non-interactive case). */}
           <div className="drag-region pointer-events-none absolute inset-x-0 top-0 h-9" />
           {children}
         </main>

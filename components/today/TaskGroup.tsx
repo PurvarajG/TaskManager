@@ -13,19 +13,25 @@ export default function TaskGroup({
   label,
   tasks,
   emptyText,
+  hideLabel = false,
 }: {
   label: string;
   tasks: Task[];
   emptyText: string;
+  /** Omits the internal SectionLabel — for use inside a rail panel whose
+   *  disclosure header already shows the title. */
+  hideLabel?: boolean;
 }) {
   const { openTask, projects } = useTasks();
 
   return (
     <section>
-      <SectionLabel>
-        {label}
-        {tasks.length > 0 && ` · ${tasks.length}`}
-      </SectionLabel>
+      {!hideLabel && (
+        <SectionLabel>
+          {label}
+          {tasks.length > 0 && ` · ${tasks.length}`}
+        </SectionLabel>
+      )}
 
       {tasks.length === 0 ? (
         <p className="mt-3 text-sm text-muted-foreground">{emptyText}</p>

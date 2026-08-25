@@ -6,6 +6,7 @@ import { toISODate } from "@/lib/parse";
 import { fmtDate } from "@/lib/format";
 import SectionLabel from "@/components/SectionLabel";
 import TaskRow from "@/components/TaskRow";
+import PageShell from "@/components/ui/PageShell";
 
 export default function CompletedPage() {
   const { tasks, ready } = useTasks();
@@ -26,19 +27,21 @@ export default function CompletedPage() {
   }, [tasks]);
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 sm:px-10 sm:py-16">
-      <SectionLabel>Completed</SectionLabel>
-      <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl">
-        What you&apos;ve <span className="gradient-text">shipped</span>
-      </h1>
-
+    <PageShell
+      label="Completed"
+      title={
+        <>
+          What you&apos;ve <span className="gradient-text">shipped</span>
+        </>
+      }
+    >
       {ready && groups.length === 0 && (
-        <p className="mt-10 rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground">
+        <p className="rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground">
           Nothing completed yet.
         </p>
       )}
 
-      <div className="mt-10 space-y-10">
+      <div className="space-y-10">
         {groups.map(([day, dayTasks]) => (
           <section key={day}>
             <SectionLabel>{day === todayISO ? "Today" : fmtDate(day)}</SectionLabel>
@@ -50,6 +53,6 @@ export default function CompletedPage() {
           </section>
         ))}
       </div>
-    </div>
+    </PageShell>
   );
 }

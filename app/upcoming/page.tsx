@@ -7,6 +7,7 @@ import { fmtDate } from "@/lib/format";
 import SectionLabel from "@/components/SectionLabel";
 import TaskRow from "@/components/TaskRow";
 import QuickAdd from "@/components/QuickAdd";
+import PageShell from "@/components/ui/PageShell";
 
 export default function UpcomingPage() {
   const { tasks, ready } = useTasks();
@@ -27,15 +28,15 @@ export default function UpcomingPage() {
   }, [tasks, todayISO, horizon]);
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 sm:px-10 sm:py-16">
-      <SectionLabel>Next 7 Days</SectionLabel>
-      <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl">
-        What&apos;s <span className="gradient-text">coming</span>
-      </h1>
-
-      <div className="mt-10">
-        <QuickAdd autoFocus={false} />
-      </div>
+    <PageShell
+      label="Next 7 Days"
+      title={
+        <>
+          What&apos;s <span className="gradient-text">coming</span>
+        </>
+      }
+    >
+      <QuickAdd autoFocus={false} />
 
       {ready && days.length === 0 && (
         <p className="mt-10 rounded-xl border border-dashed border-border px-6 py-14 text-center text-sm text-muted-foreground">
@@ -55,6 +56,6 @@ export default function UpcomingPage() {
           </section>
         ))}
       </div>
-    </div>
+    </PageShell>
   );
 }

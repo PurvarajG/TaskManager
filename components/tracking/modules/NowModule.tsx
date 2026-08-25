@@ -80,6 +80,7 @@ export default function NowModule() {
           value={runningSegment?.taskId}
           onChange={startTask}
           placeholder="Time a task…"
+          size="lg"
         />
       </div>
 
@@ -100,7 +101,7 @@ export default function NowModule() {
                   key={activity.id}
                   onClick={() => start(category.id, activity.id)}
                   disabled={active}
-                  className={`flex min-h-11 items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors sm:min-h-9 ${
+                  className={`flex min-h-12 items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors sm:min-h-10 ${
                     active
                       ? "border-accent/40 bg-accent/10 text-accent"
                       : "border-border bg-card hover:border-accent/30"
@@ -131,7 +132,7 @@ export default function NowModule() {
                     key={activity.id}
                     onClick={() => start(category.id, activity.id)}
                     disabled={active}
-                    className={`flex min-h-11 items-center gap-2 rounded-full border px-3 py-1.5 text-sm transition-colors sm:min-h-9 ${
+                    className={`flex min-h-12 items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors sm:min-h-10 ${
                       active
                         ? "border-accent/40 bg-accent/10 text-accent"
                         : "border-border bg-card hover:border-accent/30"
