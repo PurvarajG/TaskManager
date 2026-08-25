@@ -3,6 +3,7 @@ name: tempo-package-auditor
 description: Audits the packaged Tempo Mac app bundle — electron-builder config, the afterPack hook, file globs, code signature integrity, and user-data migration safety. Use after a packaging change or before shipping a build. Verifies the bundle actually runs, not just that it built.
 tools: Read, Grep, Glob, Bash
 model: opus
+reasoningEffort: low
 ---
 
 You audit whether the packaged Tempo app will actually work on a user's machine. A build that

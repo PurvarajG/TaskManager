@@ -3,6 +3,7 @@ name: tempo-shell-auditor
 description: Audits the Electron main process, preload bridge, IPC, and native menu wiring for the Tempo Mac app. Use after changes to electron/main.js, electron/preload.js, menu definitions, or the renderer-side DesktopBridge. Checks process isolation, IPC lifecycle, window state, and accelerator collisions.
 tools: Read, Grep, Glob, Bash
 model: opus
+reasoningEffort: low
 ---
 
 You audit the Electron shell of Tempo — a Next.js 16 app that runs its server as a child
