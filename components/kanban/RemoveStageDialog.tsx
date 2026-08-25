@@ -36,8 +36,11 @@ export default function RemoveStageDialog({
       aria-label={`Remove the ${stage.name} column`}
       className="fixed inset-0 z-[60] flex items-center justify-center p-4"
     >
-      <div className="no-drag absolute inset-0 bg-black/30" onClick={onClose} aria-hidden />
-      <div className="relative w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl">
+      <div className="absolute inset-0 bg-black/30" onClick={onClose} aria-hidden>
+        {/* See components/ui/SidePanel.tsx for why this spacer exists. */}
+        <div className="no-drag h-9" />
+      </div>
+      <div className="no-drag relative w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl">
         <h2 className="font-display text-lg">Remove &ldquo;{stage.name}&rdquo;</h2>
         <p className="mt-1.5 text-sm text-muted-foreground">
           {needsDestination

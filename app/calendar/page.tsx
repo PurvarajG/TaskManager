@@ -96,7 +96,7 @@ function Calendar() {
           <button
             onClick={() => setCursor(shiftMonth(view.year, view.month, -1))}
             aria-label="Previous month"
-            className="flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
+            className="no-drag flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
           >
             ‹
           </button>
@@ -105,14 +105,14 @@ function Calendar() {
               const [y, m] = todayISO.split("-").map(Number);
               setCursor({ year: y, month: m - 1 });
             }}
-            className="rounded-lg px-3 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="no-drag rounded-lg px-3 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             Today
           </button>
           <button
             onClick={() => setCursor(shiftMonth(view.year, view.month, 1))}
             aria-label="Next month"
-            className="flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
+            className="no-drag flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
           >
             ›
           </button>

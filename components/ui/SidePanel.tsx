@@ -70,16 +70,32 @@ export default function SidePanel({
   return (
     <div className="fixed inset-0 z-50">
       <div
-        className="no-drag absolute inset-0 bg-black/30 motion-safe:transition-opacity"
+        className="absolute inset-0 bg-black/30 motion-safe:transition-opacity"
         onClick={onClose}
         aria-hidden
-      />
+      >
+        {/* AppChrome's h-9 drag strip has nothing subtracting it here
+            otherwise: without this spacer, clicking/double-clicking the
+            top 36px of the scrim would drag/zoom the window instead of
+            dismissing the panel. The click still bubbles to the parent's
+            onClick, so dismissal keeps working across the whole scrim. */}
+        <div className="no-drag h-9" />
+      </div>
       <div
         ref={panel}
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="absolute inset-y-0 right-0 flex w-full flex-col border-l border-border bg-background shadow-xl sm:max-w-md"
+        // Below the `sm` (640px) breakpoint this panel is `w-full`, i.e. a
+        // full-viewport `.no-drag` surface — the same "entire window
+        // undraggable" shape as the scrim bug above, just permanent while
+        // open instead of confined to a spacer. That's safe only because
+        // the window has a 900px `minWidth` floor (electron/main.js) that
+        // keeps `sm` always satisfied and there is no page-zoom path that
+        // could shrink the effective viewport. If `minWidth` ever drops
+        // below 640px, or page zoom is added, this needs the same h-9
+        // spacer treatment as the scrim.
+        className="no-drag absolute inset-y-0 right-0 flex w-full flex-col border-l border-border bg-background shadow-xl sm:max-w-md"
       >
         <div className="flex items-center justify-between border-b border-border px-5 py-4">
           <h2 className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">

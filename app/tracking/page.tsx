@@ -112,28 +112,28 @@ export default function TrackingPage() {
           <button
             onClick={() => setDayISO(shiftTrackingDay(dayISO, -1))}
             aria-label="Previous day"
-            className="flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
+            className="no-drag flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
           >
             ‹
           </button>
           <button
             onClick={() => setDayISO(todayISO)}
             disabled={isToday}
-            className="rounded-lg px-3 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
+            className="no-drag rounded-lg px-3 py-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40"
           >
             Today
           </button>
           <button
             onClick={() => setDayISO(shiftTrackingDay(dayISO, 1))}
             aria-label="Next day"
-            className="flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
+            className="no-drag flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
           >
             ›
           </button>
           <a
             href="/tracking/settings"
             aria-label="Tracking settings"
-            className="ml-1 flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
+            className="no-drag ml-1 flex size-11 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground sm:size-9"
           >
             ⚙
           </a>

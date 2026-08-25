@@ -189,18 +189,31 @@ function NavLinks() {
  */
 export default function Sidebar() {
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-border px-5 pt-9 pb-10">
-      <div className="drag-region flex items-center justify-between px-1">
-        <Link href="/" className="no-drag flex items-center gap-2.5">
-          <span className="size-6 rounded-lg bg-gradient-to-br from-accent to-accent-secondary shadow-accent" />
-          <span className="font-display text-lg">Today</span>
-        </Link>
-        <div className="no-drag">
-          <ThemeToggle />
+    <aside className="flex w-56 shrink-0 flex-col border-r border-border pb-10">
+      {/* Full-width drag region: spans the h-9 titlebar band (`pt-9`)
+          across the whole row, so the window can be grabbed anywhere along
+          the sidebar's top, matching AppChrome's h-9 spacer convention.
+          The branding ROW itself carries `.no-drag` (not just its two
+          interactive children) so the row's live drag area is exactly the
+          `pt-9` band — without that, the gaps between the logo, wordmark,
+          and ThemeToggle would stay drag-live below the row's own y range,
+          silently dragging the window (or blocking scrim dismissal) when
+          clicked. The logo `Link` and `ThemeToggle` remain independently
+          clickable regardless, since `.no-drag` on the row already covers
+          them. */}
+      <div className="drag-region flex flex-col px-5 pt-9">
+        <div className="no-drag flex items-center justify-between px-1">
+          <Link href="/" className="flex items-center gap-2.5">
+            <span className="size-6 rounded-lg bg-gradient-to-br from-accent to-accent-secondary shadow-accent" />
+            <span className="font-display text-lg">Today</span>
+          </Link>
+          <div>
+            <ThemeToggle />
+          </div>
         </div>
       </div>
 
-      <div className="mt-10 flex-1">
+      <div className="mt-10 flex-1 px-5">
         <NavLinks />
       </div>
     </aside>

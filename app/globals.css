@@ -121,10 +121,75 @@ textarea,
   color: transparent;
 }
 
-/* macOS drag regions. Anything interactive inside a drag area — button,
-   link, input, anything with onClick — must opt back out with .no-drag, or
-   the pointer is consumed by window-dragging instead of reaching it, with
-   no visual sign anything is wrong. */
+/* macOS drag regions. `-webkit-app-region: drag` is read by Chromium into
+   an annotated list of draggable rects that native code hit-tests BEFORE
+   the event ever reaches the renderer's DOM — independent of CSS
+   pointer-events. The mechanism that resolves overlapping drag/no-drag
+   declarations is TREE ORDER, not ancestry: Blink walks the layout tree
+   and Electron replays the walk as a sequence of union (drag) and
+   difference (no-drag) operations over one shared region, in that order.
+   So ANY element with `.no-drag` that comes LATER in the DOM than a
+   `.drag-region` subtracts itself from that region if it overlaps it —
+   it does not need to be that region's descendant, or related to it at
+   all. This is why SectionLabel and the tracking/calendar header buttons
+   work despite sitting in independent page trees, unrelated to the
+   `.drag-region` strip in AppChrome that mounts before them.
+
+   The same rule is a trap in the other direction: a full-viewport
+   `.no-drag` scrim (a dialog backdrop, a modal overlay) that mounts AFTER
+   the drag regions subtracts the ENTIRE window from dragging while it's
+   open, not just the area it visually covers — there is no ancestor
+   relationship required to do the damage either. Put `.no-drag` on the
+   actual dialog/panel surface, sized to what it covers, never on a
+   `fixed inset-0` backdrop. But a backdrop that's click-to-dismiss still
+   overlaps AppChrome's h-9 drag band along its own top edge, and it
+   declares no `-webkit-app-region` of its own, so that band is still
+   live for drag/zoom while the dialog is open. Give the backdrop a
+   `.no-drag` `h-9` spacer as its first child, spanning its width, so the
+   click still bubbles to the backdrop's own onClick and the top band
+   dismisses like the rest of it (see components/TimerConflict.tsx,
+   components/kanban/RemoveStageDialog.tsx, components/ui/SidePanel.tsx).
+
+   So: anything interactive inside a drag area — button, link, input,
+   anything with onClick, and any plain text that should stay
+   selectable/double-clickable without dragging or zooming the window —
+   must opt out with `.no-drag` on that element itself, sized to what it
+   actually covers.
+
+   Titlebar band convention: the sidebar's top drag region (Sidebar.tsx) is
+   `pt-9` and AppChrome's content-pane strip is `h-9` to match it — both are
+   the same 36px titlebar height so the window can be grabbed continuously
+   across the full width of the app.
+
+   Sidebar.tsx is the model for a header that has its OWN controls inside
+   the band: the drag region genuinely wraps the branding row as an
+   ancestor, and the entire branding ROW opts out with `.no-drag` — not
+   just the logo `Link` and `ThemeToggle` individually. Subtracting only
+   those two elements would leave the dead space BETWEEN them (and
+   flanking them) still drag-live within the row's own y-range, which is a
+   real hole: clicking there — including through an open scrim — drags the
+   window instead of dismissing it. Subtracting the whole row removes that
+   gap along with the controls, while the sidebar's `pt-9` band above the
+   row is untouched and still genuinely drags the window; the two children
+   stay independently clickable because `.no-drag` on their shared parent
+   already covers them.
+
+   AppChrome's content-pane strip can't wrap page content as an ancestor
+   (pages render their own headers independently), so it is a `pointer-
+   events-none` absolutely-positioned sibling instead. In the Electron app
+   `pointer-events-none` does nothing to the drag rect itself — the native
+   hit-test runs before the renderer, so the band still drags regardless.
+   Its job is the plain web build, where there is no native drag hit-test
+   and a bare absolute strip would otherwise eat every click and text
+   selection across the top 36px of every page. Either way, because the
+   Electron drag rect is untouched by pointer-events, every page header
+   whose content geometrically lands in the top 36px must still add
+   `.no-drag` to that content — including plain, non-interactive text like
+   Today's SectionLabel at the `lg:py-4` compact breakpoint — or a
+   click/double-click there drags/zooms the window instead of reaching the
+   content. See app/tracking/page.tsx and app/calendar/page.tsx for the
+   pattern on interactive controls, and components/SectionLabel.tsx for
+   the non-interactive case. */
 .drag-region {
   -webkit-app-region: drag;
 }

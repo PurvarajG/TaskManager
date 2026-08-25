@@ -20,8 +20,11 @@ export default function TimerConflict() {
       aria-label="A timer is already running"
       className="fixed inset-0 z-[60] flex items-center justify-center p-4"
     >
-      <div className="no-drag absolute inset-0 bg-black/30" onClick={dismissTimerConflict} aria-hidden />
-      <div className="relative w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl">
+      <div className="absolute inset-0 bg-black/30" onClick={dismissTimerConflict} aria-hidden>
+        {/* See components/ui/SidePanel.tsx for why this spacer exists. */}
+        <div className="no-drag h-9" />
+      </div>
+      <div className="no-drag relative w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-xl">
         <p className="text-sm">
           You&rsquo;re already timing{" "}
           <span className="font-semibold">{runningTask?.title ?? "another task"}</span>.
