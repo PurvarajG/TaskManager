@@ -5,7 +5,7 @@ import { useTasks } from "@/lib/store-context";
 import { externalEventLabel } from "@/lib/external-events-view";
 import { fmt, fmtDate, fmtTime } from "@/lib/format";
 import type { ExternalEvent } from "@/lib/icloud";
-import type { Task } from "@/lib/types";
+import { projectColorVar, type Task } from "@/lib/types";
 import { hasTextSelection } from "@/lib/selection";
 import SidePanel from "../ui/SidePanel";
 
@@ -91,7 +91,7 @@ export function DayPanelBody({
                         <span
                           aria-hidden
                           className="size-1.5 rounded-full"
-                          style={{ background: project.color }}
+                          style={{ background: projectColorVar(project.color) }}
                         />
                         {project.name}
                       </span>
@@ -123,6 +123,7 @@ export function DayPanelBody({
                   ) : (
                     <button
                       onClick={() => setMoving(task.id)}
+                      aria-label={`Move date for ${task.title}`}
                       className="mt-2 rounded-md px-2 py-1.5 font-mono text-[10px] uppercase tracking-[0.1em] text-muted-foreground hover:bg-muted hover:text-foreground"
                     >
                       Move date

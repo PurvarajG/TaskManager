@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTasks } from "@/lib/store-context";
-import { PROJECT_COLORS } from "@/lib/types";
+import { PROJECT_COLORS, projectColorVar } from "@/lib/types";
 import ThemeToggle from "./ThemeToggle";
 import TempoMark from "./TempoMark";
 
@@ -134,7 +134,7 @@ function NavLinks() {
                   >
                     <span
                       className="size-2 shrink-0 rounded-full"
-                      style={{ background: p.color }}
+                      style={{ background: projectColorVar(p.color) }}
                     />
                     <span className="select-text truncate">{p.name}</span>
                     {(openCounts.get(p.id) ?? 0) > 0 && (
@@ -190,7 +190,7 @@ function NavLinks() {
  */
 export default function Sidebar() {
   return (
-    <aside className="flex w-56 shrink-0 flex-col bg-nav pb-10 text-nav-foreground">
+    <aside className="nav-rail flex w-56 shrink-0 flex-col bg-nav pb-10 text-nav-foreground">
       {/* Full-width drag region: spans the h-9 titlebar band (`pt-9`)
           across the whole row, so the window can be grabbed anywhere along
           the sidebar's top, matching AppChrome's h-9 spacer convention.

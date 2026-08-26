@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { fmt } from "@/lib/format";
 import { useTasks } from "@/lib/store-context";
-import type { Activity, Category, Project, Segment, Task } from "@/lib/types";
+import { projectColorVar, type Activity, type Category, type Project, type Segment, type Task } from "@/lib/types";
 import CategoryPicker from "../CategoryPicker";
 import MetaLabel from "../MetaLabel";
 import { segmentLabel, segmentSubject } from "../segment-label";
@@ -166,7 +166,7 @@ function RecordRow({
                 <span
                   aria-hidden
                   className="size-1.5 shrink-0 rounded-full"
-                  style={{ background: subject.project.color }}
+                  style={{ background: projectColorVar(subject.project.color) }}
                 />
               )}
               <span className="truncate">{subject.label}</span>

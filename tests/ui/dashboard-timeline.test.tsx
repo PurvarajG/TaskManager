@@ -128,7 +128,7 @@ describe("Today dashboard timeline", () => {
     expect(screen.getByText("Website")).toBeInTheDocument();
 
     await userEvent.click(await screen.findByRole("button", { name: "Ship timeline" }));
-    expect(view.container.querySelector('[data-testid="timeline-bar"]')).toHaveStyle({ backgroundColor: "#db2777" });
+    expect(view.container.querySelector('[data-testid="timeline-bar"]')).toHaveStyle({ backgroundColor: "var(--color-project-3)" });
     expect(await screen.findByRole("dialog", { name: "Task" })).toBeInTheDocument();
   });
 

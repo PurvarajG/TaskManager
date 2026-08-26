@@ -708,6 +708,82 @@ None yet — Phase 0 had no undecidable ambiguity requiring a default choice.
   buttons whose entire accessible name is "Move date". Pre-existing, not
   introduced by this plan; cheap to fix during the Phase 8 sweep.
 
+## Phase 8 — Carry-over pass on undesigned routes
+
+- **Project palette single-sourced everywhere.** `projectColorVar()` wraps
+  the raw `project.color` render sites named in the "Carried into Phase 8"
+  note: `components/today/DashboardTimeline.tsx` (both the hour-scale
+  `TimeBar`/`TaskButton` bars and the day-scale lane dot/bars — `lanes` now
+  maps each project's stored hex through `projectColorVar` once, up front,
+  rather than at each render site), `components/Sidebar.tsx`,
+  `components/TaskRow.tsx`, `components/today/TaskGroup.tsx`,
+  `components/calendar/DayPanel.tsx`, `app/projects/[id]/page.tsx`,
+  `components/tracking/TaskPicker.tsx`,
+  `components/tracking/modules/RecordsModule.tsx`, and
+  `components/tracking/modules/RollupsModule.tsx`.
+  The initial Phase 8 pass missed three sites, caught by audit and fixed in
+  a follow-up round: `components/calendar/MonthGrid.tsx`'s `colorOf` still
+  returned the raw stored hex while its `DayGrid`/`WeekGrid` siblings routed
+  through the token; `components/tracking/modules/RibbonModule.tsx` passed
+  `subject.project?.color` straight into `TimeBlock`'s `projectColor` prop
+  unconverted; and `components/ProjectSettings.tsx`'s colour-picker swatches
+  and selection ring rendered the raw `PROJECT_COLORS` hex, so in dark mode
+  the picker previewed a colour the app doesn't actually paint. All three
+  now route their *displayed* colour through `projectColorVar()`.
+  `ProjectSettings.tsx`'s `onClick` still writes the original
+  `PROJECT_COLORS` hex to storage — only the swatch/ring preview changed,
+  the stored value is untouched.
+- **Bar text on project-coloured backgrounds got its own token.** Phase 8's
+  bar-colour fix (above) exposed a defect it introduced: painting
+  `DashboardTimeline`'s `TimeBar`/`TaskButton`/`SpanBar` backgrounds through
+  the lightened `--dark-project-N` set left the bar text still hardcoded to
+  `--color-accent-foreground` (white in all three theme states), which
+  reads at 1.74–2.89:1 against the lightened dark-mode bars. Added a paired
+  `--color-project-foreground` (`#ffffff`) / `--dark-project-foreground`
+  (`#14171c`) token in `app/globals.css`, wired through both dark selectors
+  per the existing pairing contract, and pointed `barChrome` (shared by
+  `TaskButton`/`SpanBar`) and `TimeBar`'s bar classes at it. `TimeBar` no
+  longer duplicates the class string inline — it now calls `barChrome` too.
+- **Project dots on the nav rail get a dark-locked palette.** `--color-nav`
+  is `#313333` in both themes by design, so in light mode the saturated
+  `--color-project-N` tokens (e.g. `#0052ff` at 2.21:1) were unreadable
+  against it. Added a `.nav-rail` class (now on `Sidebar.tsx`'s `<aside>`)
+  in `app/globals.css` that redefines `--color-project-1..7` to the
+  `--dark-project-N` values regardless of theme, rather than forking a
+  second palette of names.
+- **`Move date` buttons now carry a per-task accessible name** —
+  `aria-label={`Move date for ${task.title}`}` in
+  `components/calendar/DayPanel.tsx`. Updated
+  `tests/ui/calendar.test.tsx` to query by the new name.
+- **`ActivitiesSection`'s pin toggle reconciled with `ui/Toggle`'s disabled
+  style** — `disabled:opacity-40` → `disabled:cursor-not-allowed
+  disabled:opacity-50` in
+  `components/tracking/settings/ActivitiesSection.tsx`.
+- **Token sweep of the five undesigned routes and of `TaskRow`/`TaskPanel`
+  turned up nothing to fix.** `app/all`, `app/completed`, `app/trash`,
+  `app/search`, and `app/tracking/settings` were already fully token-based
+  (`PageShell`, `SectionLabel`, `border-border`, `bg-card`,
+  `text-muted-foreground`) with no hardcoded colour, and matched the header
+  rhythm / empty-state / `Panel` chrome conventions already established —
+  no structural change was made, per the user's decision that these routes
+  keep their current screens. `TaskRow.tsx` and `TaskPanel.tsx` had exactly
+  one inline `style` each with a colour value (the project dot in
+  `TaskRow`, now routed through `projectColorVar`); everything else in both
+  files was already token classes. No behaviour in either component was
+  touched.
+- Updated `tests/ui/dashboard-timeline.test.tsx` to expect
+  `backgroundColor: "var(--color-project-3)"` instead of the raw
+  `#db2777` hex, matching the new token-routed render.
+- **Recorded, not fixed: a third disabled-state treatment.** Besides
+  `ui/Toggle`'s `disabled:cursor-not-allowed disabled:opacity-50` and
+  `ActivitiesSection`'s now-reconciled switch, `disabled:opacity-40` with no
+  `cursor-not-allowed` still survives in `components/kanban/RemoveStageDialog.tsx`,
+  `components/kanban/Board.tsx`, `components/kanban/Card.tsx`,
+  `components/today/QuickTodos.tsx`, `components/tracking/TaskPicker.tsx`,
+  `components/tracking/CategoryPicker.tsx`, and `app/tracking/page.tsx`.
+  Out of scope for this fix-only pass; a future consistency sweep should
+  reconcile these onto one disabled treatment.
+
 ## Corrections to the plan
 
 - **Phase 3's "WIP limits and the over-limit warning" does not exist.** The

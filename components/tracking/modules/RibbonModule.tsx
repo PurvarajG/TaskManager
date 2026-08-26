@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTasks } from "@/lib/store-context";
 import { dayWindow } from "@/lib/tracking-day";
-import type { Gap, Segment, TrackingSettings } from "@/lib/types";
+import { projectColorVar, type Gap, type Segment, type TrackingSettings } from "@/lib/types";
 import HourGrid from "../../time/HourGrid";
 import CategoryPicker from "../CategoryPicker";
 import GapBlock from "../GapBlock";
@@ -113,7 +113,7 @@ export default function RibbonModule({ dayISO, isToday }: { dayISO: string; isTo
                 key={segment.id}
                 color={category?.color ?? "cat-neutral"}
                 label={subject.label}
-                projectColor={subject.project?.color}
+                projectColor={subject.project?.color ? projectColorVar(subject.project.color) : undefined}
                 density="continuous"
                 onClick={() => setSelected({ kind: "segment", segment })}
                 style={{ position: "absolute", top, height: Math.max(bottom - top, 4), left: 0, right: 0 }}

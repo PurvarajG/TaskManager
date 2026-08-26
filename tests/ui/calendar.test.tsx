@@ -192,7 +192,7 @@ describe("day panel", () => {
       emptyWorkspace({ tasks: [timed] }),
     );
 
-    await userEvent.click(await screen.findByRole("button", { name: "Move date" }));
+    await userEvent.click(await screen.findByRole("button", { name: "Move date for Standup" }));
     const field = screen.getByLabelText("New date for Standup");
     await userEvent.clear(field);
     await userEvent.type(field, "2026-03-18");

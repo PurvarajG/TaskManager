@@ -2,7 +2,7 @@
 
 import { useTasks } from "@/lib/store-context";
 import { fmt } from "@/lib/format";
-import type { Task } from "@/lib/types";
+import { projectColorVar, type Task } from "@/lib/types";
 import SectionLabel from "../SectionLabel";
 
 /**
@@ -49,7 +49,7 @@ export default function TaskGroup({
                     <span
                       aria-hidden
                       className="size-1.5 shrink-0 rounded-full"
-                      style={{ background: project.color }}
+                      style={{ background: projectColorVar(project.color) }}
                     />
                   )}
                   <span className="select-text min-w-0 flex-1 truncate">{task.title}</span>

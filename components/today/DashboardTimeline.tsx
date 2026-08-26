@@ -5,7 +5,7 @@ import { useCallback, useRef, useState, type CSSProperties } from "react";
 import { useTasks } from "@/lib/store-context";
 import { daysBetween } from "@/lib/parse";
 import { shiftDays } from "@/lib/summary";
-import { DAY_END_HOUR, type Project, type Task, type TaskInput } from "@/lib/types";
+import { DAY_END_HOUR, projectColorVar, type Project, type Task, type TaskInput } from "@/lib/types";
 import { useNow } from "@/lib/useNow";
 import {
   resolveTimelineDrag,
@@ -185,7 +185,7 @@ function HourLane({ iso, tasks, projects, todayISO, now, onOpenTask }: { iso: st
   // confirmed priority surface, so even a sparse day keeps a tall track
   // (112px) and each stacked task lane gets more breathing room (34px).
   const trackHeight = Math.max(112, maxColumns * 34 + 16);
-  return <div className={`grid grid-cols-[6rem_minmax(0,1fr)] border-b border-border/70 last:border-b-0 ${iso === todayISO ? "bg-accent/[0.035]" : ""}`}><Link href={`/calendar?date=${iso}`} aria-label={`Open calendar for ${iso}`} className="border-r border-border/70 px-3 py-3 hover:bg-muted"><span className={`block font-mono text-[11px] ${iso === todayISO ? "font-semibold text-accent" : "text-muted-foreground"}`}>{date.toLocaleDateString(undefined, { weekday: "short" })} {date.getDate()}</span>{iso === todayISO && <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-accent">Today</span>}</Link><div><div className="relative" style={{ height: trackHeight, backgroundImage: "repeating-linear-gradient(to right, transparent 0, transparent calc(7.142857% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) calc(7.142857% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) 7.142857%)" }}>{columned.map(({ task, column }) => <TimeBar key={task.id} task={task} column={column} color={projectFor(task, projects)?.color ?? "var(--color-muted-foreground)"} onOpenTask={onOpenTask} />)}{currentLeft !== null && currentLeft >= 0 && currentLeft <= 100 && <div aria-label="Current time" className="pointer-events-none absolute inset-y-0 z-10 w-px bg-accent" style={{ left: `${currentLeft}%` }} />}</div>{unscheduled.length > 0 && <div aria-label={`Unscheduled tasks for ${iso}`} className="flex flex-wrap gap-1 border-t border-border/60 px-2 py-2">{unscheduled.map((task) => <TaskButton key={task.id} task={task} color={projectFor(task, projects)?.color ?? "var(--color-muted-foreground)"} onOpenTask={onOpenTask} />)}</div>}</div></div>;
+  return <div className={`grid grid-cols-[6rem_minmax(0,1fr)] border-b border-border/70 last:border-b-0 ${iso === todayISO ? "bg-accent/[0.035]" : ""}`}><Link href={`/calendar?date=${iso}`} aria-label={`Open calendar for ${iso}`} className="border-r border-border/70 px-3 py-3 hover:bg-muted"><span className={`block font-mono text-[11px] ${iso === todayISO ? "font-semibold text-accent" : "text-muted-foreground"}`}>{date.toLocaleDateString(undefined, { weekday: "short" })} {date.getDate()}</span>{iso === todayISO && <span className="font-mono text-[9px] uppercase tracking-[0.1em] text-accent">Today</span>}</Link><div><div className="relative" style={{ height: trackHeight, backgroundImage: "repeating-linear-gradient(to right, transparent 0, transparent calc(7.142857% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) calc(7.142857% - 1px), color-mix(in srgb, var(--color-border) 55%, transparent) 7.142857%)" }}>{columned.map(({ task, column }) => <TimeBar key={task.id} task={task} column={column} color={projectFor(task, projects)?.color ? projectColorVar(projectFor(task, projects)!.color) : "var(--color-muted-foreground)"} onOpenTask={onOpenTask} />)}{currentLeft !== null && currentLeft >= 0 && currentLeft <= 100 && <div aria-label="Current time" className="pointer-events-none absolute inset-y-0 z-10 w-px bg-accent" style={{ left: `${currentLeft}%` }} />}</div>{unscheduled.length > 0 && <div aria-label={`Unscheduled tasks for ${iso}`} className="flex flex-wrap gap-1 border-t border-border/60 px-2 py-2">{unscheduled.map((task) => <TaskButton key={task.id} task={task} color={projectFor(task, projects)?.color ? projectColorVar(projectFor(task, projects)!.color) : "var(--color-muted-foreground)"} onOpenTask={onOpenTask} />)}</div>}</div></div>;
 }
 
 function TimeBar({ task, color, column, onOpenTask }: { task: Task; color: string; column: number; onOpenTask: (id: string) => void }) {
@@ -193,7 +193,7 @@ function TimeBar({ task, color, column, onOpenTask }: { task: Task; color: strin
   const left = Math.max(0, ((start - DAY_START_HOUR * 60) / DAY_MINUTES) * 100);
   const right = Math.min(100, ((start + task.minutes - DAY_START_HOUR * 60) / DAY_MINUTES) * 100);
   if (right <= 0 || left >= 100) return null;
-  return <button type="button" data-testid="timeline-bar" onClick={() => onOpenTask(task.id)} title={task.title} className={`absolute rounded px-2 text-left text-[10px] font-medium text-[color:var(--color-accent-foreground)] shadow-sm transition-opacity hover:opacity-85 ${task.status === "done" ? "opacity-55 line-through" : ""}`} style={{ left: `${left}%`, width: `${Math.max(right - left, 2)}%`, top: 8 + column * 34, height: 28, backgroundColor: color }}><span className="block truncate">{task.title}</span></button>;
+  return <button type="button" data-testid="timeline-bar" onClick={() => onOpenTask(task.id)} title={task.title} className={`absolute rounded px-2 text-left ${barChrome(task.status === "done")}`} style={{ left: `${left}%`, width: `${Math.max(right - left, 2)}%`, top: 8 + column * 34, height: 28, backgroundColor: color }}><span className="block truncate">{task.title}</span></button>;
 }
 
 /**
@@ -247,7 +247,12 @@ function DayTimeline({
 }) {
   const known = new Set(projects.map((p) => p.id));
   const isOrphan = (task: Task) => !task.projectId || !known.has(task.projectId);
-  const lanes = [...projects.filter((project) => tasks.some((task) => task.projectId === project.id)), ...(tasks.some((task) => isOrphan(task)) ? [{ id: "unassigned", name: "Unassigned", color: "var(--color-muted-foreground)" }] : [])];
+  const lanes = [
+    ...projects
+      .filter((project) => tasks.some((task) => task.projectId === project.id))
+      .map((project) => ({ ...project, color: projectColorVar(project.color) })),
+    ...(tasks.some((task) => isOrphan(task)) ? [{ id: "unassigned", name: "Unassigned", color: "var(--color-muted-foreground)" }] : []),
+  ];
   const gridRef = useRef<HTMLDivElement>(null);
 
   const handleCommit = useCallback(
@@ -340,7 +345,7 @@ function DayTimeline({
 }
 
 const barChrome = (done: boolean) =>
-  `truncate rounded px-2 text-left text-[10px] font-medium text-[color:var(--color-accent-foreground)] shadow-sm transition-opacity hover:opacity-85 ${done ? "opacity-55 line-through" : ""}`;
+  `truncate rounded px-2 text-left text-[10px] font-medium text-[color:var(--color-project-foreground)] shadow-sm transition-opacity hover:opacity-85 ${done ? "opacity-55 line-through" : ""}`;
 
 /** The two grab handles shared by `SpanBar` and day-scale `TaskButton`, inset at the bar's edges. */
 function TimelineHandles({ taskId, bind }: { taskId: string; bind: (taskId: string, mode: TimelineDragMode) => TimelineDragHandlers }) {

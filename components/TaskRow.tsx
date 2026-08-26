@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useTasks } from "@/lib/store-context";
 import { fmt, fmtDate, fmtTime, PRIORITY_LABEL } from "@/lib/format";
 import { isStale, taskAge } from "@/lib/focus";
-import type { Task } from "@/lib/types";
+import { projectColorVar, type Task } from "@/lib/types";
 import { hasTextSelection } from "@/lib/selection";
 import TimerButton from "./TimerButton";
 
@@ -110,7 +110,7 @@ export default function TaskRow({
           )}
           {showProject && project && (
             <span className="inline-flex items-center gap-1.5 normal-case tracking-normal">
-              <span className="size-1.5 rounded-full" style={{ background: project.color }} />
+              <span className="size-1.5 rounded-full" style={{ background: projectColorVar(project.color) }} />
               {project.name}
             </span>
           )}

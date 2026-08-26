@@ -4,7 +4,7 @@ import { useTasks } from "@/lib/store-context";
 import { WEEKDAY_LABELS, type CalendarDay } from "@/lib/calendar";
 import { externalEventLabel } from "@/lib/external-events-view";
 import type { ExternalEvent } from "@/lib/icloud";
-import type { Task } from "@/lib/types";
+import { projectColorVar, type Task } from "@/lib/types";
 import { useDragReschedule } from "./useDragReschedule";
 
 /**
@@ -34,8 +34,10 @@ export default function MonthGrid({
     onAnnounce,
   );
 
-  const colorOf = (task: Task) =>
-    projects.find((p) => p.id === task.projectId)?.color ?? "var(--color-muted-foreground)";
+  const colorOf = (task: Task) => {
+    const color = projects.find((p) => p.id === task.projectId)?.color;
+    return color ? projectColorVar(color) : "var(--color-muted-foreground)";
+  };
 
   return (
     <div>

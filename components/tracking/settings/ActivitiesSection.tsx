@@ -180,7 +180,7 @@ function ActivityRow({
         aria-label={activity.pinned ? `Unpin ${activity.name}` : `Pin ${activity.name}`}
         disabled={!activity.isPreset}
         onClick={() => onPatch({ pinned: !activity.pinned })}
-        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors disabled:opacity-40 ${
+        className={`relative h-5 w-9 shrink-0 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
           activity.pinned ? "bg-accent" : "bg-border"
         }`}
         title="Pinned"

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTasks } from "@/lib/store-context";
-import { PROJECT_COLORS, type Project } from "@/lib/types";
+import { PROJECT_COLORS, projectColorVar, type Project } from "@/lib/types";
 import SidePanel from "./ui/SidePanel";
 import { Field, SavingInput } from "./ui/Field";
 import { labelClass } from "./ui/Field";
@@ -38,7 +38,9 @@ export default function ProjectSettings({
 
         <Field label="Colour">
           <div className="flex flex-wrap items-center gap-2">
-            {PROJECT_COLORS.map((c) => (
+            {PROJECT_COLORS.map((c) => {
+              const preview = projectColorVar(c);
+              return (
               <button
                 key={c}
                 onClick={() => updateProject(project.id, { color: c })}
@@ -49,14 +51,15 @@ export default function ProjectSettings({
                 <span
                   className="size-5 rounded-full"
                   style={{
-                    background: c,
-                    boxShadow: project.color === c ? `0 0 0 2px var(--color-background), 0 0 0 4px ${c}` : undefined,
+                    background: preview,
+                    boxShadow: project.color === c ? `0 0 0 2px var(--color-background), 0 0 0 4px ${preview}` : undefined,
                   }}
                 />
                 {/* Colour alone never carries the choice. */}
                 {project.color === c && <span className="sr-only">Selected</span>}
               </button>
-            ))}
+              );
+            })}
           </div>
         </Field>
 

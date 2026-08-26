@@ -3,6 +3,7 @@
 import { fmt } from "@/lib/format";
 import { useTasks } from "@/lib/store-context";
 import { coveragePercent, minutesByKind, minutesByProject } from "@/lib/tracking-stats";
+import { projectColorVar } from "@/lib/types";
 import CategoryDot from "../CategoryDot";
 import MetaLabel from "../MetaLabel";
 
@@ -79,13 +80,13 @@ export default function RollupsModule({ dayISO, todayISO, now }: { dayISO: strin
                 <span
                   aria-hidden
                   className="size-2 shrink-0 rounded-full"
-                  style={{ background: project?.color ?? "var(--color-muted-foreground)" }}
+                  style={{ background: project?.color ? projectColorVar(project.color) : "var(--color-muted-foreground)" }}
                 />
                 <span className="w-28 shrink-0 truncate text-sm">{project?.name ?? "No project"}</span>
                 <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full"
-                    style={{ width: `${(minutes / projectMax) * 100}%`, backgroundColor: project?.color ?? "var(--color-muted-foreground)" }}
+                    style={{ width: `${(minutes / projectMax) * 100}%`, backgroundColor: project?.color ? projectColorVar(project.color) : "var(--color-muted-foreground)" }}
                   />
                 </div>
                 <span className="w-14 shrink-0 text-right font-mono text-xs tabular-nums text-muted-foreground">

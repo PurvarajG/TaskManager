@@ -6,6 +6,7 @@ import { useTasks } from "@/lib/store-context";
 import { toISODate } from "@/lib/parse";
 import { fmt, PRIORITY_LABEL } from "@/lib/format";
 import { projectSummary } from "@/lib/summary";
+import { projectColorVar } from "@/lib/types";
 import { getAttentionItems, getFocusTask } from "@/lib/focus";
 import PageShell from "@/components/ui/PageShell";
 import MetricStrip from "@/components/ui/MetricStrip";
@@ -62,7 +63,7 @@ export default function ProjectPage() {
       }
       title={
         <span className="flex items-center gap-3">
-          <span className="size-3 shrink-0 rounded-full" style={{ background: project.color }} />
+          <span className="size-3 shrink-0 rounded-full" style={{ background: projectColorVar(project.color) }} />
           <span className="select-text">{project.name}</span>
         </span>
       }

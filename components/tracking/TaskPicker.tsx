@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { usePickerMenu } from "@/lib/usePickerMenu";
 import { toISODate } from "@/lib/parse";
-import type { Project, Task } from "@/lib/types";
+import { projectColorVar, type Project, type Task } from "@/lib/types";
 
 const MIN_WIDTH = 288;
 
@@ -120,7 +120,7 @@ export default function TaskPicker({
               <span
                 aria-hidden
                 className="size-1.5 shrink-0 rounded-full"
-                style={{ background: projectById.get(selected.projectId)!.color }}
+                style={{ background: projectColorVar(projectById.get(selected.projectId)!.color) }}
               />
             )}
             <span className="truncate">{selected.title}</span>
@@ -196,7 +196,7 @@ export default function TaskPicker({
                     }`}
                   >
                     {project && (
-                      <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ background: project.color }} />
+                      <span aria-hidden className="size-1.5 shrink-0 rounded-full" style={{ background: projectColorVar(project.color) }} />
                     )}
                     <span className="min-w-0 flex-1 truncate">{task.title}</span>
                     {task.scheduled === today && (
