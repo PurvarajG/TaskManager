@@ -578,14 +578,96 @@ kind).
   `trueCapacityRatio` for an over-capacity day, and `ceilingIsProvisional`
   before settings load.
 
-### `app/settings/page.tsx` (Phase 7) — status: untouched
-- Server component today; Phase 7 introduces a client child for the nav
-  rather than converting the whole page.
-- Calendar feed subscribe URL + copy affordance.
-- iCloud connected/not-connected states and instructions.
-- Sidebar nav visibility controls, including the `UNHIDEABLE_NAV_KEY`
-  guarantee.
-- `tests/ui/settings.test.tsx` and `tests/ui/nav-visibility.test.tsx` contracts.
+### `app/settings/page.tsx` (Phase 7) — status: Phase 7, done
+- Stays a server component (the feed token is still read straight from
+  `process.env` at request time, `dynamic = "force-dynamic"` unchanged) — only
+  the section nav became a client child, per the plan's explicit instruction
+  not to convert the whole page.
+- Now the prototype's two-pane `.settings-layout`: `SettingsNav` (new,
+  `components/settings/SettingsNav.tsx`, client) on the left inside a
+  `rail:grid-cols-[200px_minmax(0,1fr)]` grid, grouped content on the right.
+  `SettingsNav` tracks scroll position with an `IntersectionObserver` over
+  the section ids it's given (`calendar`, `sidebar`) and highlights the
+  active entry; clicking calls `scrollIntoView`. Below the `rail:` breakpoint
+  (1200px) the grid collapses to a single column and the nav renders inline
+  above the content — no separate narrow-viewport branch was written, since
+  Tailwind's grid collapse already produces the prototype's stacked mobile
+  form.
+- Calendar feed subscribe URL + copy affordance: **preserved exactly** —
+  `CalendarFeed` itself was not touched, just relocated under the new
+  `id="calendar"` section wrapper. `tests/ui/settings.test.tsx` passes
+  unmodified.
+- iCloud connected/not-connected states and instructions: **preserved
+  exactly**, same markup, same copy, moved under the same `#calendar`
+  section (as a second sub-group, matching the prototype's "Calendar
+  connections" grouping — the two live under one nav entry since they are
+  both about calendar integration and the app has no separate "Tracking
+  behaviour"/"Appearance"/"Data & privacy" settings for the prototype's other
+  nav rows to point at; inventing empty sections for those was rejected as
+  scope creep with no backing state).
+- Sidebar nav visibility: `NavVisibility`'s per-item bordered rows are
+  unchanged (not reshaped into the prototype's single `.setting-card`),
+  relocated under `id="sidebar"`; it now imports the shared `Toggle` (see
+  below). The `UNHIDEABLE_NAV_KEY` guarantee (Settings' own toggle stays
+  `disabled`) is unchanged — `tests/ui/nav-visibility.test.tsx` passes
+  unmodified.
+- **New shared primitive**: `components/ui/Toggle.tsx` — the ARIA
+  `role="switch"` control previously hand-rolled inline inside
+  `NavVisibility`. `NavVisibility` now imports it (same rendered
+  `aria-checked`/`aria-label`/`disabled`/visual states, verified by the
+  unmodified test file); it's the toggle any later page should reuse instead
+  of a third bespoke switch.
+
+**Fix-only pass (layout auditor BLOCK) applied after the above:**
+- `SettingsNav`'s `IntersectionObserver` effect no longer latches a
+  `observing` ref — under React Strict Mode's double-invoke that ref
+  permanently skipped re-observing on the second mount pass, freezing
+  active-section highlighting on `sections[0]` for the whole dev session
+  (production builds happened to work, masking it). The effect now
+  constructs, observes, and returns a disconnect cleanup on every run, with
+  `sections` in the dependency array so a sections-prop change (or elements
+  not yet mounted) can recover instead of latching a stale state forever.
+- `SettingsNav`'s `<nav>` gets `aria-label="Settings sections"` (it was the
+  second unnamed navigation landmark on the page, after `Sidebar.tsx`'s
+  `<nav>`, which now also carries `aria-label="Main"`); its jump targets are
+  now a real `<ul>/<li>` list instead of bare sibling buttons, matching
+  `NavVisibility`'s own list semantics; the dead `settings-nav` class (no
+  matching rule anywhere in `app/globals.css`) was removed.
+- `app/settings/page.tsx`'s two `<section>` jump targets are now named
+  landmarks (`aria-labelledby` pointing at a real `<h2>`/`<h3>` wrapping each
+  group's existing `SectionLabel`, so the visible pill IS the heading rather
+  than a `sr-only` duplicate) — activating a jumplist entry now scrolls to
+  something a screen reader announces.
+- The two-pane grid's engagement breakpoint moved from `rail:` (1200px) to
+  `shell:` (900px, the Electron window's real `minWidth`) on both the grid
+  itself and `SettingsNav`'s sticky/border classes — the `rail:` breakpoint
+  left the whole 900-1199px band, which the packaged app's window can
+  actually occupy, with the nav as a non-sticky button stack that scrolled
+  out of view on click.
+- The grid's `200px` column literal is now `var(--width-nav-rail)`
+  (`12.5rem`, a new `app/globals.css` token) — `--width-rail` (23.75rem) is
+  the tracking/Today module-rail width and was never the right token for
+  this short jumplist; a magic number should not have stood in for either.
+- `components/tracking/settings/ModuleOrderSection.tsx`'s show/hide switch
+  (byte-identical to `NavVisibility`'s pre-extraction inline switch) is now
+  migrated onto the shared `Toggle` — the Phase 7 extraction had left this
+  duplicate behind.
+- **Recorded divergence for Phase 8**: `Toggle`'s disabled state renders
+  `opacity-50 cursor-not-allowed`; `components/tracking/ActivitiesSection.tsx`
+  (lines ~161-210) still hand-rolls a similar switch using
+  `disabled:opacity-40` with no `cursor-not-allowed`. Left as-is per this
+  fix-only pass's scope (fix the named items only); Phase 8's token/consistency
+  sweep should migrate `ActivitiesSection` onto `Toggle` too and resolve the
+  opacity mismatch.
+- Ledger correction: the line above previously read "`NavVisibility` itself
+  is untouched," which contradicted the very next paragraph describing its
+  new `Toggle` import — corrected above to say what actually changed.
+- `Panel`/`PanelRow`/`MetricStrip` were not used on this page: none of its
+  three groups need collapsible module chrome or a stat row — the calendar
+  feed and iCloud blocks already carry their own preserved-exactly card
+  styling, and `NavVisibility` already carries its own per-row cards.
+  Forcing them through `Panel` would have meant restructuring components the
+  plan requires to survive unchanged.
 
 ### `components/TaskRow.tsx`, `components/TaskPanel.tsx` (Phase 8) — status: untouched
 - Inline subtasks, stale banner, hover actions, timer button, recurrence,

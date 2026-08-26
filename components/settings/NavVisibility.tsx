@@ -2,6 +2,7 @@
 
 import { useTasks } from "@/lib/store-context";
 import { NAV, UNHIDEABLE_NAV_KEY } from "@/components/Sidebar";
+import Toggle from "@/components/ui/Toggle";
 
 /** Hides a nav link from the sidebar. The route itself still loads if navigated to directly. */
 export default function NavVisibility() {
@@ -21,28 +22,18 @@ export default function NavVisibility() {
             <span className={`flex-1 text-sm ${hidden ? "text-muted-foreground" : ""}`}>
               {item.label}
             </span>
-            <button
-              role="switch"
-              aria-checked={!hidden}
-              aria-label={hidden ? `Show ${item.label}` : `Hide ${item.label}`}
+            <Toggle
+              on={!hidden}
+              label={hidden ? `Show ${item.label}` : `Hide ${item.label}`}
               disabled={locked}
-              onClick={() =>
+              onChange={() =>
                 patchSettings({
                   hiddenNavItems: hidden
                     ? settings.hiddenNavItems.filter((k) => k !== item.key)
                     : [...settings.hiddenNavItems, item.key],
                 })
               }
-              className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-                hidden ? "bg-border" : "bg-accent"
-              } ${locked ? "cursor-not-allowed opacity-50" : ""}`}
-            >
-              <span
-                className={`absolute top-0.5 size-4 rounded-full bg-card transition-all ${
-                  hidden ? "left-0.5" : "left-[18px]"
-                }`}
-              />
-            </button>
+            />
           </li>
         );
       })}

@@ -82,7 +82,7 @@ function NavLinks() {
         />
       </form>
 
-      <nav className="flex flex-col gap-0.5">
+      <nav aria-label="Main" className="flex flex-col gap-0.5">
         {/* settings is null before the first fetch — show the full nav rather than flashing an empty sidebar. */}
         {(settings ? NAV.filter((item) => !settings.hiddenNavItems.includes(item.key)) : NAV).map((item) => {
           const active = pathname === item.href;

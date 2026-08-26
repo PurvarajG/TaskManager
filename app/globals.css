@@ -88,6 +88,11 @@
      inheriting it. */
   --width-rail: 23.75rem;
 
+  /* The Settings jumplist's own rail width — a short list of section labels,
+     not a full module column, so --width-rail (23.75rem/380px, sized for the
+     tracking day ribbon) is far too wide here. */
+  --width-nav-rail: 12.5rem;
+
   /* Category palette. Categories store the token name ("cat-indigo"), never a
      hex value, so recolouring the theme recolours every category with it. */
   --color-cat-indigo: #4f46e5;

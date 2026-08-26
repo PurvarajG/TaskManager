@@ -3,6 +3,7 @@
 import { useTasks } from "@/lib/store-context";
 import { MODULE_TITLE } from "@/lib/tracking-modules";
 import { useDragReorder } from "@/lib/useDragReorder";
+import Toggle from "@/components/ui/Toggle";
 
 /** Drag to reorder, toggle to hide — the dashboard renders modules exactly in this order. */
 export default function ModuleOrderSection() {
@@ -30,27 +31,17 @@ export default function ModuleOrderSection() {
             <span className={`flex-1 text-sm ${hidden ? "text-muted-foreground" : ""}`}>
               {MODULE_TITLE[key] ?? key}
             </span>
-            <button
-              role="switch"
-              aria-checked={!hidden}
-              aria-label={hidden ? `Show ${MODULE_TITLE[key] ?? key}` : `Hide ${MODULE_TITLE[key] ?? key}`}
-              onClick={() =>
+            <Toggle
+              on={!hidden}
+              label={hidden ? `Show ${MODULE_TITLE[key] ?? key}` : `Hide ${MODULE_TITLE[key] ?? key}`}
+              onChange={() =>
                 patchSettings({
                   hiddenModules: hidden
                     ? settings.hiddenModules.filter((k) => k !== key)
                     : [...settings.hiddenModules, key],
                 })
               }
-              className={`relative h-5 w-9 shrink-0 rounded-full transition-colors ${
-                hidden ? "bg-border" : "bg-accent"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 size-4 rounded-full bg-card transition-all ${
-                  hidden ? "left-0.5" : "left-[18px]"
-                }`}
-              />
-            </button>
+            />
           </li>
         );
       })}
