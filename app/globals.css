@@ -98,6 +98,21 @@
   --color-cat-rose: #e11d48;
   --color-cat-cyan: #0891b2;
   --color-cat-neutral: #737373;
+
+  /* Roles introduced by the Tempo-focus prototype (design-prototypes/tempo-focus):
+     the charcoal nav rail, its inverted-surface "focus card" ink, and the
+     warm attention callout used for overdue/stalled items. Kept as distinct
+     roles rather than reusing --color-accent/--color-foreground so the rail
+     and the focus card can stay dark even when the rest of the app is in
+     light mode. */
+  --color-nav: #313333;
+  --color-nav-foreground: #aeb5c1;
+  --color-nav-hover: #3b3e40;
+  --color-nav-active: #075cf6;
+  --color-ink: #101a34;
+  --color-attention: #ff692e;
+  --color-attention-surface: #fff7f4;
+  --color-attention-border: #f2ddd5;
 }
 
 /* Single source of truth for the dark palette's VALUES. Neither selector
@@ -126,6 +141,22 @@
   --dark-cat-rose: #fb7185;
   --dark-cat-cyan: #22d3ee;
   --dark-cat-neutral: #a3a3a3;
+
+  /* Tempo-focus roles in dark mode. The nav rail is already an opaque dark
+     surface in light mode, so it carries over unchanged — it never needs to
+     get "darker". Ink and attention are page surfaces, though, and do need
+     dark-mode counterparts: the focus card lightens slightly off the
+     near-black page so it still reads as an elevated surface, and the warm
+     attention callout swaps its near-white surface for a dark warm tint so
+     it doesn't paint a light hole into a dark page. */
+  --dark-nav: #313333;
+  --dark-nav-foreground: #aeb5c1;
+  --dark-nav-hover: #3b3e40;
+  --dark-nav-active: #4d7cff;
+  --dark-ink: #1b2747;
+  --dark-attention: #ff8259;
+  --dark-attention-surface: #2a1f1c;
+  --dark-attention-border: #4a352c;
 }
 
 /* Dark palette follows the OS by default; an explicit toggle (data-theme on
@@ -151,6 +182,15 @@
     --color-cat-rose: var(--dark-cat-rose);
     --color-cat-cyan: var(--dark-cat-cyan);
     --color-cat-neutral: var(--dark-cat-neutral);
+
+    --color-nav: var(--dark-nav);
+    --color-nav-foreground: var(--dark-nav-foreground);
+    --color-nav-hover: var(--dark-nav-hover);
+    --color-nav-active: var(--dark-nav-active);
+    --color-ink: var(--dark-ink);
+    --color-attention: var(--dark-attention);
+    --color-attention-surface: var(--dark-attention-surface);
+    --color-attention-border: var(--dark-attention-border);
   }
 }
 :root[data-theme="dark"] {
@@ -172,6 +212,15 @@
   --color-cat-rose: var(--dark-cat-rose);
   --color-cat-cyan: var(--dark-cat-cyan);
   --color-cat-neutral: var(--dark-cat-neutral);
+
+  --color-nav: var(--dark-nav);
+  --color-nav-foreground: var(--dark-nav-foreground);
+  --color-nav-hover: var(--dark-nav-hover);
+  --color-nav-active: var(--dark-nav-active);
+  --color-ink: var(--dark-ink);
+  --color-attention: var(--dark-attention);
+  --color-attention-surface: var(--dark-attention-surface);
+  --color-attention-border: var(--dark-attention-border);
 }
 
 body {
