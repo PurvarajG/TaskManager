@@ -669,7 +669,12 @@ kind).
   Forcing them through `Panel` would have meant restructuring components the
   plan requires to survive unchanged.
 
-### `components/TaskRow.tsx`, `components/TaskPanel.tsx` (Phase 8) — status: untouched
+### `components/TaskRow.tsx`, `components/TaskPanel.tsx` (Phase 8) — status: changed, behaviour preserved
+
+`TaskPanel` is untouched. `TaskRow` was edited twice: Phase 3 moved its inline
+`taskAge`/`isStale` into `lib/focus.ts` and imports them back, and Phase 8
+routed its project dot through `projectColorVar`. The stale banner and its
+"Still doing it" / "Let it go" handlers are byte-identical.
 - Inline subtasks, stale banner, hover actions, timer button, recurrence,
   tags, trash/restore — token sweep only, no behavioural change permitted.
 
