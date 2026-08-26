@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useTasks } from "@/lib/store-context";
 import { externalEventLabel } from "@/lib/external-events-view";
 import { fmt, fmtDate, fmtTime } from "@/lib/format";
@@ -14,45 +14,52 @@ import SidePanel from "../ui/SidePanel";
  * add something to it, or move something off it. The Move date control is the
  * accessible equivalent of dragging a marker across the grid, and it's the
  * only way on touch.
+ *
+ * The interior content is split into `DayPanelBody` so the Day calendar view
+ * can embed the exact same add/list/move-date affordances inline in its side
+ * rail instead of only reaching them through this click-to-open modal — one
+ * implementation of "a day's tasks, with add and move" either way.
  */
-export default function DayPanel({
+export function DayPanelBody({
   iso,
   tasks,
   externalEvents = [],
-  onClose,
 }: {
   iso: string;
   tasks: Task[];
   /** Read-only, from Apple Calendar. Never editable from this app. */
   externalEvents?: ExternalEvent[];
-  onClose: () => void;
 }) {
   const { addTask, openTask, patchTask, projects } = useTasks();
   const [draft, setDraft] = useState("");
   const [moving, setMoving] = useState<string | null>(null);
+  // Unique per mounted instance so the rail's inline copy (app/calendar/page.tsx)
+  // and this modal can never collide on id/htmlFor even if both are ever
+  // mounted at once — see the calendar page for why that's now suppressed.
+  const inputId = useId();
 
   return (
-    <SidePanel open onClose={onClose} title={fmtDate(iso)}>
-      <div className="space-y-5">
-        <div className="space-y-1.5">
-          <label htmlFor="calendar-add" className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-            Add a task on this day
-          </label>
-          <input
-            id="calendar-add"
-            value={draft}
-            placeholder="What needs doing?"
-            onChange={(e) => setDraft(e.target.value)}
-            onKeyDown={async (e) => {
-              if (e.key !== "Enter" || !draft.trim()) return;
-              const text = draft;
-              setDraft("");
-              // The date comes from the day you opened, not from parsing.
-              await addTask(text, { scheduled: iso }).catch(() => {});
-            }}
-            className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-accent/40"
-          />
-        </div>
+    <div className="space-y-5">
+      <div className="space-y-1.5">
+        <label htmlFor={inputId} className="font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
+          Add a task on this day
+        </label>
+        <input
+          id={inputId}
+          data-day-add-input
+          value={draft}
+          placeholder="What needs doing?"
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={async (e) => {
+            if (e.key !== "Enter" || !draft.trim()) return;
+            const text = draft;
+            setDraft("");
+            // The date comes from the day you opened, not from parsing.
+            await addTask(text, { scheduled: iso }).catch(() => {});
+          }}
+          className="h-10 w-full rounded-lg border border-border bg-card px-3 text-sm outline-none placeholder:text-muted-foreground/60 focus:border-accent/40"
+        />
+      </div>
 
         {tasks.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nothing scheduled. Add the first thing above.</p>
@@ -149,6 +156,24 @@ export default function DayPanel({
           </section>
         )}
       </div>
+  );
+}
+
+export default function DayPanel({
+  iso,
+  tasks,
+  externalEvents = [],
+  onClose,
+}: {
+  iso: string;
+  tasks: Task[];
+  /** Read-only, from Apple Calendar. Never editable from this app. */
+  externalEvents?: ExternalEvent[];
+  onClose: () => void;
+}) {
+  return (
+    <SidePanel open onClose={onClose} title={fmtDate(iso)}>
+      <DayPanelBody iso={iso} tasks={tasks} externalEvents={externalEvents} />
     </SidePanel>
   );
 }

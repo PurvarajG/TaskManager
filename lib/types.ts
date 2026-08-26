@@ -163,6 +163,20 @@ export const PROJECT_COLORS = [
   "#0891b2",
 ] as const;
 
+/**
+ * Projects store a raw hex value (unlike categories, which store a token
+ * name — see `categoryColorVar` in components/tracking/colors.ts), so a raw
+ * PROJECT_COLORS hex can't be swapped for a dark-mode variant by itself.
+ * This maps a stored hex back to the `--color-project-N` token at the same
+ * index (see app/globals.css), which resolves to a lighter `--dark-project-N`
+ * value in dark mode. Colors outside PROJECT_COLORS (e.g. legacy data) fall
+ * back to the raw hex unchanged.
+ */
+export function projectColorVar(hex: string): string {
+  const index = PROJECT_COLORS.indexOf(hex as (typeof PROJECT_COLORS)[number]);
+  return index === -1 ? hex : `var(--color-project-${index + 1})`;
+}
+
 // ── Time tracking lab ────────────────────────────────────────────────────
 
 /** What a category *means*, independent of its name — summaries read this, never the name. */

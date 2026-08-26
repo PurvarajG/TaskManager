@@ -5,7 +5,7 @@ import type { CalendarDay } from "@/lib/calendar";
 import { externalEventLabel } from "@/lib/external-events-view";
 import type { ExternalEvent } from "@/lib/icloud";
 import { useNow } from "@/lib/useNow";
-import type { Task } from "@/lib/types";
+import { projectColorVar, type Task } from "@/lib/types";
 import { dayHeight, DAY_WINDOW_HOURS, HourGridBox, HourRail, instantToPx, timeToPx } from "../time/HourGrid";
 
 const PX_PER_HOUR = 56;
@@ -38,8 +38,10 @@ export default function DayGrid({
   const { projects, openTask } = useTasks();
   const now = useNow();
 
-  const colorOf = (task: Task) =>
-    projects.find((p) => p.id === task.projectId)?.color ?? "var(--color-muted-foreground)";
+  const colorOf = (task: Task) => {
+    const color = projects.find((p) => p.id === task.projectId)?.color;
+    return color ? projectColorVar(color) : "var(--color-muted-foreground)";
+  };
 
   const isToday = day.iso === todayISO;
   const nowOffset = isToday && now ? instantToPx(now.toISOString(), PX_PER_HOUR) : null;
@@ -82,15 +84,27 @@ export default function DayGrid({
       )}
 
       <button
-        onClick={() => onSelectDay(day.iso)}
+        onClick={() => {
+          // Day view's side rail (app/calendar/page.tsx) already renders the
+          // exact same add-task input for this day inline — focus that one
+          // rather than opening a second copy in a modal behind it.
+          const input = document.querySelector<HTMLInputElement>("[data-day-add-input]");
+          if (input) input.focus();
+          else onSelectDay(day.iso);
+        }}
         className="mb-2 text-left font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground hover:text-foreground"
       >
         Add a task on this day
       </button>
 
-      <div className="flex">
+      <div className="flex rounded-xl border border-border bg-card p-2">
         <HourRail windowStartHour={0} windowHours={WINDOW_HOURS} height={HEIGHT} className="w-12 shrink-0 sm:w-14" />
-        <HourGridBox windowHours={WINDOW_HOURS} height={HEIGHT} nowOffset={nowOffset} aria-label={`${day.iso} hours`}>
+        <HourGridBox
+          windowHours={WINDOW_HOURS}
+          height={HEIGHT}
+          nowOffset={nowOffset}
+          aria-label={`${day.iso} hours`}
+        >
           {timed.map((task) => {
             const top = timeToPx(task.dueTime as string, PX_PER_HOUR);
             return (
@@ -98,10 +112,14 @@ export default function DayGrid({
                 key={task.id}
                 onClick={() => openTask(task.id)}
                 title={task.title}
-                className={`absolute inset-x-1 flex items-center gap-2 truncate rounded px-2 py-1 text-left text-xs font-medium text-accent-foreground shadow-sm hover:opacity-85 ${
+                className={`absolute inset-x-1 flex items-center gap-2 truncate rounded border-l-[3px] py-1 pl-2.5 pr-2 text-left text-xs font-medium text-foreground hover:opacity-85 ${
                   task.status === "done" ? "opacity-55 line-through" : ""
                 }`}
-                style={{ top, backgroundColor: colorOf(task) }}
+                style={{
+                  top,
+                  borderLeftColor: colorOf(task),
+                  backgroundColor: `color-mix(in srgb, ${colorOf(task)} 14%, var(--color-card))`,
+                }}
               >
                 <span className="truncate">{task.title}</span>
               </button>

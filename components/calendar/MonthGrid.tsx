@@ -66,7 +66,7 @@ export default function MonthGrid({
                 overDate === day.iso ? "border-accent bg-accent/10" : "border-border/60"
               } ${day.isWeekend && !isToday ? "bg-muted/40" : ""} ${
                 day.inMonth ? "" : "opacity-45"
-              } ${isToday ? "border-accent/50 bg-accent/5" : ""}`}
+              } ${isToday ? "border-accent/50 bg-accent/10" : ""}`}
             >
               <button
                 onClick={() => onSelectDay(day.iso)}

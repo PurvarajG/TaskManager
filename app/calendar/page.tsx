@@ -15,14 +15,16 @@ import {
   weekGrid,
   type CalendarView,
 } from "@/lib/calendar";
+import { fmtDate } from "@/lib/format";
 import { groupExternalEventsByDate } from "@/lib/external-events-view";
 import { useExternalEvents } from "@/lib/useExternalEvents";
 import type { Task } from "@/lib/types";
 import PageShell from "@/components/ui/PageShell";
+import Panel from "@/components/ui/Panel";
 import MonthGrid from "@/components/calendar/MonthGrid";
 import WeekGrid from "@/components/calendar/WeekGrid";
 import DayGrid from "@/components/calendar/DayGrid";
-import DayPanel from "@/components/calendar/DayPanel";
+import DayPanel, { DayPanelBody } from "@/components/calendar/DayPanel";
 
 const VIEW_LABELS: Record<CalendarView, string> = { day: "Day", week: "Week", month: "Month" };
 
@@ -127,6 +129,22 @@ function Calendar() {
       label="Calendar"
       maxWidth="max-w-none"
       title={viewLabel(view, anchorISO)}
+      rail={
+        // The prototype's day screen is an agenda column plus a side rail —
+        // reuse DayPanelBody's exact add/list/move-date implementation
+        // inline here instead of only behind the click-to-open DayPanel
+        // modal, since in day view you're always already looking at the one
+        // day it would show.
+        view === "day" ? (
+          <Panel title={fmtDate(anchorISO)} collapsible={false}>
+            <DayPanelBody
+              iso={anchorISO}
+              tasks={tasksByDate.get(anchorISO) ?? []}
+              externalEvents={externalByDate.get(anchorISO) ?? []}
+            />
+          </Panel>
+        ) : undefined
+      }
       actions={
         <>
           <div role="group" aria-label="Calendar view" className="flex items-center gap-0.5 rounded-lg border border-border p-0.5">
@@ -207,7 +225,17 @@ function Calendar() {
         {announcement}
       </p>
 
-      {selected && (
+      {/* In day view the rail above already renders DayPanelBody for
+          `anchorISO`, so opening the modal here too would mount a second
+          copy of that day's add input behind it. Suppress it in day view;
+          the rail is the one surface for the day on screen.
+
+          Note `selected` is NOT cleared when the view changes, so it can
+          still hold a day picked in week or month view. That is precisely
+          why this gate is on `view`, not on comparing `selected` to
+          `anchorISO`: whatever `selected` holds, day view's own surface is
+          the rail. */}
+      {selected && view !== "day" && (
         <DayPanel
           iso={selected}
           tasks={tasksByDate.get(selected) ?? []}

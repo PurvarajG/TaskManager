@@ -346,12 +346,72 @@ white-on-`#4d7cff` clears the WCAG large-text (14pt bold / 18pt regular)
   `patchSettings` toggle used to collapse it). `expandLabel` left at its
   default ("Expand").
 
-### `components/calendar/*`, `components/time/HourGrid.tsx` (Phase 4) — status: untouched
-- `useDragReschedule` and its a11y announcements.
-- `?view=` / `?date=` URL contract.
-- Multi-day complex-task spans.
-- iCloud external-event overlay rendered as a distinct neutral chip.
-- `tests/ui/calendar.test.tsx` behavioural contract.
+### `components/calendar/*`, `components/time/HourGrid.tsx` (Phase 4) — status: restyled, capabilities preserved
+- `useDragReschedule` and its a11y announcements — **preserved**, untouched
+  (`components/calendar/useDragReschedule.ts` not edited; `MonthGrid`/`WeekGrid`
+  still call it identically).
+- `?view=` / `?date=` URL contract in `app/calendar/page.tsx` — **preserved**,
+  untouched.
+- Multi-day complex-task spans — **preserved** (`tasksByDate` construction in
+  `app/calendar/page.tsx` untouched).
+- iCloud external-event overlay rendered as a distinct neutral chip —
+  **preserved**: `data-external-event` markers keep their dashed-border,
+  no-drag, no-click, muted-text treatment in `MonthGrid`, `WeekGrid`, `DayGrid`.
+- `tests/ui/calendar.test.tsx` behavioural contract — **preserved unmodified**,
+  all 18 tests pass, including the `.min-h-6` untimed-chip-strip selector and
+  the `2026-03-12, 0 tasks` aria-label WeekGrid's test depends on.
+- `tests/ui/external-events-hook.test.tsx` — **preserved unmodified**, 6 tests
+  pass.
+- `components/time/HourGrid.tsx` `HourGridBox`/`HourGrid`/`HourRail` — **moved
+  to**: same file, now also gives the box an explicit `bg-card` (previously
+  transparent) and restyles the now-line to a `bg-now` 1px line with a small round dot, matching the prototype's `.nowline`.
+  `components/tracking/modules/RibbonModule.tsx` (the ribbon call site) was
+  re-checked before and after: unchanged props, unchanged behaviour, only
+  inherits the restyled box/now-line — its geometry, gap/segment blocks and
+  waking-hours crop toggle are untouched.
+- `components/calendar/WeekGrid.tsx` — restyled: outer `calendar-shell`
+  treatment (bordered, rounded, card-background wrapper around the sticky
+  hour rail + day columns), today's day-head at `bg-accent/10`, timed event
+  chips now render with a 3px left accent bar in the task's project colour
+  over a tinted (`color-mix`) card background instead of a solid fill —
+  closer to the prototype's `.event`/`.event.orange` chip while still
+  encoding each task's own project colour rather than only two hardcoded
+  hues. Untimed dot markers, the `.min-h-6` chip strip, drag/drop wiring,
+  and the sticky hour rail are all unchanged.
+- `components/calendar/DayGrid.tsx` — restyled: the hour-rail + hour-grid-box
+  row now sits inside a bordered/rounded/card-background wrapper (the
+  `.calendar-day`/`.day-agenda` shell), and timed task chips get the same
+  left-accent-bar + tinted-background treatment as `WeekGrid`. The untimed
+  task list, "Add a task on this day" button (now focuses the rail's
+  `[data-day-add-input]` in day view, falling back to `onSelectDay`; it never
+  adds inline), and the no-drag/no-`useDragReschedule` behaviour for
+  this view are all unchanged — verified by `tests/ui/calendar.test.tsx`'s
+  "day calendar" describe block.
+- `components/calendar/MonthGrid.tsx` — restyled: today cell background
+  bumped from `bg-accent/5` to `bg-accent/10` for consistency with the other
+  two grids; drag/drop, complex-task span rendering across days, and the
+  external-event dashed chips are unchanged.
+- `components/calendar/DayPanel.tsx` — its interior (add input, task list,
+  "Move date" control, and the read-only "From Apple Calendar" section) is
+  now factored into a new named export `DayPanelBody`, with the default
+  `DayPanel` export unchanged in behaviour: it still wraps that body in
+  `SidePanel` exactly as before (`role="dialog"`, focus trap, Escape-to-close,
+  same test ids/labels) — verified by `tests/ui/calendar.test.tsx`'s "day
+  panel" and "imported Apple Calendar events" describe blocks, all passing
+  unmodified.
+- **New**: Day view (`?view=day`) now uses `PageShell`'s existing `rail` prop
+  — `app/calendar/page.tsx` passes a `Panel`-chromed (`components/ui/Panel.tsx`,
+  from Phase 0) rail containing `DayPanelBody` for the day currently shown,
+  giving the day screen the prototype's "agenda column + side rail" shape
+  (`.calendar-day`/`.day-side`) without a second implementation of the
+  add/list/move-date affordances. `PageShell`'s `shell:`/`rail:` grid
+  arithmetic was not touched. Month and week views pass no `rail`, so their
+  layout is unchanged; the click-to-open `DayPanel` modal still exists for
+  month and week (clicking a day opens it). In DAY view it is deliberately
+  suppressed: the rail renders the same `DayPanelBody` for the day on screen,
+  so mounting the modal too would put two copies of the day's add input in
+  one document. Nothing the modal offered is lost — the rail carries the task
+  list, add, "Move date" and the read-only Apple Calendar section.
 
 ### `components/tracking/*` (Phase 5) — status: untouched
 - `TaskPicker` / `CategoryPicker` portal behaviour (clipping fix from the
@@ -394,6 +454,27 @@ white-on-`#4d7cff` clears the WCAG large-text (14pt bold / 18pt regular)
 ## Deferred decisions
 
 None yet — Phase 0 had no undecidable ambiguity requiring a default choice.
+
+## Carried into Phase 8
+
+- **Single-source the project palette.** Phase 4 added `--color-project-1..7`
+  (with dark counterparts) and `projectColorVar()` in `lib/types.ts`, but only
+  `WeekGrid` and `DayGrid` route through it. Every other project-colour
+  surface still paints the raw stored hex, so in dark mode one project shows a
+  deep swatch in the sidebar and a lighter bar on the calendar. Phase 8's
+  token sweep must extend `projectColorVar()` to the remaining call sites:
+  `components/Sidebar.tsx`, `components/TaskRow.tsx`,
+  `components/today/TaskGroup.tsx`, `components/calendar/DayPanel.tsx`,
+  `app/projects/[id]/page.tsx`, `components/ProjectSettings.tsx`,
+  `components/tracking/TaskPicker.tsx`,
+  `components/tracking/modules/RecordsModule.tsx`,
+  `components/tracking/modules/RollupsModule.tsx` and
+  `components/today/DashboardTimeline.tsx` — the last one first, since it
+  still paints a solid raw-hex bar with inverted text, the exact pattern
+  Phase 4 removed from the calendar.
+- **`Move date` buttons share one accessible name.** `DayPanel` renders N
+  buttons whose entire accessible name is "Move date". Pre-existing, not
+  introduced by this plan; cheap to fix during the Phase 8 sweep.
 
 ## Corrections to the plan
 

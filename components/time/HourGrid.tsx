@@ -91,16 +91,21 @@ export function HourGridBox({
       // richer widget it isn't.
       role={ariaLabel ? "group" : undefined}
       aria-label={ariaLabel}
-      className={`relative isolate min-w-0 flex-1 rounded-lg border border-border/70 transition-colors ${className}`}
+      className={`relative isolate min-w-0 flex-1 rounded-lg border border-border/70 bg-card transition-colors ${className}`}
       style={{ height, backgroundImage: hourGridBackground(windowHours) }}
     >
       {children}
       {nowOffset !== null && nowOffset >= 0 && nowOffset <= height && (
         <div
           aria-label="Now"
-          className="pointer-events-none absolute inset-x-0 z-10 h-px bg-accent"
+          className="pointer-events-none absolute inset-x-0 z-10 h-px bg-now"
           style={{ top: nowOffset }}
-        />
+        >
+          <span
+            aria-hidden
+            className="absolute -top-0.75 left-0 size-1.75 rounded-full bg-now"
+          />
+        </div>
       )}
     </div>
   );

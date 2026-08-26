@@ -114,6 +114,23 @@
   --color-attention: #ff692e;
   --color-attention-surface: #fff7f4;
   --color-attention-border: #f2ddd5;
+
+  /* Distinct from --color-attention (overdue/stalled) so the calendar's
+     now-line never carries the same meaning as an overdue chip that can sit
+     right beside it on the same hour grid. */
+  --color-now: #e11d48;
+
+  /* Same values as PROJECT_COLORS (lib/types.ts) in light mode — this block
+     exists so dark mode has somewhere to hang a lightened counterpart via
+     projectColorVar(), same pattern as the --color-cat-* / --dark-cat-* pair
+     above. */
+  --color-project-1: #0052ff;
+  --color-project-2: #7c3aed;
+  --color-project-3: #db2777;
+  --color-project-4: #dc2626;
+  --color-project-5: #ea580c;
+  --color-project-6: #16a34a;
+  --color-project-7: #0891b2;
 }
 
 /* Single source of truth for the dark palette's VALUES. Neither selector
@@ -163,6 +180,18 @@
   --dark-attention: #ff8259;
   --dark-attention-surface: #2a1f1c;
   --dark-attention-border: #4a352c;
+
+  --dark-now: #fb7185;
+
+  /* Lighter, less saturated than the light PROJECT_COLORS so chips and their
+     3px left bar stay legible against #14171c (card) and #0b0d10 (page). */
+  --dark-project-1: #6d93ff;
+  --dark-project-2: #a78bfa;
+  --dark-project-3: #f472b6;
+  --dark-project-4: #f87171;
+  --dark-project-5: #fb923c;
+  --dark-project-6: #4ade80;
+  --dark-project-7: #22d3ee;
 }
 
 /* Dark palette follows the OS by default; an explicit toggle (data-theme on
@@ -198,6 +227,16 @@
     --color-attention: var(--dark-attention);
     --color-attention-surface: var(--dark-attention-surface);
     --color-attention-border: var(--dark-attention-border);
+
+    --color-now: var(--dark-now);
+
+    --color-project-1: var(--dark-project-1);
+    --color-project-2: var(--dark-project-2);
+    --color-project-3: var(--dark-project-3);
+    --color-project-4: var(--dark-project-4);
+    --color-project-5: var(--dark-project-5);
+    --color-project-6: var(--dark-project-6);
+    --color-project-7: var(--dark-project-7);
   }
 }
 :root[data-theme="dark"] {
@@ -229,6 +268,16 @@
   --color-attention: var(--dark-attention);
   --color-attention-surface: var(--dark-attention-surface);
   --color-attention-border: var(--dark-attention-border);
+
+  --color-now: var(--dark-now);
+
+  --color-project-1: var(--dark-project-1);
+  --color-project-2: var(--dark-project-2);
+  --color-project-3: var(--dark-project-3);
+  --color-project-4: var(--dark-project-4);
+  --color-project-5: var(--dark-project-5);
+  --color-project-6: var(--dark-project-6);
+  --color-project-7: var(--dark-project-7);
 }
 
 body {
