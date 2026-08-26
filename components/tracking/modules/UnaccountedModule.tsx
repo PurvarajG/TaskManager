@@ -5,9 +5,9 @@ import { fmt } from "@/lib/format";
 import { useTasks } from "@/lib/store-context";
 import { wakingWindow } from "@/lib/tracking-day";
 import type { Gap, TrackingSettings } from "@/lib/types";
-import CategoryDot from "../CategoryDot";
+import PanelRow from "@/components/ui/PanelRow";
+import ActivityPill from "../ActivityPill";
 import GapFillForm from "../GapFillForm";
-import MetaLabel from "../MetaLabel";
 import { presetChips } from "../presets";
 
 function clockLabel(iso: string): string {
@@ -34,49 +34,49 @@ export default function UnaccountedModule({ dayISO }: { dayISO: string }) {
   }
 
   return (
-    <ul className="space-y-3">
+    <div>
       {gaps.map((gap) => {
         const key = `${gap.startedAt}-${gap.endedAt}`;
         const label = settings ? overnightLabel(gap, settings, dayISO) : null;
         return (
-          <li key={key} className="rounded-xl border border-dashed border-border">
-            <div className="flex flex-wrap items-center gap-3 px-4 py-3.5">
-              <MetaLabel>
-                {clockLabel(gap.startedAt)} – {clockLabel(gap.endedAt)}
-              </MetaLabel>
-              <span className="font-mono text-xs tabular-nums text-muted-foreground">{fmt(gap.minutes)}</span>
-              {label && <span className="font-mono text-[10px] uppercase tracking-[0.1em] text-accent">{label}</span>}
-
-              <div className="ml-auto flex flex-wrap items-center gap-1.5">
-                {pinned.slice(0, 4).map(({ activity, category }) => (
-                  <button
-                    key={activity.id}
-                    onClick={() =>
-                      fillGap({ startedAt: gap.startedAt, endedAt: gap.endedAt, categoryId: category.id, activityId: activity.id })
-                    }
-                    className="flex min-h-11 items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-xs transition-colors hover:border-accent/30 sm:min-h-8"
-                  >
-                    <CategoryDot color={category.color} />
-                    {activity.name}
-                  </button>
-                ))}
-                <button
-                  onClick={() => setExpanded(expanded === key ? null : key)}
-                  className="min-h-11 rounded-full px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted sm:min-h-8"
-                >
-                  Something else…
-                </button>
-              </div>
+          <PanelRow
+            key={key}
+            detail={
+              <>
+                {fmt(gap.minutes)} · {label ?? "choose what you were doing"}
+              </>
+            }
+          >
+            <span className="font-medium">
+              {clockLabel(gap.startedAt)} – {clockLabel(gap.endedAt)}
+            </span>
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {pinned.slice(0, 4).map(({ activity, category }) => (
+                <ActivityPill
+                  key={activity.id}
+                  color={category.color}
+                  name={activity.name}
+                  onClick={() =>
+                    fillGap({ startedAt: gap.startedAt, endedAt: gap.endedAt, categoryId: category.id, activityId: activity.id })
+                  }
+                />
+              ))}
+              <button
+                onClick={() => setExpanded(expanded === key ? null : key)}
+                className="min-h-11 rounded-full px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted sm:min-h-8"
+              >
+                Something else…
+              </button>
             </div>
 
             {expanded === key && (
-              <div className="flex flex-wrap items-center gap-3 border-t border-border/70 px-4 py-4">
+              <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border/70 pt-3">
                 <GapFillForm gap={gap} onFilled={() => setExpanded(null)} />
               </div>
             )}
-          </li>
+          </PanelRow>
         );
       })}
-    </ul>
+    </div>
   );
 }

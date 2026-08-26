@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useElapsed } from "@/components/TaskTime";
 import { useTasks } from "@/lib/store-context";
+import ActivityPill from "../ActivityPill";
 import CategoryDot from "../CategoryDot";
 import MetaLabel from "../MetaLabel";
 import { presetChips } from "../presets";
@@ -53,24 +54,47 @@ export default function NowModule() {
 
   return (
     <div className="space-y-4">
-      {runningSegment ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-accent/30 bg-accent/[0.035] px-4 py-3">
-          <span aria-hidden className="size-2 shrink-0 rounded-full bg-accent motion-safe:animate-pulse-dot" />
-          {runningCategory && <CategoryDot color={runningCategory.color} />}
-          <span className="min-w-0 flex-1 truncate text-sm font-medium">{runningLabel}</span>
-          <span className="font-mono text-sm tabular-nums" aria-live="off">
-            {elapsed}
-          </span>
+      {/* The prototype's `.timer` block: an always-dark `--color-ink` surface
+          (its own `--color-ink-foreground` on-surface text — never
+          `text-background`, which would go near-black in dark mode) with a
+          round play/stop control and a large mono elapsed readout on the
+          right. Idle state keeps the same shape so starting doesn't jump the
+          layout; the play control is inert while idle since starting
+          requires picking a task or category below. */}
+      <div className="flex flex-wrap items-center gap-4 rounded-xl bg-ink px-4 py-4 text-ink-foreground">
+        {runningSegment ? (
           <button
+            type="button"
             onClick={() => stopSegment()}
-            className="shrink-0 rounded-lg bg-muted px-3 py-1.5 text-sm font-medium transition-colors hover:bg-border"
+            aria-label="Stop"
+            className="flex size-11 shrink-0 items-center justify-center rounded-full bg-accent text-lg text-accent-foreground transition-transform motion-safe:hover:scale-105"
           >
-            Stop
+            ■
           </button>
+        ) : (
+          <span
+            aria-hidden
+            className="flex size-11 shrink-0 items-center justify-center rounded-full bg-ink-foreground/15 text-lg text-ink-foreground/50"
+          >
+            ▶
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <p className="flex min-w-0 items-center gap-2 truncate text-sm font-medium">
+            {runningSegment && (
+              <span aria-hidden className="size-2 shrink-0 rounded-full bg-accent motion-safe:animate-pulse-dot" />
+            )}
+            {runningSegment && runningCategory && <CategoryDot color={runningCategory.color} />}
+            <span className="truncate">{runningSegment ? runningLabel : "Start a focused activity"}</span>
+          </p>
+          <p className="mt-0.5 truncate text-xs text-ink-foreground/60">
+            {runningSegment ? "Tracking now" : "Pick a task or a category below"}
+          </p>
         </div>
-      ) : (
-        <p className="text-sm text-muted-foreground">Nothing is being tracked. Pick something below.</p>
-      )}
+        <span className="ml-auto shrink-0 font-mono text-xl tabular-nums" aria-live="off">
+          {runningSegment ? elapsed : "00:00"}
+        </span>
+      </div>
 
       <div>
         <MetaLabel className="mb-2 block">Start a task</MetaLabel>
@@ -94,24 +118,15 @@ export default function NowModule() {
 
         {visiblePinned.length > 0 || hiddenRest.length > 0 ? (
           <div className="flex flex-wrap items-center gap-2">
-            {visiblePinned.map(({ activity, category }) => {
-              const active = runningSegment?.activityId === activity.id;
-              return (
-                <button
-                  key={activity.id}
-                  onClick={() => start(category.id, activity.id)}
-                  disabled={active}
-                  className={`flex min-h-12 items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors sm:min-h-10 ${
-                    active
-                      ? "border-accent/40 bg-accent/10 text-accent"
-                      : "border-border bg-card hover:border-accent/30"
-                  }`}
-                >
-                  <CategoryDot color={category.color} />
-                  {activity.name}
-                </button>
-              );
-            })}
+            {visiblePinned.map(({ activity, category }) => (
+              <ActivityPill
+                key={activity.id}
+                color={category.color}
+                name={activity.name}
+                active={runningSegment?.activityId === activity.id}
+                onClick={() => start(category.id, activity.id)}
+              />
+            ))}
 
             <QuickAddActivity />
 
@@ -125,24 +140,15 @@ export default function NowModule() {
             )}
 
             {showAll &&
-              hiddenRest.map(({ activity, category }) => {
-                const active = runningSegment?.activityId === activity.id;
-                return (
-                  <button
-                    key={activity.id}
-                    onClick={() => start(category.id, activity.id)}
-                    disabled={active}
-                    className={`flex min-h-12 items-center gap-2 rounded-full border px-4 py-2 text-sm transition-colors sm:min-h-10 ${
-                      active
-                        ? "border-accent/40 bg-accent/10 text-accent"
-                        : "border-border bg-card hover:border-accent/30"
-                    }`}
-                  >
-                    <CategoryDot color={category.color} />
-                    {activity.name}
-                  </button>
-                );
-              })}
+              hiddenRest.map(({ activity, category }) => (
+                <ActivityPill
+                  key={activity.id}
+                  color={category.color}
+                  name={activity.name}
+                  active={runningSegment?.activityId === activity.id}
+                  onClick={() => start(category.id, activity.id)}
+                />
+              ))}
           </div>
         ) : (
           <p className="text-sm text-muted-foreground">

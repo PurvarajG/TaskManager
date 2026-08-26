@@ -2,13 +2,17 @@
 
 import { fmt } from "@/lib/format";
 import { useTasks } from "@/lib/store-context";
-import { coveragePercent, minutesByProject } from "@/lib/tracking-stats";
+import { coveragePercent, minutesByKind, minutesByProject } from "@/lib/tracking-stats";
 import CategoryDot from "../CategoryDot";
 import MetaLabel from "../MetaLabel";
 
-/** Minutes per category, plus coverage — how much of the waking day so far is accounted for. */
+/**
+ * "Today at a glance" — the prototype's three-up `.stat-row` (Accounted /
+ * Focus / Unaccounted) — plus the existing minutes-per-category and
+ * minutes-per-project rundowns below it.
+ */
 export default function RollupsModule({ dayISO, todayISO, now }: { dayISO: string; todayISO: string; now: Date }) {
-  const { categories, segments, tasks, projects, settings, recordedMinutesForCategory } = useTasks();
+  const { categories, segments, tasks, projects, gaps, settings, recordedMinutesForCategory } = useTasks();
   if (!settings) return null;
 
   const rows = categories
@@ -21,8 +25,18 @@ export default function RollupsModule({ dayISO, todayISO, now }: { dayISO: strin
   const projectRows = minutesByProject(segments, tasks, projects, now);
   const projectMax = Math.max(1, ...projectRows.map((r) => r.minutes));
 
+  const accountedMinutes = rows.reduce((sum, r) => sum + r.minutes, 0);
+  const focusMinutes = minutesByKind(segments, categories, now).work;
+  const unaccountedMinutes = gaps.reduce((sum, g) => sum + g.minutes, 0);
+
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-2.5">
+        <Stat value={fmt(accountedMinutes)} label="Accounted" />
+        <Stat value={fmt(focusMinutes)} label="Focus" />
+        <Stat value={fmt(unaccountedMinutes)} label="Unaccounted" />
+      </div>
+
       <div className="flex items-center gap-3">
         <MetaLabel>Coverage</MetaLabel>
         <span className="font-mono text-sm tabular-nums">{coverage}%</span>
@@ -82,6 +96,16 @@ export default function RollupsModule({ dayISO, todayISO, now }: { dayISO: strin
           </ul>
         </div>
       )}
+    </div>
+  );
+}
+
+/** The prototype's `.stat` card — big serif value over a quiet uppercase label. */
+function Stat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="rounded-lg bg-muted px-3 py-3 text-center">
+      <p className="font-display text-lg leading-tight">{value}</p>
+      <MetaLabel className="mt-1 block">{label}</MetaLabel>
     </div>
   );
 }

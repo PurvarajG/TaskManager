@@ -4,7 +4,7 @@ import { fmt } from "@/lib/format";
 import { useTasks } from "@/lib/store-context";
 import { coveragePercent, longestStretchMinutes, minutesByKind, mostFragmentedHour } from "@/lib/tracking-stats";
 import type { CategoryKind } from "@/lib/types";
-import MetaLabel from "../MetaLabel";
+import PanelRow from "@/components/ui/PanelRow";
 
 const KIND_LABEL: Record<CategoryKind, string> = {
   work: "Work",
@@ -25,37 +25,30 @@ export default function SignalsModule({ dayISO, todayISO, now }: { dayISO: strin
   const kinds = (Object.keys(byKind) as CategoryKind[]).filter((k) => byKind[k] > 0);
 
   return (
-    <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-      <Signal label="Coverage" value={`${coverage}%`} />
-      <Signal label="Longest stretch" value={longest > 0 ? fmt(Math.round(longest)) : "—"} />
-      <Signal
-        label="Most fragmented"
-        value={fragmentedHour === null ? "—" : `${String(fragmentedHour).padStart(2, "0")}:00`}
-      />
-      <div>
-        <MetaLabel>By kind</MetaLabel>
-        {kinds.length === 0 ? (
-          <p className="mt-1 text-sm text-muted-foreground">—</p>
-        ) : (
-          <ul className="mt-1 space-y-0.5">
-            {kinds.map((kind) => (
-              <li key={kind} className="flex items-center justify-between gap-3 text-sm">
-                <span className="text-muted-foreground">{KIND_LABEL[kind]}</span>
-                <span className="font-mono text-xs tabular-nums">{fmt(byKind[kind])}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function Signal({ label, value }: { label: string; value: string }) {
-  return (
     <div>
-      <MetaLabel>{label}</MetaLabel>
-      <p className="mt-1 truncate font-mono text-lg tabular-nums">{value}</p>
+      <PanelRow detail={`${coverage}% of waking hours accounted for`}>
+        <span className="font-medium">Coverage</span>
+      </PanelRow>
+      <PanelRow detail={longest > 0 ? "Longest continuous stretch today" : "Nothing recorded yet"}>
+        <span className="font-medium">{longest > 0 ? fmt(Math.round(longest)) : "—"}</span>
+      </PanelRow>
+      <PanelRow
+        detail={fragmentedHour === null ? "Not enough switching to call out" : "Most segment starts in one hour"}
+      >
+        <span className="font-medium">
+          {fragmentedHour === null ? "Most fragmented" : `${String(fragmentedHour).padStart(2, "0")}:00`}
+        </span>
+      </PanelRow>
+      <PanelRow
+        detail={
+          kinds.length === 0
+            ? undefined
+            : kinds.map((kind) => `${KIND_LABEL[kind]} ${fmt(byKind[kind])}`).join(" · ")
+        }
+      >
+        <span className="font-medium">By kind</span>
+        {kinds.length === 0 && <p className="mt-1 text-xs text-muted-foreground">—</p>}
+      </PanelRow>
     </div>
   );
 }

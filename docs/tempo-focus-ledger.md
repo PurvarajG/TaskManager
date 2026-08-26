@@ -413,16 +413,79 @@ white-on-`#4d7cff` clears the WCAG large-text (14pt bold / 18pt regular)
   one document. Nothing the modal offered is lost — the rail carries the task
   list, add, "Move date" and the read-only Apple Calendar section.
 
-### `components/tracking/*` (Phase 5) — status: untouched
-- `TaskPicker` / `CategoryPicker` portal behaviour (clipping fix from the
-  prior plan's Phase 5 must not regress).
-- `ModuleCard` collapse state + its backfill migration.
-- User module order and visibility.
-- Gap-fill one-tap action.
-- Editable `RecordsModule` table.
-- Empty state when no categories exist.
-- Tracking-day boundary paging.
-- `tests/ui/tracking-pickers.test.tsx` contract.
+### `components/tracking/*` (Phase 5) — status: restyled, capabilities preserved
+- `TaskPicker` / `CategoryPicker` — **untouched**, not edited by this phase.
+  Portal behaviour (clipping fix from the prior plan's Phase 5) verified
+  still intact; `tests/ui/tracking-pickers.test.tsx` passes unmodified.
+- `ModuleCard` collapse state + its backfill migration — **untouched**
+  (`ModuleCard` was already a thin `Panel` wrapper from Phase 0; not edited
+  this phase). Module chrome for every tracking module still goes through
+  `Panel`/`ModuleCard`, never a parallel implementation.
+- User module order and visibility (`app/tracking/page.tsx`'s
+  `moduleOrder`/`hiddenModules` split, `MODULE_COLUMN`/`MODULE_TITLE`) —
+  **preserved**, `app/tracking/page.tsx` not edited this phase.
+- Gap-fill one-tap action (`UnaccountedModule` → `fillGap`) — **preserved**:
+  the per-gap quick-fill buttons still call `fillGap` with the same
+  arguments, now rendered as `ActivityPill` (new, see below) inside a
+  `PanelRow` instead of the previous bespoke button markup. "Something
+  else…" still expands `GapFillForm` inline.
+- Editable `RecordsModule` table — **untouched**, not edited this phase.
+- Empty state when no categories exist (`app/tracking/page.tsx`'s
+  `categories.length === 0` branch) — **preserved**, not edited.
+- Tracking-day boundary paging (`app/tracking/page.tsx`'s `‹ / Today / ›`) —
+  **preserved**, not edited.
+- `tests/ui/tracking-pickers.test.tsx` — **preserved unmodified**, passes.
+
+**New**: `components/tracking/ActivityPill.tsx` — the prototype's `.pill`
+treatment (bordered, `bg-card`, compact), factored out of the duplicated
+button markup previously hand-rolled in both `NowModule`'s quick-start row
+and `UnaccountedModule`'s per-gap fill row. Both now render this one
+component; `active`/`disabled` and the `onClick` contract (start an
+activity, or fill a gap) are unchanged.
+
+**New**: `components/ui/PanelRow.tsx` — the prototype's `.panel-row`
+treatment (headline + quiet detail line, top-border-separated, no border on
+the first row). Shared by `UnaccountedModule` (one row per gap: time range,
+duration + reason, quick-fill pills, and the "Something else…" expansion)
+and `SignalsModule` (one row per signal: Coverage, Longest stretch, Most
+fragmented, By kind).
+
+- `components/tracking/modules/NowModule.tsx` — the running/idle summary
+  row is now the prototype's `.timer` block: a `bg-ink`/`text-ink-foreground`
+  surface (Phase 0's ink tokens; no `text-background` used against it) with
+  a round play/stop control on the left and a large `font-mono text-xl`
+  elapsed readout on the right. Stop is now an icon button
+  (`aria-label="Stop"`) instead of a text button — same `stopSegment()` call.
+  Idle state keeps the identical block shape with a disabled-looking play
+  glyph, "Start a focused activity" / "Pick a task or a category below" in
+  place of the live label, and "00:00". The task picker (`TaskPicker`,
+  `size="lg"`) and quick-start chips below are unchanged in structure, only
+  the chips now render via `ActivityPill`.
+- `components/tracking/modules/RollupsModule.tsx` — gains the prototype's
+  "Today at a glance" three-up `.stat-row` at the top (`Stat`, a new
+  file-local component: `font-display` value over a `MetaLabel`, on a
+  `bg-muted` card) showing Accounted (sum of `recordedMinutesForCategory`
+  across categories with recorded time), Focus (`minutesByKind(...).work`),
+  and Unaccounted (sum of the day's `gaps[].minutes` from `useTasks()`). The
+  existing coverage bar, per-category rundown and per-project rundown below
+  it are **unchanged** — this is additive, not a replacement.
+- `components/tracking/modules/SignalsModule.tsx` — restyled from a 2×4 stat
+  grid to four `PanelRow`s (Coverage, Longest stretch, Most fragmented, By
+  kind), same underlying `coveragePercent`/`longestStretchMinutes`/
+  `mostFragmentedHour`/`minutesByKind` calls, values now shown as each row's
+  headline with a plain-language detail line beneath (e.g. "62% of waking
+  hours accounted for") in place of the previous label/value pairing.
+- `components/tracking/modules/UnaccountedModule.tsx` — each gap is now one
+  `PanelRow` (dashed-box-per-gap list replaced with the shared panel-row
+  list), keeping the clock-range headline, duration + overnight/reason
+  detail line, the quick-fill `ActivityPill`s, the "Something else…" toggle,
+  and the inline `GapFillForm` expansion all intact.
+- `components/tracking/modules/RibbonModule.tsx`, `components/time/HourGrid.tsx`
+  — **not touched this phase**; Phase 4 already gave the ribbon box its
+  `bg-card` surface and `bg-now` now-line, and `RibbonModule` already renders
+  it inside `ModuleCard`/`Panel` chrome with the hour rail beside the track,
+  matching the prototype's `.ribbon`/`.ribbon-hours`/`.ribbon-track` shape —
+  verified, no changes required.
 
 ### `app/upcoming/page.tsx` (Phase 6) — status: untouched
 - Grouped-list rendering (kept as the narrow-viewport form).
