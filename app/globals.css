@@ -67,14 +67,12 @@
   --shadow-accent-lg: 0 8px 24px color-mix(in srgb, var(--color-accent) 35%, transparent);
 
   /* For elevated surfaces whose own background is INVERTED relative to the
-     page (the Up Next card: bg-foreground on a bg-background page). A plain
-     black shadow (Tailwind's shadow-xl) reads fine in light mode, where the
-     page is light and --color-foreground is dark, but is invisible in dark
-     mode, where the page is already near-black. Deriving from
-     --color-foreground instead of a fixed black self-adjusts: dark
-     (low-lightness) foreground in light mode still casts a dark shadow, and
-     light (high-lightness) foreground in dark mode casts a visible pale
-     glow against the dark page instead of vanishing into it. */
+     page (the Up Next card: bg-foreground on a bg-background page). In light
+     mode --color-foreground is near-black, so deriving the shadow from it
+     gives an ordinary dark drop shadow. In dark mode that same derivation
+     inverted into a near-WHITE cast — a halo ringing the focus card rather
+     than a shadow under it — so dark mode gets its own literal value below
+     (--dark-shadow-elevated) instead of inheriting this one. */
   --shadow-elevated: 0 20px 50px -12px color-mix(in srgb, var(--color-foreground) 35%, transparent);
 
   --ease-out-soft: cubic-bezier(0.16, 1, 0.3, 1);
@@ -214,6 +212,11 @@
   /* Dark ink counterpart to --color-project-foreground: the dark-project-N
      set is lightened, so text on top needs to go dark instead of white. */
   --dark-project-foreground: #14171c;
+
+  /* Dark mode's elevated shadow is a fixed black, not a --color-foreground
+     derivation: the ink card sits LIGHTER than the near-black page here, so
+     it needs a real shadow beneath it. See --shadow-elevated above. */
+  --dark-shadow-elevated: 0 20px 50px -12px rgb(0 0 0 / 0.65);
 }
 
 /* Dark palette follows the OS by default; an explicit toggle (data-theme on
@@ -245,6 +248,7 @@
     --color-nav-hover: var(--dark-nav-hover);
     --color-nav-active: var(--dark-nav-active);
     --color-ink: var(--dark-ink);
+    --shadow-elevated: var(--dark-shadow-elevated);
     --color-ink-foreground: var(--dark-ink-foreground);
     --color-attention: var(--dark-attention);
     --color-attention-surface: var(--dark-attention-surface);
@@ -287,6 +291,7 @@
   --color-nav-hover: var(--dark-nav-hover);
   --color-nav-active: var(--dark-nav-active);
   --color-ink: var(--dark-ink);
+  --shadow-elevated: var(--dark-shadow-elevated);
   --color-ink-foreground: var(--dark-ink-foreground);
   --color-attention: var(--dark-attention);
   --color-attention-surface: var(--dark-attention-surface);

@@ -154,7 +154,14 @@ export default function WeekGrid({
                 height={HEIGHT}
                 nowOffset={isToday ? nowOffset : null}
                 aria-label={`${day.iso} hours`}
-                className={overDate === day.iso ? "border-accent" : ""}
+                // HourGridBox carries `flex-1` for its other caller (HourGrid,
+                // a flex ROW, where that sizes its width). Here it sits in a
+                // flex COLUMN, so `flex: 1 1 0%` applied to its HEIGHT
+                // instead — zeroing the flex-basis and collapsing the inline
+                // `height: 864px` down to whatever the column had left, which
+                // is why the week showed only the 00:00 row. Restoring
+                // auto-basis/no-grow-or-shrink lets the day's real height win.
+                className={`shrink-0 grow-0 basis-auto ${overDate === day.iso ? "border-accent" : ""}`}
               >
                 {timed.map((task) => {
                   const top = timeToPx(task.dueTime as string, PX_PER_HOUR);
