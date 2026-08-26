@@ -445,10 +445,16 @@ activity, or fill a gap) are unchanged.
 
 **New**: `components/ui/PanelRow.tsx` — the prototype's `.panel-row`
 treatment (headline + quiet detail line, top-border-separated, no border on
-the first row). Shared by `UnaccountedModule` (one row per gap: time range,
-duration + reason, quick-fill pills, and the "Something else…" expansion)
-and `SignalsModule` (one row per signal: Coverage, Longest stretch, Most
-fragmented, By kind).
+the first row). Takes an `as` prop (`"div"` default, or `"li"`) so a caller
+that wraps its rows in a `<ul>` gets real list semantics instead of working
+around the primitive at the call site. The detail line is a `div`, not a
+`p`, because callers pass structured content (Signals' per-kind `<ul>`) and a
+list inside a `<p>` gets closed by the HTML parser — which drops the detail
+styling and mismatches hydration. Shared by `UnaccountedModule` (one
+`<li>` `PanelRow` per gap inside a `<ul>`: time range, duration + reason,
+quick-fill pills, and the "Something else…" expansion) and `SignalsModule`
+(one `PanelRow` per signal: Coverage, Longest stretch, Most fragmented, By
+kind).
 
 - `components/tracking/modules/NowModule.tsx` — the running/idle summary
   row is now the prototype's `.timer` block: a `bg-ink`/`text-ink-foreground`
@@ -472,14 +478,20 @@ fragmented, By kind).
 - `components/tracking/modules/SignalsModule.tsx` — restyled from a 2×4 stat
   grid to four `PanelRow`s (Coverage, Longest stretch, Most fragmented, By
   kind), same underlying `coveragePercent`/`longestStretchMinutes`/
-  `mostFragmentedHour`/`minutesByKind` calls, values now shown as each row's
-  headline with a plain-language detail line beneath (e.g. "62% of waking
-  hours accounted for") in place of the previous label/value pairing.
-- `components/tracking/modules/UnaccountedModule.tsx` — each gap is now one
-  `PanelRow` (dashed-box-per-gap list replaced with the shared panel-row
-  list), keeping the clock-range headline, duration + overnight/reason
-  detail line, the quick-fill `ActivityPill`s, the "Something else…" toggle,
-  and the inline `GapFillForm` expansion all intact.
+  `mostFragmentedHour`/`minutesByKind` calls. Each row's headline is the
+  signal's own name (matching the prototype's `.panel-row` shape, label in
+  the headline), and the detail line beneath carries the value plus its
+  plain-language context (e.g. "1h 20m · longest continuous stretch today"),
+  in both the data and empty states. "By kind" renders its per-kind
+  breakdown as a real `<ul>` of rows with `font-mono tabular-nums` values,
+  not a joined string.
+- `components/tracking/modules/UnaccountedModule.tsx` — the gap list is a
+  `<ul>` of `PanelRow`s rendered with `as="li"` (dashed-box-per-gap list
+  replaced with the shared panel-row list, list semantics preserved for
+  assistive tech), keeping the clock-range headline, duration +
+  overnight/reason detail line, the quick-fill `ActivityPill`s, the
+  "Something else…" toggle, and the inline `GapFillForm` expansion all
+  intact.
 - `components/tracking/modules/RibbonModule.tsx`, `components/time/HourGrid.tsx`
   — **not touched this phase**; Phase 4 already gave the ribbon box its
   `bg-card` surface and `bg-now` now-line, and `RibbonModule` already renders

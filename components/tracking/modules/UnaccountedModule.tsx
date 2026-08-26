@@ -34,13 +34,14 @@ export default function UnaccountedModule({ dayISO }: { dayISO: string }) {
   }
 
   return (
-    <div>
+    <ul>
       {gaps.map((gap) => {
         const key = `${gap.startedAt}-${gap.endedAt}`;
         const label = settings ? overnightLabel(gap, settings, dayISO) : null;
         return (
           <PanelRow
             key={key}
+            as="li"
             detail={
               <>
                 {fmt(gap.minutes)} · {label ?? "choose what you were doing"}
@@ -77,6 +78,6 @@ export default function UnaccountedModule({ dayISO }: { dayISO: string }) {
           </PanelRow>
         );
       })}
-    </div>
+    </ul>
   );
 }

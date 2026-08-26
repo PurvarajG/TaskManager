@@ -10,6 +10,7 @@ export default function PanelRow({
   detail,
   trailing,
   className = "",
+  as: Tag = "div",
 }: {
   /** The row's headline content. */
   children: React.ReactNode;
@@ -18,14 +19,19 @@ export default function PanelRow({
   /** Optional trailing content on the headline row (actions, a value). */
   trailing?: React.ReactNode;
   className?: string;
+  /** Render as a different element, e.g. "li" when the caller wraps rows in a <ul>. */
+  as?: "div" | "li";
 }) {
   return (
-    <div className={`border-t border-border/70 py-2.5 text-sm first:border-t-0 first:pt-0 ${className}`}>
+    <Tag className={`border-t border-border/70 py-2.5 text-sm first:border-t-0 first:pt-0 ${className}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">{children}</div>
         {trailing && <div className="flex shrink-0 items-center gap-1.5">{trailing}</div>}
       </div>
-      {detail && <p className="mt-1 text-xs text-muted-foreground">{detail}</p>}
-    </div>
+      {/* A div, not a p: callers pass structured detail (Signals' per-kind
+          <ul>), and a list inside a <p> is closed by the HTML parser, which
+          both drops these styles and mismatches hydration. */}
+      {detail && <div className="mt-1 text-xs text-muted-foreground">{detail}</div>}
+    </Tag>
   );
 }
