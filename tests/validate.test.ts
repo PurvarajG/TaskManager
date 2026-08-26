@@ -37,6 +37,16 @@ test("an hour is a whole 0-23, and a string list rejects non-lists", () => {
   assert.throws(() => v.stringList("now", "moduleOrder"), v.Invalid);
 });
 
+test("a stringList key built from a UUID (e.g. board-backlog-<stageId>) round-trips unchanged rather than being silently truncated", () => {
+  const key = `board-backlog-${uuid}`;
+  assert.equal(key.length, 50);
+  assert.deepEqual(v.stringList([key], "collapsedModules"), [key]);
+  // An absurdly long entry must be rejected outright, never sliced into a
+  // different, valid-looking key — that silent truncation is exactly what
+  // let the board-backlog collapse key duplicate without bound.
+  assert.throws(() => v.stringList(["x".repeat(200)], "collapsedModules"), v.Invalid);
+});
+
 test("ids must be well-formed before they reach SQL", () => {
   assert.equal(v.uuid(uuid, "id"), uuid);
   assert.throws(() => v.uuid("'; drop table tasks; --", "id"), v.Invalid);

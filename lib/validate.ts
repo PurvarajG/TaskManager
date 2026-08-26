@@ -145,7 +145,27 @@ export function hour(value: unknown, field: string): number {
   return n;
 }
 
+/**
+ * Cap for keys in stringList fields (moduleOrder, hiddenModules,
+ * collapsedModules, hiddenNavItems). Must comfortably fit the longest key
+ * any caller actually builds: `board-backlog-${stageId}` where stageId is a
+ * randomUUID (14 + 36 = 50 chars), plus headroom for future prefixes of
+ * similar shape. DO NOT tighten this back toward the literal module-name
+ * keys ("now", "records", ...) without checking every collapsedModules /
+ * hiddenModules writer for UUID-derived keys first — a lower cap silently
+ * truncates such a key into a different, valid-looking key instead of
+ * rejecting it, which is exactly how this class of bug went unnoticed
+ * (see board-backlog collapse-key truncation).
+ */
+const STRING_LIST_ITEM_MAX = 80;
+
 export function stringList(value: unknown, field: string): string[] {
   if (!Array.isArray(value)) fail(`${field} must be a list`);
-  return value.map((v) => str(v, field, 40));
+  return value.map((v) => {
+    if (typeof v !== "string") fail(`${field} must be text`);
+    if (v.length > STRING_LIST_ITEM_MAX) {
+      fail(`${field} entries must be ${STRING_LIST_ITEM_MAX} characters or fewer`);
+    }
+    return v;
+  });
 }

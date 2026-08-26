@@ -798,3 +798,38 @@ None yet — Phase 0 had no undecidable ambiguity requiring a default choice.
   `Board.tsx`, `useBoardDrag.ts`, `ProjectStage`/`StageKind` types, or any
   test. Nothing was lost during Phase 3; the plan's premise was simply wrong.
   A later phase should not go looking for a WIP-limit mechanism to preserve.
+
+
+## Phase 9 — shell and packaging verification
+
+- `electron/`, the user-data path and `migrateLegacyUserData` — **untouched**,
+  verified by an empty `git diff a68c867..HEAD -- electron lib/db.ts
+  lib/schema.sql lib/migrate.ts app/api lib/store`.
+- Vibrancy is now fully occluded by the opaque rail and the opaque `<main>`.
+  `vibrancy: "sidebar"` is inert rather than wrong, and the transparent
+  `backgroundColor` still earns its place: it stops an opaque layer painting
+  behind the transparent body during resize and first paint. No change made.
+- Menu commands re-verified against the current DOM: `⌘F` still finds
+  `#tempo-sidebar-search`, `⌘N` finds `#tempo-quick-add`, and `⌘⇧T` reads the
+  store rather than the DOM, so Phase 5's restyle of the play control could
+  not reach it.
+- **Defect found by the package auditor and fixed** (Phase 3 shipped it;
+  every earlier audit missed it): `board-backlog-${stageId}` is 50 characters
+  and `stringList` capped entries at 40 by SLICING, so a collapsed backlog
+  column sprang back open on the next PATCH, never persisted, and appended a
+  duplicate key on every click. `lib/validate.ts` now rejects over-long
+  entries instead of silently rewriting them into a different valid-looking
+  key, with the cap raised to fit a prefixed UUID.
+
+### Known, recorded, not fixed
+- Nothing prunes a `board-backlog-<stageId>` key from `collapsed_modules` when
+  its stage or project is deleted, so the array accumulates dead keys over a
+  long-lived install. Bounded and harmless at current scale; predates this
+  plan's board-collapse feature only in mechanism, not in kind.
+- `components/tracking/TimeBlock.tsx`'s sparse branch sets white text over a
+  category colour — the same contrast bug Phase 8 fixed for projects. It is
+  unreachable today (its only caller passes `density="continuous"`), so it was
+  left alone; fix it before that branch is ever used.
+- `disabled:opacity-40` without `cursor-not-allowed` survives in the kanban
+  dialogs, `QuickTodos` and the tracking pickers — a third disabled treatment
+  alongside `ui/Toggle`'s.
