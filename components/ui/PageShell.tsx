@@ -35,11 +35,21 @@ import SectionLabel from "@/components/SectionLabel";
  * SectionLabel already opts itself out of the drag region, and `actions`
  * is wrapped in `.no-drag` here so callers don't have to remember it per
  * page.
+ *
+ * Header language (Phase 2, design-prototypes/tempo-focus/index.html's
+ * `.topline`/`.eyebrow`/`h1`/`.subtitle`): `label` now renders through
+ * SectionLabel's bordered `variant="eyebrow"` pill instead of the plain
+ * accent-tinted one, followed by the serif `h1`, then the optional
+ * `subtitle` line, then `headerExtra`. Only this header render path
+ * changed — `label`, `pulse`, `actions`, `headerExtra`, `rail`,
+ * `maxWidth` and `workspaceTestId` all keep their exact prop shape and
+ * behaviour.
  */
 export default function PageShell({
   label,
   pulse = false,
   title,
+  subtitle,
   actions,
   headerExtra,
   rail,
@@ -50,6 +60,9 @@ export default function PageShell({
   label: React.ReactNode;
   pulse?: boolean;
   title: React.ReactNode;
+  /** Optional single line under the h1 — true, route-specific context, not
+   *  marketing copy. Rendered before `headerExtra`. */
+  subtitle?: React.ReactNode;
   actions?: React.ReactNode;
   /** Extra header content below the title — stats rows, a progress bar, a
    *  subtitle — before the scrolling body begins. */
@@ -83,13 +96,21 @@ export default function PageShell({
     >
       <header className="shrink-0">
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <SectionLabel pulse={pulse}>{label}</SectionLabel>
+          <SectionLabel variant="eyebrow" pulse={pulse}>
+            {label}
+          </SectionLabel>
           {actions && <div className="no-drag flex flex-wrap items-center gap-2">{actions}</div>}
         </div>
 
         <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl shell:mt-3 shell:text-3xl">
           {title}
         </h1>
+
+        {subtitle && (
+          <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-muted-foreground shell:mt-1.5">
+            {subtitle}
+          </p>
+        )}
 
         {headerExtra}
       </header>

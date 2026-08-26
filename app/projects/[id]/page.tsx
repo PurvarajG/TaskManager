@@ -6,7 +6,8 @@ import { useTasks } from "@/lib/store-context";
 import { toISODate } from "@/lib/parse";
 import { fmt } from "@/lib/format";
 import { projectSummary } from "@/lib/summary";
-import SectionLabel from "@/components/SectionLabel";
+import PageShell from "@/components/ui/PageShell";
+import MetricStrip from "@/components/ui/MetricStrip";
 import ProjectSettings from "@/components/ProjectSettings";
 import Board from "@/components/kanban/Board";
 
@@ -33,43 +34,58 @@ export default function ProjectPage() {
   if (!project) return null;
 
   return (
-    <div className="px-6 py-12 sm:px-10 sm:py-16">
-      <div className="flex items-center justify-between">
-        <SectionLabel>Project</SectionLabel>
+    <PageShell
+      label="Project"
+      maxWidth="max-w-6xl shell:max-w-none"
+      actions={
         <button
           onClick={() => setSettingsOpen(true)}
           className="rounded-lg px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           Settings
         </button>
-      </div>
+      }
+      title={
+        <span className="flex items-center gap-3">
+          <span className="size-3 shrink-0 rounded-full" style={{ background: project.color }} />
+          <span className="select-text">{project.name}</span>
+        </span>
+      }
+      headerExtra={
+        <>
+          {/* Plain counts, not a score: every figure here is recomputed from tasks,
+              stage semantics, and time entries. */}
+          <MetricStrip
+            className="mt-5"
+            items={[
+              { key: "complete", value: `${summary.percentComplete}%`, label: "Complete" },
+              { key: "open", value: String(summary.open), label: "Open" },
+              { key: "done", value: String(summary.completed), label: "Done" },
+              ...(summary.overdue > 0
+                ? [{ key: "overdue", value: String(summary.overdue), label: "Overdue" }]
+                : []),
+              ...(summary.blocked > 0
+                ? [{ key: "blocked", value: String(summary.blocked), label: "Blocked" }]
+                : []),
+              { key: "estimated", value: fmt(summary.estimatedMinutes), label: "Estimated" },
+              { key: "recorded", value: fmt(summary.recordedMinutes), label: "Recorded" },
+              { key: "today", value: fmt(summary.recordedTodayMinutes), label: "Today" },
+              { key: "last-7-days", value: fmt(summary.recordedWeekMinutes), label: "Last 7 days" },
+            ]}
+          />
 
-      <h1 className="mt-5 flex items-center gap-3 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl">
-        <span className="size-3 shrink-0 rounded-full" style={{ background: project.color }} />
-        <span className="select-text">{project.name}</span>
-      </h1>
-
-      {/* Plain counts, not a score: every figure here is recomputed from tasks,
-          stage semantics, and time entries. */}
-      <dl className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
-        <Stat label="Complete" value={`${summary.percentComplete}%`} />
-        <Stat label="Open" value={String(summary.open)} />
-        <Stat label="Done" value={String(summary.completed)} />
-        {summary.overdue > 0 && <Stat label="Overdue" value={String(summary.overdue)} />}
-        {summary.blocked > 0 && <Stat label="Blocked" value={String(summary.blocked)} />}
-        <Stat label="Estimated" value={fmt(summary.estimatedMinutes)} />
-        <Stat label="Recorded" value={fmt(summary.recordedMinutes)} />
-        <Stat label="Today" value={fmt(summary.recordedTodayMinutes)} />
-        <Stat label="Last 7 days" value={fmt(summary.recordedWeekMinutes)} />
-      </dl>
-
-      {/* Counts by column, so the board's shape is legible before you scan it. */}
-      <dl className="mt-2 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground">
-        {summary.byStage.map(({ stage, count }) => (
-          <Stat key={stage.id} label={stage.name} value={String(count)} />
-        ))}
-      </dl>
-
+          {/* Counts by column, so the board's shape is legible before you scan it. */}
+          <MetricStrip
+            className="mt-2"
+            items={summary.byStage.map(({ stage, count }) => ({
+              key: stage.id,
+              value: String(count),
+              label: stage.name,
+            }))}
+          />
+        </>
+      }
+    >
       <div className="mt-8">
         <Board project={project} todayISO={todayISO} />
       </div>
@@ -77,15 +93,6 @@ export default function ProjectPage() {
       {settingsOpen && (
         <ProjectSettings project={project} onClose={() => setSettingsOpen(false)} />
       )}
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline gap-1.5">
-      <dt>{label}</dt>
-      <dd className="text-foreground">{value}</dd>
-    </div>
+    </PageShell>
   );
 }

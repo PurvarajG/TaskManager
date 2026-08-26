@@ -8,6 +8,7 @@ import { useNow } from "@/lib/useNow";
 import { todaySummary } from "@/lib/summary";
 import { useTasks } from "@/lib/store-context";
 import PageShell from "./ui/PageShell";
+import MetricStrip from "./ui/MetricStrip";
 import SectionLabel from "./SectionLabel";
 import TaskRow from "./TaskRow";
 import QuickAdd from "./QuickAdd";
@@ -95,16 +96,31 @@ export default function Today() {
       headerExtra={
         ready && (
           <>
-            <dl className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-[11px] uppercase tracking-[0.1em] text-muted-foreground lg:mt-3 lg:gap-x-5 lg:text-[10px]">
-              <Stat label="Active" value={String(today.length)} />
-              {summary.overdue.length > 0 && (
-                <Stat label="Overdue" value={String(summary.overdue.length)} />
-              )}
-              <Stat label="Planned" value={fmt(committed)} />
-              <Stat label="Capacity left" value={fmt(minutesLeft)} />
-              <Stat label="Recorded today" value={fmt(summary.recordedTodayMinutes)} />
-              {runningTask && <Stat label="Timing" value={runningTask.title} />}
-            </dl>
+            <MetricStrip
+              className="mt-6 lg:mt-3"
+              items={[
+                { key: "active", value: String(today.length), label: "Active" },
+                ...(summary.overdue.length > 0
+                  ? [{ key: "overdue", value: String(summary.overdue.length), label: "Overdue" }]
+                  : []),
+                { key: "planned", value: fmt(committed), label: "Planned" },
+                { key: "capacity-left", value: fmt(minutesLeft), label: "Capacity left" },
+                {
+                  key: "recorded-today",
+                  value: fmt(summary.recordedTodayMinutes),
+                  label: "Recorded today",
+                },
+                ...(runningTask
+                  ? [
+                      {
+                        key: "timing",
+                        value: <span className="inline-block max-w-40 truncate align-bottom">{runningTask.title}</span>,
+                        label: "Timing",
+                      },
+                    ]
+                  : []),
+              ]}
+            />
 
             <div className="mt-4 lg:mt-2">
               <div className="h-1.5 overflow-hidden rounded-full bg-muted">
@@ -268,14 +284,5 @@ export default function Today() {
         )}
       </div>
     </PageShell>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline gap-1.5">
-      <dt>{label}</dt>
-      <dd className="max-w-40 truncate text-foreground">{value}</dd>
-    </div>
   );
 }

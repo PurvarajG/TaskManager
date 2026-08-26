@@ -50,7 +50,14 @@ export default function Board({ project, todayISO }: { project: Project; todayIS
 
   return (
     <>
-      <div className="-mx-6 overflow-x-auto px-6 pb-4 sm:-mx-10 sm:px-10">
+      {/*
+        Bleed is calibrated to PageShell's workspace padding so the board's own
+        overflow-x-auto is the only horizontal scroller — if PageShell's px-*
+        steps change, update these to match or the page gains a spurious
+        second horizontal scrollbar (visible overflow-x next to
+        shell:overflow-y-auto computes to `overflow: auto` on the ancestor).
+      */}
+      <div className="-mx-6 overflow-x-auto px-6 pb-4 sm:-mx-10 sm:px-10 shell:-mx-8 shell:px-8 xl:-mx-10 xl:px-10">
         <div className="flex items-start gap-3">
           {stages.map((stage) => (
             <Column

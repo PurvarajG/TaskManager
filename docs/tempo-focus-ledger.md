@@ -146,21 +146,73 @@ white-on-`#4d7cff` clears the WCAG large-text (14pt bold / 18pt regular)
   to its button, matching the focus-visible ring style used elsewhere in
   `components/ui/`.
 
-### `components/ui/PageShell.tsx` (Phase 2) — status: untouched
+### `components/ui/PageShell.tsx` (Phase 2) — status: Phase 2, done
 - Props: `label`, `title`, `pulse`, `actions`, `headerExtra`, `rail`,
-  `maxWidth`, `workspaceTestId` (all required by `tests/ui/page-shell.test.tsx`
-  and every route using `PageShell`).
+  `maxWidth`, `workspaceTestId` — **preserved**, unchanged shape;
+  `tests/ui/page-shell.test.tsx` passes unmodified. New `subtitle?` prop
+  added (optional, additive).
 - Two named variants: `shell:` (900px custom variant) and `rail:` (1200px
-  custom variant, two-column grid with `stretch` alignment) — arithmetic
-  documented in `app/globals.css`.
+  custom variant, two-column grid with `stretch` alignment) — **untouched**,
+  arithmetic and classes byte-for-byte as documented in `app/globals.css`.
+- Header render path changed to the prototype's language: the internal
+  `SectionLabel` call for `label` now passes `variant="eyebrow"` (added in
+  Phase 0) instead of the default plain pill; serial order is now eyebrow →
+  serif `h1` → optional `subtitle` paragraph → `headerExtra`. No call site
+  needed updating for this — `label`/`headerExtra` still work exactly as
+  before, `subtitle` is opt-in.
+- **Deferred decision:** no route was given a `subtitle` this phase. The
+  prototype's per-screen subtitle copy ("Outcome: complete the move with
+  every dependency confirmed...", "Track the present first, then understand
+  where the day went.", etc.) is either fabricated per-project narrative text
+  with no backing field on `Project` (no `description`/`outcome` column
+  exists) or generic filler not tied to actual route state. Per the phase's
+  explicit instruction not to invent marketing copy, `subtitle` ships as
+  available plumbing only; a later phase may fill it in only where a truthful,
+  data-derived line exists (e.g. Phase 3's focus-band work may surface a real
+  per-project outcome once one is captured).
 
-### `app/projects/[id]/page.tsx` (Phases 2, 3) — status: untouched
-- Currently renders its own header rather than `PageShell` (moves onto it in
-  Phase 2).
+### `components/ui/MetricStrip.tsx` (Phase 2) — status: Phase 2, wired
+- First call sites: `components/Today.tsx` (Active/Overdue/Planned/Capacity
+  left/Recorded today/Timing) and `app/projects/[id]/page.tsx` (Complete/
+  Open/Done/Overdue/Blocked/Estimated/Recorded/Today/Last 7 days, plus a
+  second strip for the per-stage counts). Every stat previously shown is
+  still shown, same value, same label; only the value/label order flipped
+  (MetricStrip renders `<strong>value</strong> label`, the old hand-rolled
+  `<dl>` rendered `label value`) to match the shared primitive's own
+  convention consistently across the app.
+- `app/tracking/page.tsx` and `app/upcoming/page.tsx`, both named in the plan
+  as conversion targets, were checked and currently have **no** hand-rolled
+  stat row of this kind in the live tree (`app/tracking/page.tsx` only has
+  toolbar nav buttons in its header; `app/upcoming/page.tsx` has no header
+  stats at all) — the plan's snapshot predates whatever removed them. Nothing
+  to convert on either route; noted here so a later phase doesn't assume this
+  was missed.
+
+### `app/projects/[id]/page.tsx` (Phases 2, 3) — status: Phase 2, done
+- Now renders through `PageShell` instead of its own hand-rolled header —
+  eyebrow "Project", serif `h1` carrying the colour dot + project name
+  (moved into `title`, unchanged markup/classes), Settings button moved into
+  `actions` (`.no-drag`-wrapped automatically by `PageShell`), both stat rows
+  moved into `headerExtra` via two `MetricStrip`s — **preserved**, same
+  values/labels/conditionals (`overdue`/`blocked` only shown when > 0).
 - Board (`components/kanban/`): `useBoardDrag`, column rename, WIP limits,
   `STAGE_KINDS`, add-column, `RemoveStageDialog`'s required-destination
-  behaviour, card move menu (Phase 3 restyles `Board`/`Column`/`Card` without
-  touching these).
+  behaviour, card move menu — **untouched**, `Board` still receives the same
+  `project`/`todayISO` props (Phase 3 restyles `Board`/`Column`/`Card`
+  without touching these).
+- `ProjectSettings` side panel — **preserved**, same `settingsOpen` state and
+  `onClose` handler, now opened via the `PageShell` `actions` button.
+- Missing-id handling (`if (!project) return null;`) — **preserved**, unchanged;
+  there has never been a "Project not found" message, just a silent `null` render.
+
+### `app/tracking/settings/page.tsx` (Phase 2) — status: Phase 2, done
+- Now renders through `PageShell` (`label="Tracking settings"`, serif title
+  "Configure your taxonomy") instead of a hand-rolled header div — the four
+  sections (Categories, Activities, Gap rules, Module order & visibility),
+  their descriptive copy, and the loading skeleton before `ready && settings`
+  are **preserved** unchanged, only re-parented under `PageShell`'s children.
+  Drag-reorder behaviour inside `ModuleOrderSection` etc. is untouched (no
+  edits made to any `components/tracking/settings/*` file).
 
 ### `lib/focus.ts` (Phase 3, new file) — status: untouched
 - To be extracted from the stale/waiting logic currently living in

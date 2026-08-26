@@ -1,9 +1,7 @@
 /**
  * Inline mono uppercase stat row — "68% complete · 2 need attention".
  * Introduced as the shared primitive for the stat rows currently hand-rolled
- * per-page (Today, the project workspace, Tracking, Next 7 Days). Phase 0
- * only introduces the primitive; wiring those pages onto it is a later
- * phase's job, so this component has no existing call sites yet.
+ * per-page (Today, the project workspace, Tracking, Next 7 Days).
  */
 export interface MetricStripItem {
   /** The emphasised lead value, e.g. "68%" or "1h 35m". */
@@ -23,14 +21,21 @@ export default function MetricStrip({
   if (items.length === 0) return null;
 
   return (
-    <div
+    <dl
       className={`flex flex-wrap items-center gap-x-6 gap-y-1.5 font-mono text-[10px] uppercase tracking-[0.13em] text-muted-foreground ${className}`}
     >
       {items.map((item, i) => (
-        <span key={item.key ?? i} className="whitespace-nowrap">
-          <strong className="font-semibold text-foreground">{item.value}</strong> {item.label}
-        </span>
+        <div key={item.key ?? i} className="flex gap-1 whitespace-nowrap">
+          {/*
+            A dl pairs each dt with the dd that FOLLOWS it in DOM order, so the
+            term must come first in the markup. The prototype shows the value
+            first visually; that flip is done with CSS `order`, never by
+            emitting the dd ahead of its dt.
+          */}
+          <dt className="order-2">{item.label}</dt>
+          <dd className="order-1 font-semibold text-foreground">{item.value}</dd>
+        </div>
       ))}
-    </div>
+    </dl>
   );
 }

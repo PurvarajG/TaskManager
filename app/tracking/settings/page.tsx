@@ -1,6 +1,7 @@
 "use client";
 
 import SectionLabel from "@/components/SectionLabel";
+import PageShell from "@/components/ui/PageShell";
 import ActivitiesSection from "@/components/tracking/settings/ActivitiesSection";
 import CategoriesSection from "@/components/tracking/settings/CategoriesSection";
 import GapRulesSection from "@/components/tracking/settings/GapRulesSection";
@@ -11,12 +12,14 @@ export default function TrackingSettingsPage() {
   const { ready, settings } = useTasks();
 
   return (
-    <div className="mx-auto max-w-3xl px-6 py-12 sm:px-10 sm:py-16">
-      <SectionLabel>Tracking settings</SectionLabel>
-      <h1 className="mt-5 font-display text-4xl leading-[1.1] tracking-[-0.02em] sm:text-5xl">
-        Configure your <span className="gradient-text">taxonomy</span>
-      </h1>
-
+    <PageShell
+      label="Tracking settings"
+      title={
+        <>
+          Configure your <span className="gradient-text">taxonomy</span>
+        </>
+      }
+    >
       {!ready || !settings ? (
         <div className="mt-10 h-10 w-64 animate-pulse rounded-lg bg-muted" />
       ) : (
@@ -64,6 +67,6 @@ export default function TrackingSettingsPage() {
           </section>
         </div>
       )}
-    </div>
+    </PageShell>
   );
 }
