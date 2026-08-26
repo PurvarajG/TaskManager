@@ -7,16 +7,35 @@ import type { Project, ProjectStage, StageKind } from "@/lib/types";
 import { STAGE_KINDS } from "@/lib/types";
 import Column from "./Column";
 import RemoveStageDialog from "./RemoveStageDialog";
+import CollapsedBar from "../ui/CollapsedBar";
 import { inputClass, labelClass, selectClass } from "../ui/Field";
 
 export default function Board({ project, todayISO }: { project: Project; todayISO: string }) {
-  const { tasks, stagesFor, moveTask, addStage } = useTasks();
+  const { tasks, stagesFor, moveTask, addStage, settings, patchSettings } = useTasks();
   const [removing, setRemoving] = useState<ProjectStage | null>(null);
   const [addingColumn, setAddingColumn] = useState(false);
   /** Announced politely after a move, whether it came from drag or keyboard. */
   const [announcement, setAnnouncement] = useState("");
 
   const stages = stagesFor(project.id);
+
+  // Reuses the same collapsedModules/patchSettings path Today's rail panels
+  // already persist through, rather than a second collapse mechanism. Keyed
+  // per stage so multiple backlog-kind columns (rare, but not disallowed)
+  // collapse independently. Nothing is collapsed by default, so a board with
+  // no saved preference renders exactly as it always has.
+  const collapsedModules = settings?.collapsedModules ?? [];
+  const collapseKey = (stageId: string) => `board-backlog-${stageId}`;
+  const isCollapsed = (stageId: string) => collapsedModules.includes(collapseKey(stageId));
+  const toggleCollapsed = (stageId: string) => {
+    if (!settings) return;
+    const key = collapseKey(stageId);
+    patchSettings({
+      collapsedModules: collapsedModules.includes(key)
+        ? collapsedModules.filter((k) => k !== key)
+        : [...collapsedModules, key],
+    });
+  };
 
   const byStage = useMemo(() => {
     const map = new Map<string, typeof tasks>();
@@ -51,30 +70,52 @@ export default function Board({ project, todayISO }: { project: Project; todayIS
   return (
     <>
       {/*
-        Bleed is calibrated to PageShell's workspace padding so the board's own
+        Bleed is calibrated to PageShell's workspace padding so this div's own
         overflow-x-auto is the only horizontal scroller — if PageShell's px-*
-        steps change, update these to match or the page gains a spurious
-        second horizontal scrollbar (visible overflow-x next to
-        shell:overflow-y-auto computes to `overflow: auto` on the ancestor).
+        steps change, update these to match. The immediate containing block at
+        `shell:` and up (app/projects/[id]/page.tsx's Board wrapper) pins
+        `shell:overflow-x-hidden` alongside its own `shell:overflow-y-auto`
+        for exactly this reason: overflow-y:auto alone computes overflow-x to
+        auto too, which would otherwise give that wrapper a second horizontal
+        scrollbar around this one.
       */}
       <div className="-mx-6 overflow-x-auto px-6 pb-4 sm:-mx-10 sm:px-10 shell:-mx-8 shell:px-8 xl:-mx-10 xl:px-10">
         <div className="flex items-start gap-3">
-          {stages.map((stage) => (
-            <Column
-              key={stage.id}
-              stage={stage}
-              stages={stages}
-              tasks={byStage.get(stage.id) ?? []}
-              todayISO={todayISO}
-              projectId={project.id}
-              dragTaskId={dragTaskId}
-              dropIndex={target?.stageId === stage.id ? target.index : null}
-              cardProps={cardProps}
-              columnProps={columnProps}
-              onMove={onMove}
-              onRemove={() => setRemoving(stage)}
-            />
-          ))}
+          {stages.map((stage) => {
+            const stageTasks = byStage.get(stage.id) ?? [];
+            const collapsible = stage.kind === "backlog";
+
+            if (collapsible && isCollapsed(stage.id)) {
+              return (
+                <div key={stage.id} className="w-56 shrink-0 self-end">
+                  <CollapsedBar
+                    label={stage.name}
+                    count={stageTasks.length}
+                    onExpand={() => toggleCollapsed(stage.id)}
+                    dropProps={columnProps(stage.id, stageTasks.length)}
+                  />
+                </div>
+              );
+            }
+
+            return (
+              <Column
+                key={stage.id}
+                stage={stage}
+                stages={stages}
+                tasks={stageTasks}
+                todayISO={todayISO}
+                projectId={project.id}
+                dragTaskId={dragTaskId}
+                dropIndex={target?.stageId === stage.id ? target.index : null}
+                cardProps={cardProps}
+                columnProps={columnProps}
+                onMove={onMove}
+                onRemove={() => setRemoving(stage)}
+                onCollapse={collapsible ? () => toggleCollapsed(stage.id) : undefined}
+              />
+            );
+          })}
 
           {addingColumn ? (
             <AddColumn

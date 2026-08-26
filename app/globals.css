@@ -110,6 +110,7 @@
   --color-nav-hover: #3b3e40;
   --color-nav-active: #075cf6;
   --color-ink: #101a34;
+  --color-ink-foreground: #f1f5f9;
   --color-attention: #ff692e;
   --color-attention-surface: #fff7f4;
   --color-attention-border: #f2ddd5;
@@ -154,6 +155,11 @@
   --dark-nav-hover: #3b3e40;
   --dark-nav-active: #4d7cff;
   --dark-ink: #1b2747;
+  /* The ink surface is deliberately dark in both themes, so its foreground
+     stays the same light value in both — no lightening/darkening swap
+     needed here, unlike attention below. Still listed explicitly per the
+     "both bodies list every property" contract above. */
+  --dark-ink-foreground: #f1f5f9;
   --dark-attention: #ff8259;
   --dark-attention-surface: #2a1f1c;
   --dark-attention-border: #4a352c;
@@ -188,6 +194,7 @@
     --color-nav-hover: var(--dark-nav-hover);
     --color-nav-active: var(--dark-nav-active);
     --color-ink: var(--dark-ink);
+    --color-ink-foreground: var(--dark-ink-foreground);
     --color-attention: var(--dark-attention);
     --color-attention-surface: var(--dark-attention-surface);
     --color-attention-border: var(--dark-attention-border);
@@ -218,6 +225,7 @@
   --color-nav-hover: var(--dark-nav-hover);
   --color-nav-active: var(--dark-nav-active);
   --color-ink: var(--dark-ink);
+  --color-ink-foreground: var(--dark-ink-foreground);
   --color-attention: var(--dark-attention);
   --color-attention-surface: var(--dark-attention-surface);
   --color-attention-border: var(--dark-attention-border);

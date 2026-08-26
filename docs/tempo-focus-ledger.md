@@ -188,7 +188,7 @@ white-on-`#4d7cff` clears the WCAG large-text (14pt bold / 18pt regular)
   to convert on either route; noted here so a later phase doesn't assume this
   was missed.
 
-### `app/projects/[id]/page.tsx` (Phases 2, 3) — status: Phase 2, done
+### `app/projects/[id]/page.tsx` (Phases 2, 3) — status: Phase 3, done
 - Now renders through `PageShell` instead of its own hand-rolled header —
   eyebrow "Project", serif `h1` carrying the colour dot + project name
   (moved into `title`, unchanged markup/classes), Settings button moved into
@@ -197,9 +197,10 @@ white-on-`#4d7cff` clears the WCAG large-text (14pt bold / 18pt regular)
   values/labels/conditionals (`overdue`/`blocked` only shown when > 0).
 - Board (`components/kanban/`): `useBoardDrag`, column rename, WIP limits,
   `STAGE_KINDS`, add-column, `RemoveStageDialog`'s required-destination
-  behaviour, card move menu — **untouched**, `Board` still receives the same
-  `project`/`todayISO` props (Phase 3 restyles `Board`/`Column`/`Card`
-  without touching these).
+  behaviour, card move menu — **untouched**; `Board` still receives the same
+  `project`/`todayISO` props (Phase 3 restyled `Board`/`Column`/`Card` and
+  added backlog-collapse state internal to `Board`, without changing this
+  call site's props).
 - `ProjectSettings` side panel — **preserved**, same `settingsOpen` state and
   `onClose` handler, now opened via the `PageShell` `actions` button.
 - Missing-id handling (`if (!project) return null;`) — **preserved**, unchanged;
@@ -214,10 +215,136 @@ white-on-`#4d7cff` clears the WCAG large-text (14pt bold / 18pt regular)
   Drag-reorder behaviour inside `ModuleOrderSection` etc. is untouched (no
   edits made to any `components/tracking/settings/*` file).
 
-### `lib/focus.ts` (Phase 3, new file) — status: untouched
-- To be extracted from the stale/waiting logic currently living in
-  `components/TaskRow.tsx`; `TaskRow` must import from the extracted module
-  rather than keep a duplicate.
+### `lib/focus.ts` (Phase 3, new file) — status: Phase 3, done
+- `taskAge`/`isStale` extracted verbatim from `components/TaskRow.tsx`'s
+  inline `age`/`stale` computation (`daysBetween(scheduled, today) >
+  STALE_AFTER_DAYS`, open tasks only). `TaskRow` now imports both from here
+  instead of computing them inline — its visible banner ("Sat here N days." /
+  "Still doing it" / "Let it go") is byte-for-byte unchanged, verified by
+  `tests/ui/board.test.tsx`'s and `tests/ui/task-panel.test.tsx`'s existing
+  overdue/date assertions plus a new `tests/focus.test.ts` unit suite (10
+  tests, `npx tsx --test`).
+- `getFocusTask(tasks, projectId, running, todayISO)` — running-timer task if
+  it belongs to the project, else the lowest-`rank()` (highest-priority) open
+  task due today or overdue in that project; `null` when nothing qualifies.
+- `getAttentionItems(tasks, stages, projectId, todayISO)` — two disjoint
+  buckets rather than a naive union: tasks in a **non**-waiting-kind stage
+  that are overdue by the scheduled-date rule (reason `"overdue"`), plus
+  tasks in a **waiting**-kind (`kind === "blocked"`) stage that are stale by
+  `isStale` (reason `"stalled-waiting"`). **Deferred decision:** a task can
+  satisfy both rules at once (staleness always implies its scheduled date has
+  passed), so waiting-kind stages are judged on staleness only and excluded
+  from the date-overdue bucket — otherwise every stalled-waiting item would
+  double as "overdue" and the two labels the plan asks for would never be
+  visually distinct. No schema change; both functions are pure and derive
+  everything from existing `Task`/`ProjectStage` fields.
+
+### `components/TaskRow.tsx` (Phase 3 touch, ahead of Phase 8) — status: preserved
+- Only the `age`/`stale` computation lines changed (now call `taskAge`/
+  `isStale` from `lib/focus.ts`); the stale banner's markup, copy, and the
+  "Still doing it" (`patchTask(id, { scheduled: todayISO })`) / "Let it go"
+  (`trashTask(id)`) handlers are untouched. Phase 8 still owns the rest of
+  this file's token sweep.
+
+### `components/Today.tsx` (Phase 3 touch, reuse) — status: preserved
+- The inline "Up next" hero block (inverted `bg-foreground` card, dot
+  texture, tag pill, serif title, meta row, "Mark done"/"Not today" actions)
+  is now rendered through the new `components/ui/FocusCard.tsx` with
+  `surface="foreground"` (its prior token) and `density="regular"` (its prior
+  `lg:` breakpoint classes) — the extraction reproduces the exact previous
+  class list, so Today's visual output and behaviour (`completeTask`,
+  `patchTask(id, { scheduled: addDays(todayISO, 1) })`) are unchanged. No
+  other part of `Today.tsx` was touched.
+
+### `components/ui/FocusCard.tsx` (new) — status: Phase 3, done
+- Extracted, parameterised version of Today's former inline "Up next" card:
+  `tag`, `title`, `meta` (array), `primaryLabel`/`onPrimary`,
+  `secondaryLabel`/`onSecondary`, `surface` (`"foreground" | "ink"`),
+  `density` (`"regular" | "compact"`). `surface="ink"` uses the Phase 0
+  `--color-ink` token (`bg-ink`); `density="compact"` swaps the `lg:`
+  breakpoint rules for `shell:` ones so the project workspace's copy fits the
+  one-viewport budget. Call sites: `Today.tsx` (`foreground`/`regular`,
+  unchanged output) and `app/projects/[id]/page.tsx` (`ink`/`compact`, new).
+
+### `components/ui/AttentionPanel.tsx` (new) — status: Phase 3, done
+- The prototype's warm `.attention` card: Phase 0's `--color-attention` /
+  `--color-attention-surface` / `--color-attention-border` tokens, a left
+  accent border, one row per `AttentionItem` (dot + title + reason detail),
+  each row opening the shared task panel via `openTask` — the same click
+  pattern `components/today/TaskGroup.tsx` uses elsewhere, not a new one.
+  Renders a quiet empty-state line when `items` is empty. No hardcoded
+  colours; the reason text uses `text-muted-foreground` (no attention-specific
+  muted token exists yet in Phase 0's palette).
+
+### `app/projects/[id]/page.tsx` — Phase 3 additions (continued from above)
+- New focus band above "Active work": `SectionLabel` "Do next", then a
+  `focus-grid`-style two-column row (`FocusCard` `surface="ink"` +
+  `AttentionPanel`) built from `getFocusTask`/`getAttentionItems`. "Start Nm"
+  goes through the existing `startTimer`/`stopTimer` store actions (the same
+  path `components/TimerButton.tsx` uses, not a new one) — toggles to "Stop
+  timing" while that task is running; "Mark done" calls the existing
+  `completeTask`. When nothing qualifies for focus, a quiet dashed
+  placeholder renders instead and the whole band is omitted when there is
+  also nothing to flag (`focusTask === null && attentionItems.length === 0`).
+  The band, the new "Active work" `SectionLabel`, and the board's own
+  `-mx-6.../px-6...` bleed comment/classes (fixed in Phase 2) are all
+  **preserved** unchanged.
+- Viewport fit: children are now wrapped in `shell:flex shell:h-full
+  shell:min-h-0 shell:flex-col`; the focus band and "Active work" head are
+  `shell:shrink-0`, and only the board's own wrapper div is
+  `shell:min-h-0 shell:flex-1 shell:overflow-y-auto` — so at `shell:` and up
+  only the board scrolls internally while the rest of the page stays fixed,
+  without editing `PageShell`'s own `shell:`/`rail:` arithmetic (unmodified;
+  its outer `shell:overflow-y-auto` becomes inert here because the inner
+  column now exactly fills the available height instead of overflowing it).
+  Below `shell:`, everything is ordinary document flow, unchanged.
+- All 9 header stats (`Complete`/`Open`/`Done`/`Overdue`/`Blocked`/
+  `Estimated`/`Recorded`/`Today`/`Last 7 days`), the per-stage `MetricStrip`,
+  the colour dot + project name, `Board`, and `ProjectSettings` — **preserved**
+  verbatim from Phase 2; only new JSX was added around them, none of their
+  props or conditionals changed.
+- New tests: `tests/ui/project-focus.test.tsx` (5 tests) covering
+  focus-task selection (priority fallback, running-task precedence),
+  attention-list contents, the empty-state placeholder, and that the board's
+  columns/counts still render alongside the new band.
+
+### `components/kanban/Board.tsx` (Phase 3) — status: Phase 3, done
+- Backlog-kind (`stage.kind === "backlog"`) columns can now collapse into the
+  new `components/ui/CollapsedBar.tsx` via a per-stage toggle, persisted
+  through the **same** `settings.collapsedModules`/`patchSettings` path
+  `Today.tsx`'s rail panels already use (key: `` `board-backlog-${stageId}` ``)
+  — not a second collapse mechanism. Nothing is collapsed by default, so
+  `tests/ui/board.test.tsx` (which asserts the Backlog column renders as a
+  normal region with a visible rename input and remove button) passes
+  **unmodified** — verified by running it after this change.
+- `useBoardDrag`, `moveTask`/`onMove`, column rename, WIP limits, the
+  over-limit warning (unchanged — this file never implemented one; noted in
+  case a later phase assumes it exists here), `STAGE_KINDS`, add-column,
+  `RemoveStageDialog`'s required-destination rule, and the card move menu —
+  all **untouched**, same props/handlers passed to `Column`/`Card`.
+- The bleed comment and its `-mx-6.../sm:-mx-10.../shell:-mx-8.../xl:-mx-10...`
+  breakpoint-matched steps (fixed in Phase 2) are **preserved** byte-for-byte.
+
+### `components/kanban/Column.tsx` (Phase 3) — status: Phase 3, done
+- New optional `onCollapse?: () => void` prop, set by `Board` only for
+  backlog-kind stages; renders one extra `‹›` icon button in the header
+  (labelled `Collapse ${stage.name} column`) next to the existing rename
+  input and `×` remove button — both **preserved**, unchanged handlers.
+  `rounded-2xl` → `rounded-xl` and `bg-muted/40` → `bg-muted/50` (soft-grey
+  column treatment per the prototype); no other class or behaviour changed.
+
+### `components/kanban/Card.tsx` (Phase 3) — status: Phase 3, done
+- Purely cosmetic: `rounded-xl` → `rounded-lg` and added
+  `motion-safe:hover:-translate-y-0.5` (the prototype's `.task:hover
+  {transform:translateY(-1px)}`). `openTask`, `TimerButton`, the move menu,
+  overdue-in-words, complex-task range display, and subtask/priority/running
+  meta are all **untouched**.
+
+### `components/ui/CollapsedBar.tsx` (Phase 0 → wired in Phase 3)
+- First call site: `components/kanban/Board.tsx`'s collapsed backlog-kind
+  column (`label`=stage name, `count`=stage task count, `onExpand`=the same
+  `patchSettings` toggle used to collapse it). `expandLabel` left at its
+  default ("Expand").
 
 ### `components/calendar/*`, `components/time/HourGrid.tsx` (Phase 4) — status: untouched
 - `useDragReschedule` and its a11y announcements.
@@ -267,3 +394,13 @@ white-on-`#4d7cff` clears the WCAG large-text (14pt bold / 18pt regular)
 ## Deferred decisions
 
 None yet — Phase 0 had no undecidable ambiguity requiring a default choice.
+
+## Corrections to the plan
+
+- **Phase 3's "WIP limits and the over-limit warning" does not exist.** The
+  plan named WIP limits as board behaviour that must survive the Phase 3
+  restyle. The layout auditor's Phase 3 review confirmed there is no
+  WIP-limit feature anywhere in the codebase — not in `Column.tsx`,
+  `Board.tsx`, `useBoardDrag.ts`, `ProjectStage`/`StageKind` types, or any
+  test. Nothing was lost during Phase 3; the plan's premise was simply wrong.
+  A later phase should not go looking for a WIP-limit mechanism to preserve.

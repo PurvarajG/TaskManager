@@ -9,6 +9,7 @@ import { todaySummary } from "@/lib/summary";
 import { useTasks } from "@/lib/store-context";
 import PageShell from "./ui/PageShell";
 import MetricStrip from "./ui/MetricStrip";
+import FocusCard from "./ui/FocusCard";
 import SectionLabel from "./SectionLabel";
 import TaskRow from "./TaskRow";
 import QuickAdd from "./QuickAdd";
@@ -206,40 +207,18 @@ export default function Today() {
         {/* The one thing. Inverted so it can't be confused with the list. */}
         {upNext && (
           <section className="mt-10 lg:mt-6">
-            <div className="relative overflow-hidden rounded-2xl bg-foreground p-7 text-background shadow-elevated lg:rounded-xl lg:p-5">
-              <div className="dot-texture pointer-events-none absolute inset-0" />
-              <div className="relative">
-                <span className="inline-flex items-center gap-2.5 rounded-full bg-gradient-to-r from-accent to-accent-secondary px-3.5 py-1.5">
-                  <span className="font-mono text-[11px] uppercase tracking-[0.15em] text-accent-foreground">
-                    Up next
-                  </span>
-                </span>
-
-                <h2 className="select-text mt-5 font-display text-3xl leading-[1.15] tracking-[-0.01em] lg:mt-3 lg:text-2xl">
-                  {upNext.title}
-                </h2>
-
-                <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] uppercase tracking-[0.1em] text-background/60 lg:mt-2 lg:text-[10px]">
-                  <span>{fmt(upNext.minutes)}</span>
-                  {upNext.priority > 0 && <span>P{upNext.priority}</span>}
-                </div>
-
-                <div className="mt-7 flex flex-wrap items-center gap-3 lg:mt-4 lg:gap-2">
-                  <button
-                    onClick={() => completeTask(upNext.id)}
-                    className="h-11 rounded-xl bg-gradient-to-r from-accent to-accent-secondary px-5 text-sm font-medium text-accent-foreground transition-all duration-200 hover:shadow-accent-lg hover:brightness-110 active:scale-[0.98] lg:h-9 lg:rounded-lg lg:px-4 lg:text-xs"
-                  >
-                    Mark done
-                  </button>
-                  <button
-                    onClick={() => patchTask(upNext.id, { scheduled: addDays(todayISO, 1) })}
-                    className="h-11 rounded-xl px-4 text-sm text-background/70 transition-colors hover:bg-background/10 hover:text-background lg:h-9 lg:px-4 lg:text-xs"
-                  >
-                    Not today
-                  </button>
-                </div>
-              </div>
-            </div>
+            <FocusCard
+              tag="Up next"
+              title={upNext.title}
+              meta={[
+                fmt(upNext.minutes),
+                ...(upNext.priority > 0 ? [`P${upNext.priority}`] : []),
+              ]}
+              primaryLabel="Mark done"
+              onPrimary={() => completeTask(upNext.id)}
+              secondaryLabel="Not today"
+              onSecondary={() => patchTask(upNext.id, { scheduled: addDays(todayISO, 1) })}
+            />
           </section>
         )}
 

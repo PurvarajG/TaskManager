@@ -17,6 +17,7 @@ export default function Column({
   columnProps,
   onMove,
   onRemove,
+  onCollapse,
 }: {
   stage: ProjectStage;
   stages: ProjectStage[];
@@ -31,6 +32,9 @@ export default function Column({
   columnProps: (stageId: string, count: number) => React.HTMLAttributes<HTMLElement>;
   onMove: (taskId: string, stageId: string, index: number) => void;
   onRemove: () => void;
+  /** Only set for backlog-kind columns — collapses this column into the
+   *  prototype's single-line CollapsedBar. */
+  onCollapse?: () => void;
 }) {
   const { addTask, renameStage } = useTasks();
   const [name, setName] = useState(stage.name);
@@ -41,7 +45,7 @@ export default function Column({
     <section
       {...columnProps(stage.id, tasks.length)}
       aria-label={`${stage.name}, ${tasks.length} ${tasks.length === 1 ? "task" : "tasks"}`}
-      className="flex w-72 shrink-0 flex-col rounded-2xl bg-muted/40 p-3"
+      className="group/column flex w-72 shrink-0 flex-col rounded-xl bg-muted/50 p-3"
     >
       <header className="flex items-center gap-2 px-1 pb-2">
         <input
@@ -63,10 +67,19 @@ export default function Column({
           className="min-w-0 flex-1 rounded-md bg-transparent px-1 py-0.5 font-mono text-[11px] uppercase tracking-[0.15em] text-muted-foreground outline-none hover:bg-muted focus:bg-card focus:text-foreground"
         />
         <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{tasks.length}</span>
+        {onCollapse && (
+          <button
+            onClick={onCollapse}
+            aria-label={`Collapse ${stage.name} column`}
+            className="shrink-0 rounded-md px-1.5 py-0.5 text-muted-foreground opacity-0 hover:bg-border hover:text-foreground focus:opacity-100 group-hover/column:opacity-100"
+          >
+            ‹›
+          </button>
+        )}
         <button
           onClick={onRemove}
           aria-label={`Remove ${stage.name} column`}
-          className="shrink-0 rounded-md px-1.5 py-0.5 text-muted-foreground opacity-0 hover:bg-border hover:text-foreground focus:opacity-100 group-hover:opacity-100"
+          className="shrink-0 rounded-md px-1.5 py-0.5 text-muted-foreground opacity-0 hover:bg-border hover:text-foreground focus:opacity-100 group-hover/column:opacity-100"
         >
           ×
         </button>

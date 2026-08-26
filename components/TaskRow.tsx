@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useTasks } from "@/lib/store-context";
-import { daysBetween } from "@/lib/parse";
 import { fmt, fmtDate, fmtTime, PRIORITY_LABEL } from "@/lib/format";
-import { STALE_AFTER_DAYS, type Task } from "@/lib/types";
+import { isStale, taskAge } from "@/lib/focus";
+import type { Task } from "@/lib/types";
 import { hasTextSelection } from "@/lib/selection";
 import TimerButton from "./TimerButton";
 
@@ -43,8 +43,8 @@ export default function TaskRow({
   const [subtaskText, setSubtaskText] = useState("");
 
   const project = projects.find((p) => p.id === task.projectId);
-  const age = daysBetween(task.scheduled, todayISO);
-  const stale = task.status === "open" && age > STALE_AFTER_DAYS;
+  const age = taskAge(task, todayISO);
+  const stale = isStale(task, todayISO);
   const done = task.status === "done";
   const doneSubtasks = task.subtasks.filter((s) => s.done).length;
 

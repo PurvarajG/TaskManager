@@ -43,7 +43,7 @@ export default function Card({
   return (
     <li
       {...dragProps}
-      className={`group relative rounded-xl border border-border bg-card p-3 shadow-sm transition-all motion-safe:duration-200 hover:border-accent/30 ${
+      className={`group relative rounded-lg border border-border bg-card p-3 shadow-sm transition-all motion-safe:duration-200 hover:border-accent/30 motion-safe:hover:-translate-y-0.5 ${
         dragging ? "opacity-40" : ""
       } ${task.status === "done" ? "opacity-60" : ""}`}
     >
