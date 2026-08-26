@@ -118,7 +118,7 @@
 /* Single source of truth for the dark palette's VALUES. Neither selector
    below can apply unconditionally — one is gated by the OS media query, the
    other by the explicit data-theme toggle — so the two rule bodies below
-   still have to list the same 17 properties each. But every value here is a
+   still have to list the same 25 properties each. But every value here is a
    var() reference into this block, so the two can never drift out of sync
    with each other; change a color once, both paths pick it up. */
 :root {

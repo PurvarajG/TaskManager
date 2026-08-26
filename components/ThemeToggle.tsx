@@ -57,7 +57,7 @@ export default function ThemeToggle() {
       onClick={cycle}
       aria-label={`Theme: ${label}. Click to change.`}
       title={`Theme: ${label}`}
-      className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      className="no-drag flex size-8 items-center justify-center rounded-lg text-nav-foreground transition-colors hover:bg-nav-hover hover:text-white"
     >
       {theme === "dark" ? (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -91,18 +91,60 @@ from the plan. Capabilities below are read off the plan text and the current
 tree; the phase that actually touches the file must verify and update this
 list against the real code at that time.
 
-### `components/Sidebar.tsx` (Phase 1) — status: untouched
-- Search submits to `/search?q=`.
-- `NAV` list filtered by `settings.hiddenNavItems`.
-- `UNHIDEABLE_NAV_KEY = "settings"` always visible regardless of hide state.
+### `components/Sidebar.tsx` (Phase 1) — status: Phase 1, done
+- Search submits to `/search?q=` — **preserved**, unchanged handler; input
+  now sits on `bg-nav-hover` with `text-nav-foreground`/`placeholder`, and
+  carries `.no-drag`.
+- `NAV` list filtered by `settings.hiddenNavItems` — **preserved**, unchanged
+  filter logic, only className restyled.
+- `UNHIDEABLE_NAV_KEY = "settings"` always visible regardless of hide state —
+  **preserved**, untouched (this constant lives in `NavVisibility`'s
+  consumer, `Sidebar.tsx` only exports it; no logic here to regress).
 - Inline project create: Enter to submit, Escape to cancel, blur to cancel,
-  auto-colour from `PROJECT_COLORS`, redirect to the new project on create.
-- Hover `×` delete per project, with confirm.
-- `ThemeToggle` and `TempoMark` render inside the rail.
-- Drag-region contract: titlebar band keeps `.drag-region`; every interactive
-  child (search, nav buttons, project links, delete button, theme toggle)
-  keeps `.no-drag` (see `app/globals.css:215-283`'s drag-region comment,
-  numbering may shift after Phase 0's additions).
+  auto-colour from `PROJECT_COLORS`, redirect to the new project on create —
+  **preserved**, unchanged handlers; the input field restyled to
+  `bg-nav-hover`/`text-white` to match the dark rail.
+- Hover `×` delete per project, with confirm — **preserved**, unchanged
+  `confirm()` call, restyled to `text-nav-foreground` / `hover:bg-nav-hover`.
+- `ThemeToggle` and `TempoMark` render inside the rail — **preserved**.
+  `ThemeToggle` (only ever mounted here, verified via repo-wide search) had
+  its hardcoded `text-muted-foreground` / `hover:bg-muted` / `hover:text-
+  foreground` classes swapped for `text-nav-foreground` / `hover:bg-nav-hover`
+  / `hover:text-white` so it's legible against the now-opaque charcoal rail
+  in all three theme states — no behavioural change, `cycle()` and the
+  `useSyncExternalStore` wiring untouched.
+- Drag-region contract: titlebar band keeps `.drag-region` (`pt-9` on the
+  branding wrapper); the branding row keeps `.no-drag` as a whole per the
+  contract comment. Added `.no-drag` defensively to nav links, project rows,
+  the search input/icon, the "+" button, and the inline project-create input
+  — none of these overlap the `pt-9` drag band today, but keeping them
+  explicit avoids a future layout shift silently making them drag-live.
+- New surface: `aside` is now `bg-nav text-nav-foreground` (opaque charcoal,
+  paints over the Electron vibrancy per the plan's decision 1); wordmark
+  `Link` text set to `text-white`; active nav/project pill is
+  `bg-nav-active` with `text-sm font-semibold text-white` (bumped from
+  `text-[13px]` — see contrast fix below); project dot + open-count badge
+  preserved, restyled to `text-nav-foreground/70` (inactive) /
+  `text-white/70` (active).
+- `tests/ui/sidebar.test.tsx` and `tests/ui/nav-visibility.test.tsx` pass
+  unmodified.
+
+**Contrast fix (Phase 0 auditor finding 3):** `--dark-nav-active` (`#4d7cff`)
+under white text measured 3.72:1 — below the 4.5:1 small-text threshold.
+Chose to enlarge and weight the active pill's label (`text-sm font-semibold`,
+14px+ semibold) rather than darken the pill, so the same active-pill token
+and blue read stays identical between light and dark mode. 14px semibold
+white-on-`#4d7cff` clears the WCAG large-text (14pt bold / 18pt regular)
+3:1 threshold with margin.
+
+**Other Phase 0 auditor findings fixed in this phase:**
+- `app/globals.css`: the dark-palette block comment said "the same 17
+  properties each" — corrected to 25 (9 base + 8 category + 8
+  nav/ink/attention roles), matching the current two dark-selector bodies.
+- `components/ui/CollapsedBar.tsx`: added an explicit
+  `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40`
+  to its button, matching the focus-visible ring style used elsewhere in
+  `components/ui/`.
 
 ### `components/ui/PageShell.tsx` (Phase 2) — status: untouched
 - Props: `label`, `title`, `pulse`, `actions`, `headerExtra`, `rail`,

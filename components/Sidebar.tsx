@@ -68,7 +68,7 @@ function NavLinks() {
           fill="none"
           stroke="currentColor"
           strokeWidth="2"
-          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/60"
+          className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-nav-foreground/60"
         >
           <circle cx="11" cy="11" r="7" />
           <path d="m21 21-4.3-4.3" />
@@ -78,7 +78,7 @@ function NavLinks() {
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Search"
-          className="h-7 w-full rounded-full border-none bg-muted/60 pl-7 pr-3 text-sm outline-none placeholder:text-muted-foreground/60 focus-visible:ring-2 focus-visible:ring-accent/20"
+          className="no-drag h-8 w-full rounded-[11px] border-none bg-nav-hover pl-7 pr-3 text-sm text-nav-foreground outline-none placeholder:text-nav-foreground/50 focus-visible:ring-2 focus-visible:ring-nav-active/50"
         />
       </form>
 
@@ -91,10 +91,10 @@ function NavLinks() {
               key={item.href}
               href={item.href}
               aria-current={active ? "page" : undefined}
-              className={`rounded-lg px-2.5 py-1 text-[13px] transition-colors ${
+              className={`no-drag rounded-lg px-2.5 py-1.5 text-sm transition-colors ${
                 active
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  ? "bg-nav-active font-semibold text-white"
+                  : "font-medium text-nav-foreground hover:bg-nav-hover hover:text-white"
               }`}
             >
               {item.label}
@@ -104,14 +104,14 @@ function NavLinks() {
       </nav>
 
       <div className="mt-8">
-        <div className="flex items-center justify-between px-3">
-          <span className="font-mono text-[10px] uppercase tracking-[0.15em] text-muted-foreground/70">
+        <div className="no-drag flex items-center justify-between px-3">
+          <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-nav-foreground/70">
             Projects
           </span>
           <button
             onClick={() => setAdding(true)}
             aria-label="New project"
-            className="flex size-5 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+            className="flex size-5 items-center justify-center rounded text-nav-foreground hover:bg-nav-hover hover:text-white"
           >
             +
           </button>
@@ -123,13 +123,13 @@ function NavLinks() {
             .map((p) => {
               const active = pathname === `/projects/${p.id}`;
               return (
-                <div key={p.id} className="group relative flex items-center">
+                <div key={p.id} className="no-drag group relative flex items-center">
                   <Link
                     href={`/projects/${p.id}`}
-                    className={`flex flex-1 items-center gap-2.5 rounded-lg px-2.5 py-1 text-[13px] transition-colors ${
+                    className={`flex flex-1 items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm transition-colors ${
                       active
-                        ? "bg-accent text-accent-foreground"
-                        : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                        ? "bg-nav-active font-semibold text-white"
+                        : "font-medium text-nav-foreground hover:bg-nav-hover hover:text-white"
                     }`}
                   >
                     <span
@@ -139,7 +139,7 @@ function NavLinks() {
                     <span className="select-text truncate">{p.name}</span>
                     {(openCounts.get(p.id) ?? 0) > 0 && (
                       <span
-                        className={`ml-auto shrink-0 font-mono text-[10px] ${active ? "text-accent-foreground/70" : "text-muted-foreground"}`}
+                        className={`ml-auto shrink-0 font-mono text-[10px] ${active ? "text-white/70" : "text-nav-foreground/70"}`}
                       >
                         {openCounts.get(p.id)}
                       </span>
@@ -152,7 +152,7 @@ function NavLinks() {
                       }
                     }}
                     aria-label={`Delete ${p.name}`}
-                    className="absolute right-1 hidden size-5 items-center justify-center rounded text-muted-foreground hover:bg-border hover:text-foreground group-hover:flex"
+                    className="absolute right-1 hidden size-5 items-center justify-center rounded text-nav-foreground hover:bg-nav-hover hover:text-white group-hover:flex"
                   >
                     ×
                   </button>
@@ -174,7 +174,7 @@ function NavLinks() {
               }}
               onBlur={() => void createProject()}
               placeholder="Project name"
-              className="mx-1 mt-1 h-8 rounded-lg border border-border bg-card px-2.5 text-sm outline-none focus:border-accent/40"
+              className="no-drag mx-1 mt-1 h-8 rounded-lg border border-nav-hover bg-nav-hover px-2.5 text-sm text-white outline-none placeholder:text-nav-foreground/50 focus:border-nav-active/60"
             />
           )}
         </div>
@@ -190,7 +190,7 @@ function NavLinks() {
  */
 export default function Sidebar() {
   return (
-    <aside className="flex w-56 shrink-0 flex-col border-r border-border pb-10">
+    <aside className="flex w-56 shrink-0 flex-col bg-nav pb-10 text-nav-foreground">
       {/* Full-width drag region: spans the h-9 titlebar band (`pt-9`)
           across the whole row, so the window can be grabbed anywhere along
           the sidebar's top, matching AppChrome's h-9 spacer convention.
@@ -204,7 +204,7 @@ export default function Sidebar() {
           them. */}
       <div className="drag-region flex flex-col px-5 pt-9">
         <div className="no-drag flex items-center justify-between px-1">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center gap-2.5 text-white">
             <TempoMark />
             <span className="font-display text-lg">Tempo</span>
           </Link>
