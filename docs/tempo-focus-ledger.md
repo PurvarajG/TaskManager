@@ -181,12 +181,13 @@ white-on-`#4d7cff` clears the WCAG large-text (14pt bold / 18pt regular)
   `<dl>` rendered `label value`) to match the shared primitive's own
   convention consistently across the app.
 - `app/tracking/page.tsx` and `app/upcoming/page.tsx`, both named in the plan
-  as conversion targets, were checked and currently have **no** hand-rolled
-  stat row of this kind in the live tree (`app/tracking/page.tsx` only has
-  toolbar nav buttons in its header; `app/upcoming/page.tsx` has no header
-  stats at all) — the plan's snapshot predates whatever removed them. Nothing
-  to convert on either route; noted here so a later phase doesn't assume this
-  was missed.
+  as conversion targets, were checked at Phase 0 and had **no** hand-rolled
+  stat row of this kind in the live tree at that time (`app/tracking/page.tsx`
+  only had toolbar nav buttons in its header; `app/upcoming/page.tsx` had no
+  header stats at all) — the plan's snapshot predated whatever removed them.
+  Nothing to convert on either route as of Phase 0. `app/upcoming/page.tsx`
+  gained a real `MetricStrip` row in Phase 6 (see that section below) since
+  the page didn't have one yet to convert.
 
 ### `app/projects/[id]/page.tsx` (Phases 2, 3) — status: Phase 3, done
 - Now renders through `PageShell` instead of its own hand-rolled header —
@@ -499,9 +500,83 @@ kind).
   matching the prototype's `.ribbon`/`.ribbon-hours`/`.ribbon-track` shape —
   verified, no changes required.
 
-### `app/upcoming/page.tsx` (Phase 6) — status: untouched
-- Grouped-list rendering (kept as the narrow-viewport form).
-- `QuickAdd` and its `lib/parse.ts` hint string.
+### `app/upcoming/page.tsx` (Phase 6) — status: Phase 6, shipped (post-audit fixes applied)
+- Grouped-list rendering — **preserved byte-for-byte in behaviour**, now the
+  `shell:hidden` (below 900px) treatment: same filter (`scheduled > todayISO
+  && scheduled <= today+6`), same `SectionLabel` day headers, same `TaskRow`
+  list. Its "Nothing scheduled" empty state is scoped to this list's own
+  container and gated on `days.length === 0`, matching what that container
+  actually shows (today is never in `days`, so this message never contradicts
+  it).
+- `QuickAdd` and its `lib/parse.ts` hint string — **preserved unchanged**,
+  still rendered once above both forms.
+- `shell:block` (900px+) seven day-column grid, today through today+6
+  inclusive (unlike the narrow list, this range **includes today**, matching
+  the prototype's first "Today" column). Each column is a semantic
+  `<ul>`/`<li>` list (`TaskRow` in `compact` mode, the same component the
+  narrow list uses, so click-to-open/subtasks/timer all carry over) with a
+  date head and a capacity bar. Its own empty state is gated on
+  `week.every(day => day.tasks.length === 0)` — correct for this form
+  specifically, since `week` (unlike `days`) includes today; the two forms no
+  longer share one empty-state condition that was only right for one of them.
+  **Both forms are mounted simultaneously** (`hidden shell:block` /
+  `shell:hidden`, not conditional rendering) — every task in days 2–7 renders
+  two live `TaskRow`s at once, one hidden via `display:none`. Verified benign
+  for the Phase 4 duplicate-id class of bug: `TaskRow` emits no `id`/`htmlFor`
+  and `display:none` removes the hidden copy from the tab order. It does mean
+  double `useTasks`/context subscriptions per visible task on wide viewports
+  while off-screen ones exist — not fixed here (out of scope for a fix-only
+  pass); a later phase should switch to conditional rendering or a
+  `matchMedia` hook if that becomes a measured problem.
+  - Capacity is **derived, not invented**: `lib/week-capacity.ts`. Ceiling =
+    `TrackingSettings.wakingEndHour - wakingStartHour` (the same waking-hours
+    window `lib/tracking-day.ts`'s `wakingWindow` already derives for the
+    tracking day; no new schema column, API route, or setting). Falls back to
+    the busiest of the seven days' own planned minutes only on the frame
+    before `/api/tracking-settings` has resolved.
+  - **Over-capacity is now visible.** `WeekDayPlan.capacityRatio` stays
+    clamped to 1 for bar width, but a new `trueCapacityRatio` (uncapped) is
+    exposed alongside it; the page uses it to detect `trueCapacityRatio > 1`
+    and renders the bar in `bg-attention` (the same attention token
+    `AttentionPanel`/Today's overcommit copy already use) plus a
+    `"N planned · over capacity"` text line under the bar — so the day's
+    planned minutes are visible as text even without the colour cue, and an
+    over-16h day no longer looks identical to an exactly-full one.
+  - **Fallback ceiling no longer looks like the real one.** While settings
+    hasn't loaded, `ceilingIsProvisional` is `true` and the page renders an
+    empty, unfilled track (`aria-hidden`) instead of a bar sized against a
+    fabricated ceiling, plus a plain `"N planned"` line with no percentage
+    claim — so the pre-settle frame reads as "not yet known," not as a
+    (wrong) capacity reading that later silently reinterprets itself.
+  - **Accessible representation.** The real (non-provisional) bar carries
+    `role="progressbar"` with `aria-valuenow`/`aria-valuemin`/`aria-valuemax`
+    and an `aria-label` stating planned minutes, percent of capacity, and
+    "over capacity" when applicable — so a screen-reader user gets the same
+    number sighted users get from the adjacent text line either way.
+- `MetricStrip` row (task count, planned time via `lib/format.ts`'s `fmt`,
+  overdue count, busiest day by planned minutes), computed from `tasks`/`week`
+  in `lib/week-capacity.ts`'s `weekMetrics`.
+  - **Overdue now uses the one shared predicate.** `weekMetrics`'s
+    `overdueCount` previously reimplemented "overdue" as
+    `scheduled < todayISO`, a third definition alongside `lib/summary.ts`'s
+    `isOverdue` (Today's metric strip) and `lib/focus.ts`'s local copy of the
+    same rule (the project focus band) — both of which already treat a
+    complex task as overdue only once its `finishDate` passes. `isOverdue` is
+    now exported from `lib/summary.ts` and imported here instead of
+    reimplemented, so a complex task started yesterday and finishing Friday
+    reads the same "not overdue" on both Today and Next 7 Days.
+- `PageShell` now receives `maxWidth="max-w-3xl shell:max-w-none"`. The
+  original Phase 6 pass left the default `max-w-3xl` (768px) on at every
+  width, clipping the 1215px seven-column grid at all viewports including
+  full screen — the plan's own "only a page whose content genuinely wants the
+  room passes something wider" rule (see `PageShell`'s comment) applied here
+  and hadn't been. Below `shell:` (900px) the narrow list still gets the
+  original 768px ceiling.
+- `tests/week-capacity.test.ts` covers the capacity-ceiling derivation
+  (settings-driven, fallback, never-zero floor), the metrics computation, the
+  shared `isOverdue` predicate (complex-task finish-date case), the uncapped
+  `trueCapacityRatio` for an over-capacity day, and `ceilingIsProvisional`
+  before settings load.
 
 ### `app/settings/page.tsx` (Phase 7) — status: untouched
 - Server component today; Phase 7 introduces a client child for the nav

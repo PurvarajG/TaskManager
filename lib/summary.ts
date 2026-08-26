@@ -26,8 +26,14 @@ function isDueOn(task: Task, iso: string): boolean {
   return task.scheduled <= iso && iso <= task.finishDate!;
 }
 
-/** A complex task isn't overdue until its finish date passes, not its start day. */
-function isOverdue(task: Task, todayISO: string): boolean {
+/**
+ * A complex task isn't overdue until its finish date passes, not its start day.
+ *
+ * This is a DEADLINE predicate only — it says nothing about status, so every
+ * caller pairs it with its own `status === "open"` check. Keeping the two
+ * apart lets callers that have already filtered by status avoid re-checking.
+ */
+export function isOverdue(task: Task, todayISO: string): boolean {
   const deadline = task.isComplex ? task.finishDate! : task.scheduled;
   return deadline < todayISO;
 }

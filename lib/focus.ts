@@ -1,5 +1,6 @@
 import { daysBetween } from "./parse";
 import { rank } from "./format";
+import { isOverdue } from "./summary";
 import { STALE_AFTER_DAYS, type ProjectStage, type Task, type TimeEntry } from "./types";
 
 /** How many days a task has sat on its scheduled date, as of `todayISO`. */
@@ -16,11 +17,7 @@ export function isStale(task: Task, todayISO: string): boolean {
   return task.status === "open" && taskAge(task, todayISO) > STALE_AFTER_DAYS;
 }
 
-/** A complex task isn't overdue until its finish date passes, not its start day. */
-function isOverdue(task: Task, todayISO: string): boolean {
-  const deadline = task.isComplex ? task.finishDate! : task.scheduled;
-  return task.status === "open" && deadline < todayISO;
-}
+// One overdue definition for the whole app — see lib/summary.ts.
 
 function isDueToday(task: Task, todayISO: string): boolean {
   if (task.status !== "open") return false;
@@ -88,7 +85,7 @@ export function getAttentionItems(
   // scheduled date has passed too.
   for (const task of projectTasks) {
     if (isWaiting(task)) continue;
-    if (!isOverdue(task, todayISO)) continue;
+    if (task.status !== "open" || !isOverdue(task, todayISO)) continue;
     const age = taskAge(task, todayISO);
     items.push({
       task,
